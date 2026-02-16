@@ -1,0 +1,353 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Code } from 'astro:components';
+import { HOMEPAGE_EXAMPLE_NMBL, HOMEPAGE_EXAMPLE_HTML } from '../examples';
+import nmblGrammar from '@nmbl/vscode-extension/syntaxes/nmbl.tmLanguage.json';
+
+const nmblLang = { ...nmblGrammar, name: 'nmbl' };
+
+const FEATURE_ATTR_COMMENTS = `button(
+  type="submit"
+  // disabled
+  class="btn"
+)`;
+
+const FEATURE_EMBEDDED_MD = `article:md
+  ## My Post
+  This is *markdown* that gets
+  compiled to HTML at build time.`;
+---
+
+<BaseLayout title="Home">
+  <section class="hero">
+    <div class="container">
+      <h1><span class="hero-mark">&gt;&lt;</span> NMBL</h1>
+      <p class="acronym"><strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage</p>
+      <p class="tagline">A concise notation for HTML that's easier to read, write, and generate.</p>
+      <p class="tagline-sub">Closing tags, angle brackets, repeated tag names &mdash; NMBL strips the noise so you and your AI can focus on structure.</p>
+      <div class="hero-actions">
+        <a href="/playground" class="btn btn-primary">Try the Playground</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="benefits">
+    <div class="container">
+      <div class="benefits-grid">
+        <div class="benefit">
+          <h3>Easier to read</h3>
+          <p>Indentation shows structure. No closing tags to match. No angle brackets to scan past. You see the content and hierarchy immediately.</p>
+        </div>
+        <div class="benefit">
+          <h3>Faster to write</h3>
+          <p>CSS selector shorthand for ids and classes. Implicit <code>div</code> tags. Block expansion for common patterns. A typical template is 30&ndash;40% shorter than equivalent HTML.</p>
+        </div>
+        <div class="benefit">
+          <h3>Fewer tokens for AI</h3>
+          <p>Every <code>&lt;/div&gt;</code> burns tokens that carry zero information. NMBL lets LLMs spend their context window on logic instead of markup boilerplate.</p>
+        </div>
+        <div class="benefit">
+          <h3>Fits your stack</h3>
+          <p>Use <code>&lt;template lang="nmbl"&gt;</code> in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. NMBL compiles to standard HTML &mdash; any framework already understands.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="comparison">
+    <div class="container">
+      <h2>Same structure. Less noise.</h2>
+      <div class="comparison-grid">
+        <div class="comparison-pane">
+          <div class="comparison-label">NMBL &mdash; {HOMEPAGE_EXAMPLE_NMBL.split('\n').length} lines, {HOMEPAGE_EXAMPLE_NMBL.length} chars</div>
+          <Code code={HOMEPAGE_EXAMPLE_NMBL} lang={nmblLang} theme="github-dark" />
+        </div>
+        <div class="comparison-pane">
+          <div class="comparison-label">HTML &mdash; {HOMEPAGE_EXAMPLE_HTML.split('\n').length} lines, {HOMEPAGE_EXAMPLE_HTML.length} chars</div>
+          <Code code={HOMEPAGE_EXAMPLE_HTML} lang="html" theme="github-dark" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="container">
+      <h2>Features</h2>
+      <div class="features-grid">
+        <div class="feature">
+          <h3>CSS-like selectors</h3>
+          <p>Use <code>#id</code> and <code>.class</code> shorthand directly on elements. Implicit <code>div</code> when using selectors alone.</p>
+        </div>
+        <div class="feature">
+          <h3>Block expansion</h3>
+          <p>Nest single children inline with <code>:</code> syntax. Perfect for navigation lists: <code>li: a(href="/") Home</code></p>
+        </div>
+        <div class="feature">
+          <h3>Comments you control</h3>
+          <p>Developer comments (<code>//</code>) are stripped from output &mdash; no more shipping notes to production. Use <code>//!</code> when you explicitly want an HTML comment. No other template syntax gives you this distinction.</p>
+        </div>
+        <div class="feature">
+          <h3>Comments inside attributes</h3>
+          <p>Something HTML and every other template language lack: comment out individual attributes while debugging. Use <code>//</code> or <code>/* */</code> inside attribute lists to annotate or disable specific props.</p>
+          <div class="feature-code">
+            <Code code={FEATURE_ATTR_COMMENTS} lang={nmblLang} theme="github-dark" />
+          </div>
+        </div>
+        <div class="feature">
+          <h3>Embedded languages</h3>
+          <p>Use content modes to embed markdown, CSS, or any language inline. Attach a filter to transform the content at compile time &mdash; <code>div:md</code> to embed markdown, <code>script:</code> for raw script blocks, or register your own.</p>
+          <div class="feature-code">
+            <Code code={FEATURE_EMBEDDED_MD} lang={nmblLang} theme="github-dark" />
+          </div>
+        </div>
+        <div class="feature">
+          <h3>Bidirectional</h3>
+          <p>Convert HTML to NMBL and back. The decompiler produces clean, idiomatic NMBL from any HTML input. Drop in existing HTML and start editing in NMBL immediately.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 6rem 0 4rem;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+  }
+
+  .hero-mark {
+    letter-spacing: -0.05em;
+  }
+
+  .acronym {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+    margin-bottom: 1.25rem;
+  }
+
+  .acronym strong {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .tagline {
+    font-size: 1.35rem;
+    color: var(--color-text);
+    max-width: 640px;
+    margin: 0 auto 0.75rem;
+  }
+
+  .tagline-sub {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    max-width: 640px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--color-accent);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--color-accent-hover);
+    color: white;
+  }
+
+  .benefits {
+    padding: 3rem 0 4rem;
+  }
+
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .benefit {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .benefit h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+  }
+
+  .benefit p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+
+  .benefit code {
+    background: rgba(124, 110, 246, 0.15);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    color: var(--color-accent);
+  }
+
+  .comparison {
+    padding: 4rem 0;
+  }
+
+  .comparison h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .comparison-pane {
+    background: var(--color-surface);
+  }
+
+  .comparison-label {
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .comparison-pane pre {
+    padding: 1.5rem;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    background: transparent !important;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .comparison-pane code {
+    color: var(--color-text);
+  }
+
+  .features {
+    padding: 4rem 0;
+  }
+
+  .features h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .feature {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .feature h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+  }
+
+  .feature p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .feature code {
+    background: rgba(124, 110, 246, 0.15);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    color: var(--color-accent);
+  }
+
+  .feature-code {
+    margin-top: 0.75rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+
+  .feature-code pre {
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    background: transparent !important;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .feature-code code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    color: var(--color-text);
+  }
+
+  @media (max-width: 1024px) {
+    .features-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 {
+      font-size: 2.5rem;
+    }
+
+    .benefits-grid,
+    .comparison-grid,
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

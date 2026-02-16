@@ -1,0 +1,26 @@
+{
+  "name": "@nmbl/vite-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nmbl/parser": "workspace:*"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

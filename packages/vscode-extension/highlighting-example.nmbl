@@ -1,0 +1,17 @@
+div#id.class1.class2(attr1="val1")
+div(
+  multi-line
+  :binding
+  foo=`template${var}`
+) text
+CustomComponent
+  | using the bar to extend
+  | more here
+
+div:
+  indented text
+  goes here
+
+div:md
+  # title
+  This is embedded [markdown](https://example.com)

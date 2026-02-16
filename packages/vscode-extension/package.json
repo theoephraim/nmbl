@@ -1,0 +1,41 @@
+{
+  "name": "@nmbl/vscode-extension",
+  "displayName": "NMBL",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NMBL language support — syntax highlighting for .nmbl files",
+  "publisher": "nmbl",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "nmbl",
+        "aliases": ["NMBL", "nmbl"],
+        "extensions": [".nmbl"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nmbl",
+        "scopeName": "text.nmbl",
+        "path": "./syntaxes/nmbl.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "source.md": "markdown",
+          "source.css": "css"
+        }
+      }
+    ]
+  },
+  "exports": {
+    "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json"
+  }
+}
