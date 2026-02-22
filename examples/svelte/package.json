@@ -1,0 +1,15 @@
+{
+  "name": "example/svelte",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@nmbl/svelte": "workspace:*",
+    "svelte": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "vite": "catalog:"
+  }
+}

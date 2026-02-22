@@ -3,5 +3,9 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .astro/
+.turbo/
 
 ignore
+
+.env.local
+.env.*.local

@@ -3,19 +3,20 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "esModuleInterop": true,
+    "lib": ["ESNext"],
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "composite": true
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true
   },
-  "references": [
-    { "path": "packages/parser" },
-    { "path": "packages/vite-plugin" },
-    { "path": "packages/astro" }
-  ]
+  "exclude": ["node_modules", "dist", "build", ".turbo"]
 }

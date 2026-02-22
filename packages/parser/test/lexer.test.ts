@@ -203,6 +203,69 @@ describe('Lexer', () => {
       const attrs = tokens.filter(t => t.type === TokenType.Attribute);
       expect(attrs).toHaveLength(2);
     });
+
+    test('directive attribute name with colon', () => {
+      const { tokens } = lex('Comp(client:load)');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('client:load');
+      expect((attr as any).value).toBe(null);
+      expect((attr as any).bound).toBe(false);
+    });
+
+    test('directive attribute with value', () => {
+      const { tokens } = lex('Comp(client:only="vue")');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('client:only');
+      expect((attr as any).value).toBe('vue');
+      expect((attr as any).bound).toBe(false);
+    });
+
+    test('Vue slot shorthand with #', () => {
+      const { tokens } = lex('template(#header)');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('#header');
+      expect((attr as any).value).toBe(null);
+      expect((attr as any).bound).toBe(false);
+    });
+
+    test('Vue slot shorthand with # and value', () => {
+      const { tokens } = lex('template(#default="{ item }")');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('#default');
+      expect((attr as any).value).toBe('{ item }');
+      expect((attr as any).bound).toBe(false);
+    });
+
+    test('expression value with braces', () => {
+      const { tokens } = lex('Code(code={EXAMPLE})');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('code');
+      expect((attr as any).value).toBe('{EXAMPLE}');
+      expect((attr as any).expression).toBe(true);
+    });
+
+    test('expression value with spaces', () => {
+      const { tokens } = lex('div(code={a + b})');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('code');
+      expect((attr as any).value).toBe('{a + b}');
+      expect((attr as any).expression).toBe(true);
+    });
+
+    test('expression value with nested parens and braces', () => {
+      const { tokens } = lex('div(handler={items.map(i => fn(i))})');
+      const attr = tokens.find(t => t.type === TokenType.Attribute);
+      expect(attr).toBeDefined();
+      expect((attr as any).name).toBe('handler');
+      expect((attr as any).value).toBe('{items.map(i => fn(i))}');
+      expect((attr as any).expression).toBe(true);
+    });
   });
 
   describe('text', () => {
@@ -290,10 +353,105 @@ describe('Lexer', () => {
   });
 
   describe('block expansion', () => {
-    test('colon space triggers block expansion', () => {
-      const types = tokenTypes('li: a Home');
-      expect(types).toContain(TokenType.Colon);
+    test('child expansion operator triggers block expansion', () => {
+      const types = tokenTypes('li > a Home');
+      expect(types).toContain(TokenType.ChildExpansion);
       expect(types).toContain(TokenType.Tag);
+    });
+  });
+
+  describe('control flow blocks', () => {
+    test('{#if} produces BlockOpen token', () => {
+      const { tokens } = lex('{#if loggedIn}');
+      const block = tokens.find(t => t.type === TokenType.BlockOpen);
+      expect(block).toBeDefined();
+      expect((block as any).blockType).toBe('if');
+      expect((block as any).expression).toBe('loggedIn');
+    });
+
+    test('{#each} produces BlockOpen token', () => {
+      const { tokens } = lex('{#each items as item, i}');
+      const block = tokens.find(t => t.type === TokenType.BlockOpen);
+      expect(block).toBeDefined();
+      expect((block as any).blockType).toBe('each');
+      expect((block as any).expression).toBe('items as item, i');
+    });
+
+    test('{:else} produces BlockContinuation token', () => {
+      const { tokens } = lex('{:else}');
+      const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
+      expect(cont).toBeDefined();
+      expect((cont as any).clauseType).toBe('else');
+      expect((cont as any).expression).toBe('');
+    });
+
+    test('{:else if} produces BlockContinuation token', () => {
+      const { tokens } = lex('{:else if condition}');
+      const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
+      expect(cont).toBeDefined();
+      expect((cont as any).clauseType).toBe('else if');
+      expect((cont as any).expression).toBe('condition');
+    });
+
+    test('{:then} produces BlockContinuation token', () => {
+      const { tokens } = lex('{:then data}');
+      const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
+      expect(cont).toBeDefined();
+      expect((cont as any).clauseType).toBe('then');
+      expect((cont as any).expression).toBe('data');
+    });
+
+    test('{:catch} produces BlockContinuation token', () => {
+      const { tokens } = lex('{:catch error}');
+      const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
+      expect(cont).toBeDefined();
+      expect((cont as any).clauseType).toBe('catch');
+      expect((cont as any).expression).toBe('error');
+    });
+
+    test('{@render} produces InlineDirective token', () => {
+      const { tokens } = lex('{@render header()}');
+      const dir = tokens.find(t => t.type === TokenType.InlineDirective);
+      expect(dir).toBeDefined();
+      expect((dir as any).directiveType).toBe('render');
+      expect((dir as any).expression).toBe('header()');
+    });
+
+    test('{@html} produces InlineDirective token', () => {
+      const { tokens } = lex('{@html rawContent}');
+      const dir = tokens.find(t => t.type === TokenType.InlineDirective);
+      expect(dir).toBeDefined();
+      expect((dir as any).directiveType).toBe('html');
+      expect((dir as any).expression).toBe('rawContent');
+    });
+
+    test('block with indented children produces indent/outdent', () => {
+      const types = tokenTypes('{#if cond}\n  p Hello');
+      expect(types).toEqual([
+        TokenType.BlockOpen,
+        TokenType.Indent,
+        TokenType.Tag,
+        TokenType.Text,
+        TokenType.Outdent,
+        TokenType.EOF,
+      ]);
+    });
+
+    test('block with continuation at same indent', () => {
+      const types = tokenTypes('{#if cond}\n  p Hello\n{:else}\n  p Bye');
+      expect(types).toEqual([
+        TokenType.BlockOpen,
+        TokenType.Indent,
+        TokenType.Tag,
+        TokenType.Text,
+        TokenType.Outdent,
+        TokenType.BlockContinuation,
+        TokenType.Indent,
+        TokenType.Tag,
+        TokenType.Text,
+        TokenType.Outdent,
+        TokenType.EOF,
+      ]);
     });
   });
 

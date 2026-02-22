@@ -1,19 +1,20 @@
 export { Lexer } from './lexer.js';
 export { Parser } from './parser.js';
-export { Compiler, type CompilerOptions } from './compiler.js';
+export { Compiler, type CompilerOptions, type SourceMapping, type CompileResult } from './compiler.js';
 export { decompile, type DecompileOptions } from './decompiler.js';
 export { TokenType, type Token } from './tokens.js';
 export type { SourcePosition, SourceSpan } from './source-location.js';
 export type {
   DocumentNode, ElementNode, AttributeNode, TextNode,
   CommentNode, HtmlCommentNode, ContentBlockNode, AstNode,
+  BlockNode, BlockClauseNode, InlineDirectiveNode,
 } from './ast.js';
 export { ErrorCode, type NmblError } from './errors.js';
 export { VOID_ELEMENTS, INLINE_ELEMENTS } from './constants.js';
 
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
-import { Compiler, type CompilerOptions } from './compiler.js';
+import { Compiler, type CompilerOptions, type CompileResult } from './compiler.js';
 import type { Token } from './tokens.js';
 import type { DocumentNode } from './ast.js';
 import type { NmblError } from './errors.js';
@@ -32,15 +33,23 @@ export function parse(source: string, filename?: string): { ast: DocumentNode; e
   return { ast, errors: [...lexErrors, ...parseErrors] };
 }
 
-/** Compile a pre-parsed AST to HTML. */
-export function compileAst(ast: DocumentNode, options?: CompilerOptions): string {
+/** Compile a pre-parsed AST to HTML with source mappings. */
+export function compileAst(ast: DocumentNode, options?: CompilerOptions & { source?: string }): CompileResult {
   const compiler = new Compiler(options);
-  return compiler.compile(ast);
+  return compiler.compileWithMappings(ast, options?.source);
 }
 
-/** Full pipeline: source → HTML. */
-export function compile(source: string, options?: CompilerOptions & { filename?: string }): { html: string; errors: NmblError[] } {
+/** Full pipeline: source → HTML with source mappings. */
+export function compile(source: string, options?: CompilerOptions & { filename?: string }): CompileResult {
   const { ast, errors } = parse(source, options?.filename);
-  const html = compileAst(ast, options);
-  return { html, errors };
+  const result = compileAst(ast, { ...options, source });
+  // Merge parse errors with compile errors
+  result.errors = [...errors, ...result.errors];
+  return result;
+}
+
+/** Backward compatibility: compile to HTML string only. */
+export function compileToHtml(source: string, options?: CompilerOptions & { filename?: string }): { html: string; errors: NmblError[] } {
+  const result = compile(source, options);
+  return { html: result.html, errors: result.errors };
 }

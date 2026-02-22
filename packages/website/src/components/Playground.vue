@@ -2,7 +2,9 @@
 .playground
   .playground-editors
     .editor-pane
-      .pane-header NMBL
+      .pane-header
+        span NMBL
+        span.pane-stats {{ nmblStats }}
       Editor(
         v-model="nmblSource"
         language="nmbl"
@@ -10,7 +12,9 @@
         @focus="activeEditor = 'nmbl'"
       )
     .editor-pane
-      .pane-header HTML
+      .pane-header
+        span HTML
+        span.pane-stats {{ htmlStats }}
       Editor(
         v-model="htmlSource"
         language="html"
@@ -21,33 +25,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { compile, decompile } from '@nmbl/parser';
 import Editor from './Editor.vue';
+import { PLAYGROUND_EXAMPLE_NMBL } from '../examples';
 
-const defaultNmbl = `nav.main-nav
-  ul
-    li: a(href="/") Home
-    li: a(href="/about") About
-    li: a(href="/contact") Contact
-
-section#hero.dark
-  h1 Welcome to NMBL
-  p A concise template language for HTML
-
-form(action="/subscribe" method="post")
-  input(type="email" name="email" required)
-  button(type="submit") Subscribe`;
-
-const nmblSource = ref(defaultNmbl);
+const nmblSource = ref(PLAYGROUND_EXAMPLE_NMBL);
 const htmlSource = ref('');
+
+function countLines(s: string) {
+  return s ? s.split('\n').length : 0;
+}
+
+const nmblStats = computed(() => {
+  const lines = countLines(nmblSource.value);
+  const chars = nmblSource.value.length;
+  const htmlChars = htmlSource.value.length;
+  const reduction = htmlChars > 0 ? Math.round((1 - chars / htmlChars) * 100) : 0;
+  return `${lines} lines, ${chars} chars` + (reduction > 0 ? ` (${reduction}% smaller)` : '');
+});
+
+const htmlStats = computed(() => {
+  const lines = countLines(htmlSource.value);
+  const chars = htmlSource.value.length;
+  return `${lines} lines, ${chars} chars`;
+});
 const activeEditor = ref<'nmbl' | 'html'>('nmbl');
 const error = ref('');
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
 // Initialize HTML from default NMBL
-compileNmbl(defaultNmbl);
+compileNmbl(PLAYGROUND_EXAMPLE_NMBL);
 
 function compileNmbl(source: string) {
   try {
@@ -113,6 +122,9 @@ watch(htmlSource, (value) => {
 }
 
 .pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0.5rem 1rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -122,6 +134,13 @@ watch(htmlSource, (value) => {
   color: var(--color-text-muted);
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
+}
+
+.pane-stats {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.7;
 }
 
 .playground-error {

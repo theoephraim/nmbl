@@ -95,7 +95,7 @@ export class Lexer {
     return pos(this.line, this.column, this.offset);
   }
 
-  private emitToken(type: TokenType.Indent | TokenType.Outdent | TokenType.Newline | TokenType.EOF | TokenType.AttrStart | TokenType.AttrEnd | TokenType.Colon): void;
+  private emitToken(type: TokenType.Indent | TokenType.Outdent | TokenType.Newline | TokenType.EOF | TokenType.AttrStart | TokenType.AttrEnd | TokenType.ChildExpansion): void;
   private emitToken<T extends Token>(type: T['type'], extra?: Omit<T, 'type' | 'span'>): void;
   private emitToken(type: TokenType, extra?: Record<string, unknown>): void {
     const p = this.position();
@@ -197,9 +197,25 @@ export class Lexer {
     } else if (this.peek() === '#' || this.peek() === '.') {
       // Implicit div — starts with # or .
       this.scanElement(true);
-    } else if (this.peek() === ':' && this.peekAt(1) !== ' ') {
+    } else if (this.peek() === ':') {
       // Standalone content block (:md, :css, etc.)
       this.scanStandaloneContentMode();
+    } else if (this.peek() === '{') {
+      const next = this.peekAt(1);
+      if (next === '#') {
+        this.scanBlockOpen();
+      } else if (next === ':') {
+        this.scanBlockContinuation();
+      } else if (next === '@') {
+        this.scanInlineDirective();
+      } else {
+        const start = this.position();
+        this.addError(ErrorCode.UnexpectedCharacter, `Unexpected character '${this.peek()}'`, start);
+        this.skipToEndOfLine();
+      }
+    } else if (this.peek() === '<') {
+      // Raw HTML passthrough (e.g. <!DOCTYPE html>)
+      this.scanRawHtmlLine();
     } else if (this.isTagStartChar(this.peek())) {
       this.scanElement(false);
     } else {
@@ -307,39 +323,38 @@ export class Lexer {
   private scanAfterTag(): void {
     // Content mode suffix: `tag:filter` (no space before or after colon, or colon at end of tag)
     if (this.peek() === ':') {
-      // Look ahead: if next char after colon is a space → block expansion
-      // If next char is a non-space or end of line → content mode
-      if (this.peekAt(1) === ' ') {
-        // Block expansion: `tag: child`
-        this.advance(); // consume ':'
-        this.advance(); // consume ' '
-        this.emitToken(TokenType.Colon);
-        // Parse the inline child element
-        if (this.peek() === '#' || this.peek() === '.') {
-          this.scanElement(true);
-        } else if (this.isTagStartChar(this.peek())) {
-          this.scanElement(false);
-        }
-        return;
-      } else {
-        // Content mode: `tag:filter` or `tag:` (default text)
-        this.advance(); // consume ':'
-        const start = this.position();
-        let modeName = '';
-        while (!this.isAtEnd() && this.isTagChar(this.peek())) {
-          modeName += this.advance();
-        }
-        if (!modeName) modeName = 'text';
-        this.emitTokenSpan(TokenType.ContentMode, start, { name: modeName });
-
-        // Skip rest of line
-        this.skipToEndOfLine();
-
-        // Set up content block scanning
-        this.contentBlockIndent = this.indentStack[this.indentStack.length - 1]!;
-        this.contentBlockMode = modeName;
-        return;
+      // Content mode: `tag:filter` or `tag:` (default text)
+      this.advance(); // consume ':'
+      const start = this.position();
+      let modeName = '';
+      while (!this.isAtEnd() && this.isTagChar(this.peek())) {
+        modeName += this.advance();
       }
+      if (!modeName) modeName = 'text';
+      this.emitTokenSpan(TokenType.ContentMode, start, { name: modeName });
+
+      // Skip rest of line
+      this.skipToEndOfLine();
+
+      // Set up content block scanning
+      this.contentBlockIndent = this.indentStack[this.indentStack.length - 1]!;
+      this.contentBlockMode = modeName;
+      return;
+    }
+
+    // Block expansion: `tag > child`
+    if (this.peek() === ' ' && this.peekAt(1) === '>' && this.peekAt(2) === ' ') {
+      this.advance(); // consume ' '
+      this.advance(); // consume '>'
+      this.advance(); // consume ' '
+      this.emitToken(TokenType.ChildExpansion);
+      // Parse the inline child element
+      if (this.peek() === '#' || this.peek() === '.') {
+        this.scanElement(true);
+      } else if (this.isTagStartChar(this.peek())) {
+        this.scanElement(false);
+      }
+      return;
     }
 
     // Inline text: rest of line after a space
@@ -437,6 +452,7 @@ export class Lexer {
     // Check for value
     let value: string | null = null;
     let templateLiteral = false;
+    let expression = false;
 
     this.skipAttrWhitespace();
 
@@ -451,6 +467,9 @@ export class Lexer {
       } else if (this.peek() === '`') {
         value = this.scanTemplateLiteral();
         templateLiteral = true;
+      } else if (this.peek() === '{') {
+        value = this.scanExpressionValue();
+        expression = true;
       } else {
         // Bare value — scan until whitespace or )
         let v = '';
@@ -464,7 +483,7 @@ export class Lexer {
       value = name;
     }
 
-    this.emitTokenSpan(TokenType.Attribute, start, { name, value, bound, templateLiteral } satisfies Omit<AttributeToken, 'type' | 'span'>);
+    this.emitTokenSpan(TokenType.Attribute, start, { name, value, bound, templateLiteral, expression } satisfies Omit<AttributeToken, 'type' | 'span'>);
   }
 
   private scanDoubleQuotedString(): string {
@@ -533,6 +552,37 @@ export class Lexer {
     return value;
   }
 
+  private scanExpressionValue(): string {
+    const start = this.position();
+    let value = '';
+    let depth = 0;
+    while (!this.isAtEnd()) {
+      const ch = this.peek();
+      if (ch === '{') {
+        depth++;
+      } else if (ch === '}') {
+        depth--;
+        if (depth === 0) {
+          value += this.advance(); // consume final }
+          return value;
+        }
+      } else if (ch === '"' || ch === "'" || ch === '`') {
+        // Skip string contents to avoid counting braces inside strings
+        value += this.advance(); // opening quote
+        const quote = ch;
+        while (!this.isAtEnd() && this.peek() !== quote) {
+          if (this.peek() === '\\') value += this.advance(); // escape
+          value += this.advance();
+        }
+        if (!this.isAtEnd()) value += this.advance(); // closing quote
+        continue;
+      }
+      value += this.advance();
+    }
+    this.addError(ErrorCode.UnterminatedExpression, 'Unterminated expression', start);
+    return value;
+  }
+
   private skipAttrWhitespace(): void {
     while (!this.isAtEnd() && (this.peek() === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r')) {
       this.advance();
@@ -560,6 +610,18 @@ export class Lexer {
       this.advance();
     }
     this.addError(ErrorCode.UnterminatedBlockComment, 'Unterminated block comment in attributes', start);
+  }
+
+  // ─── Raw HTML Passthrough ─────────────────────────────────
+
+  private scanRawHtmlLine(): void {
+    const start = this.position();
+    let value = '';
+    while (!this.isAtEnd() && this.peek() !== '\n') {
+      value += this.advance();
+    }
+    this.emitTokenSpan(TokenType.Text, start, { value, preserveTrailingWhitespace: false });
+    this.consumeNewline();
   }
 
   // ─── Text Scanning ────────────────────────────────────────
@@ -671,30 +733,38 @@ export class Lexer {
   private collectIndentedCommentLines(parentIndent: number): string {
     let result = '';
     while (!this.isAtEnd()) {
-      // Peek at next line's indentation without consuming
+      // Save position before consuming any blank lines
       const savedOffset = this.offset;
       const savedLine = this.line;
       const savedColumn = this.column;
 
-      // Skip blank lines
-      if (this.peek() === '\n') {
+      // Tentatively consume blank lines
+      let blanks = '';
+      while (!this.isAtEnd() && this.peek() === '\n') {
         this.advance();
-        result += '\n';
-        continue;
+        blanks += '\n';
       }
 
-      const lineIndent = this.measureIndentation();
-
-      if (lineIndent <= parentIndent || this.isAtEnd() || this.peek() === '\n') {
-        // Not a continuation — restore position
+      if (this.isAtEnd()) {
+        // Trailing blank lines — don't include in comment, restore
         this.offset = savedOffset;
         this.line = savedLine;
         this.column = savedColumn;
         break;
       }
 
-      // It's a continuation line — collect it
-      result += '\n';
+      const lineIndent = this.measureIndentation();
+
+      if (lineIndent <= parentIndent || this.isAtEnd() || this.peek() === '\n') {
+        // Not a continuation — restore position to before blank lines
+        this.offset = savedOffset;
+        this.line = savedLine;
+        this.column = savedColumn;
+        break;
+      }
+
+      // It's a continuation line — keep the blank lines and collect it
+      result += blanks + '\n';
       while (!this.isAtEnd() && this.peek() !== '\n') {
         result += this.advance();
       }
@@ -703,6 +773,110 @@ export class Lexer {
       }
     }
     return result;
+  }
+
+  // ─── Control Flow Block Scanning ─────────────────────────
+
+  private scanBlockOpen(): void {
+    const start = this.position();
+    this.advance(); // consume '{'
+    this.advance(); // consume '#'
+
+    // Read block type word
+    let blockType = '';
+    while (!this.isAtEnd() && this.isTagChar(this.peek())) {
+      blockType += this.advance();
+    }
+
+    // Read expression (rest until closing '}')
+    let expression = '';
+    if (this.peek() === ' ') this.advance(); // skip space after block type
+    while (!this.isAtEnd() && this.peek() !== '}') {
+      expression += this.advance();
+    }
+    if (this.peek() === '}') {
+      this.advance(); // consume '}'
+    } else {
+      this.addError(ErrorCode.UnterminatedExpression, 'Unterminated block open', start);
+    }
+
+    this.emitTokenSpan(TokenType.BlockOpen, start, { blockType, expression: expression.trim() });
+    this.consumeNewline();
+  }
+
+  private scanBlockContinuation(): void {
+    const start = this.position();
+    this.advance(); // consume '{'
+    this.advance(); // consume ':'
+
+    // Read clause type word
+    let clauseType = '';
+    while (!this.isAtEnd() && this.isTagChar(this.peek())) {
+      clauseType += this.advance();
+    }
+
+    // Handle {:else if ...} as a special case
+    if (clauseType === 'else' && this.peek() === ' ' && this.peekAt(1) === 'i' && this.peekAt(2) === 'f') {
+      // Check if it's actually "else if"
+      const savedOffset = this.offset;
+      const savedLine = this.line;
+      const savedColumn = this.column;
+      this.advance(); // consume space
+      let nextWord = '';
+      while (!this.isAtEnd() && this.isTagChar(this.peek())) {
+        nextWord += this.advance();
+      }
+      if (nextWord === 'if') {
+        clauseType = 'else if';
+      } else {
+        // Restore — it wasn't "else if"
+        this.offset = savedOffset;
+        this.line = savedLine;
+        this.column = savedColumn;
+      }
+    }
+
+    // Read expression (rest until closing '}')
+    let expression = '';
+    if (this.peek() === ' ') this.advance(); // skip space
+    while (!this.isAtEnd() && this.peek() !== '}') {
+      expression += this.advance();
+    }
+    if (this.peek() === '}') {
+      this.advance(); // consume '}'
+    } else {
+      this.addError(ErrorCode.UnterminatedExpression, 'Unterminated block continuation', start);
+    }
+
+    this.emitTokenSpan(TokenType.BlockContinuation, start, { clauseType, expression: expression.trim() });
+    this.consumeNewline();
+  }
+
+  private scanInlineDirective(): void {
+    const start = this.position();
+    this.advance(); // consume '{'
+    this.advance(); // consume '@'
+
+    // Read directive type word
+    let directiveType = '';
+    while (!this.isAtEnd() && this.isTagChar(this.peek())) {
+      directiveType += this.advance();
+    }
+
+    // Read expression (rest until closing '}')
+    let expression = '';
+    if (this.peek() === ' ') this.advance(); // skip space
+    while (!this.isAtEnd() && this.peek() !== '}') {
+      expression += this.advance();
+    }
+    if (this.peek() === '}') {
+      this.advance(); // consume '}'
+    } else {
+      this.addError(ErrorCode.UnterminatedExpression, 'Unterminated inline directive', start);
+    }
+
+    this.emitTokenSpan(TokenType.InlineDirective, start, { directiveType, expression: expression.trim() });
+    this.consumeNewline();
   }
 
   // ─── Helpers ──────────────────────────────────────────────
@@ -720,8 +894,8 @@ export class Lexer {
   }
 
   private isAttrNameChar(ch: string): boolean {
-    return this.isTagChar(ch) || ch === '@' || ch === 'v' || ch === '.';
-    // Note: v-directive handled by isTagChar, @ for Vue event shorthand
+    return this.isTagChar(ch) || ch === '@' || ch === 'v' || ch === '.' || ch === ':' || ch === '#';
+    // Note: v-directive handled by isTagChar, @ for Vue event shorthand, : for directive attrs like client:load, # for Vue slot shorthand
   }
 
   private skipToEndOfLine(): void {

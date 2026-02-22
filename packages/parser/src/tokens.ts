@@ -32,7 +32,12 @@ export enum TokenType {
   ContentText = 'ContentText',
 
   // Block expansion
-  Colon = 'Colon',
+  ChildExpansion = 'ChildExpansion',
+
+  // Control flow blocks (Svelte-style)
+  BlockOpen = 'BlockOpen',
+  BlockContinuation = 'BlockContinuation',
+  InlineDirective = 'InlineDirective',
 }
 
 interface BaseToken {
@@ -69,6 +74,7 @@ export interface AttributeToken extends BaseToken {
   value: string | null;
   bound: boolean;
   templateLiteral: boolean;
+  expression: boolean;
 }
 
 export interface TextToken extends BaseToken {
@@ -113,7 +119,25 @@ export interface ContentTextToken extends BaseToken {
   value: string;
 }
 
-export interface ColonToken extends BaseToken { type: TokenType.Colon }
+export interface ChildExpansionToken extends BaseToken { type: TokenType.ChildExpansion }
+
+export interface BlockOpenToken extends BaseToken {
+  type: TokenType.BlockOpen;
+  blockType: string;
+  expression: string;
+}
+
+export interface BlockContinuationToken extends BaseToken {
+  type: TokenType.BlockContinuation;
+  clauseType: string;
+  expression: string;
+}
+
+export interface InlineDirectiveToken extends BaseToken {
+  type: TokenType.InlineDirective;
+  directiveType: string;
+  expression: string;
+}
 
 export type Token =
   | IndentToken | OutdentToken | NewlineToken | EOFToken
@@ -122,4 +146,5 @@ export type Token =
   | TextToken | PipeTextToken
   | CommentToken | HtmlCommentToken | BlockCommentToken | BlockHtmlCommentToken
   | ContentModeToken | ContentTextToken
-  | ColonToken;
+  | ChildExpansionToken
+  | BlockOpenToken | BlockContinuationToken | InlineDirectiveToken;

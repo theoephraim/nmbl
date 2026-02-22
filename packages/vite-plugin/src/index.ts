@@ -3,7 +3,8 @@ import type { NmblError } from '@nmbl/parser';
 import type { Plugin } from 'vite';
 
 export interface NmblPluginOptions {
-  // Reserved for future options
+  /** Framework target passed to the NMBL compiler */
+  framework?: 'svelte' | 'astro';
 }
 
 function formatErrors(errors: NmblError[]): string {
@@ -16,7 +17,7 @@ export default function nmblPlugin(_options: NmblPluginOptions = {}): Plugin[] {
 
     transform(code, id) {
       if (id.endsWith('.nmbl')) {
-        const { html, errors } = compile(code);
+        const { html, errors } = compile(code, { framework: _options.framework });
         if (errors.length > 0) {
           this.warn(`NMBL compilation warnings in ${id}:\n${formatErrors(errors)}`);
         }
@@ -43,7 +44,7 @@ export default function nmblPlugin(_options: NmblPluginOptions = {}): Plugin[] {
       if (!match) return;
 
       const nmblSource = match[1];
-      const { html, errors } = compile(nmblSource);
+      const { html, errors } = compile(nmblSource, { framework: _options.framework });
       if (errors.length > 0) {
         this.warn(`NMBL compilation warnings in ${id}:\n${formatErrors(errors)}`);
       }

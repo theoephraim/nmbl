@@ -1,0 +1,38 @@
+{
+  "name": "@nmbl/vue-language-plugin",
+  "version": "0.1.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.cts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.cjs",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "tbuild": "turbo run build",
+    "dev": "tsdown --watch"
+  },
+  "peerDependencies": {
+    "@vue/language-core": "^2.1.0"
+  },
+  "dependencies": {
+    
+    "@volar/source-map": "~2.4.0",
+    "muggle-string": "^0.4.1",
+    "vscode-languageserver-textdocument": "^1.0.11"
+  },
+  "devDependencies": {
+    "@nmbl/parser": "workspace:*",
+    "@vue/compiler-dom": "catalog:",
+    "@vue/language-core": "^2.1.0",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

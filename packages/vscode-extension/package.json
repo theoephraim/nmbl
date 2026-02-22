@@ -3,9 +3,12 @@
   "displayName": "NMBL",
   "version": "0.1.0",
   "private": true,
-  "description": "NMBL language support — syntax highlighting for .nmbl files",
+  "description": "NMBL language support — syntax highlighting for .nmbl, .svelte, and .vue files",
   "publisher": "nmbl",
   "license": "MIT",
+  "scripts": {
+    "install-local": "for dir in ~/.vscode/extensions ~/.cursor/extensions ~/.windsurf/extensions; do [ -d \"$dir\" ] && ln -sfn \"$(pwd)\" \"$dir/nmbl.nmbl-0.1.0\" && echo \"Installed to $dir\"; done"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -31,6 +34,22 @@
           "source.ts": "typescript",
           "source.md": "markdown",
           "source.css": "css"
+        }
+      },
+      {
+        "scopeName": "svelte.nmbl",
+        "path": "./syntaxes/svelte-nmbl.tmLanguage.json",
+        "injectTo": ["source.svelte"],
+        "embeddedLanguages": {
+          "text.nmbl": "nmbl"
+        }
+      },
+      {
+        "scopeName": "vue.nmbl",
+        "path": "./syntaxes/vue-nmbl.tmLanguage.json",
+        "injectTo": ["source.vue", "text.html.vue"],
+        "embeddedLanguages": {
+          "text.nmbl": "nmbl"
         }
       }
     ]

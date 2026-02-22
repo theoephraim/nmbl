@@ -40,8 +40,8 @@ function tokenize(stream: StringStream, state: NmblState): string | null {
       return 'comment';
     }
 
-    // Bound attribute :name or @event
-    if (stream.match(/[:@][a-zA-Z_][a-zA-Z0-9_-]*/)) {
+    // Bound attribute :name or @event (allow : within names for directives like client:load)
+    if (stream.match(/[:@][a-zA-Z_][a-zA-Z0-9_:-]*/)) {
       return 'keyword';
     }
 
@@ -50,8 +50,8 @@ function tokenize(stream: StringStream, state: NmblState): string | null {
       return 'keyword';
     }
 
-    // Attribute name
-    if (stream.match(/[a-zA-Z_][a-zA-Z0-9_-]*/)) {
+    // Attribute name (allow : within names for directives like client:load)
+    if (stream.match(/[a-zA-Z_][a-zA-Z0-9_:-]*/)) {
       return 'attributeName';
     }
 
@@ -82,6 +82,16 @@ function tokenize(stream: StringStream, state: NmblState): string | null {
         } else {
           stream.next();
         }
+      }
+      return 'string';
+    }
+    // Expression value {expr}
+    if (stream.eat('{')) {
+      let depth = 1;
+      while (!stream.eol() && depth > 0) {
+        if (stream.eat('{')) depth++;
+        else if (stream.eat('}')) depth--;
+        else stream.next();
       }
       return 'string';
     }
@@ -159,11 +169,12 @@ function tokenize(stream: StringStream, state: NmblState): string | null {
     if (stream.match(/[a-zA-Z][a-zA-Z0-9]*/)) {
       return 'keyword';
     }
-    // Block expansion `: ` (colon followed by space)
-    if (stream.peek() === ' ') {
-      return 'keyword';
-    }
     return 'punctuation';
+  }
+
+  // Block expansion ` > ` (space + > + space)
+  if (stream.peek() === ' ' && stream.match(/ > (?=[a-zA-Z#.])/)) {
+    return 'keyword';
   }
 
   // Opening paren starts attributes

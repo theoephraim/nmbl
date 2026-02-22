@@ -6,22 +6,28 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy": "bun run build && varlock run -- wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/vue": "^5.0.0",
     "@nmbl/astro": "workspace:*",
     "@nmbl/parser": "workspace:*",
     "@nmbl/vscode-extension": "workspace:*",
     "astro": "catalog:",
+    "astro-expressive-code": "^0.41.6",
+    "varlock": "^0.2.2",
     "vue": "^3.5.0"
   },
   "devDependencies": {
+    "@cloudflare/kv-asset-handler": "^0.4.2",
     "@codemirror/lang-html": "^6.4.0",
     "@codemirror/language": "^6.10.0",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.36.0",
     "codemirror": "^6.0.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "^4.67.0"
   }
 }

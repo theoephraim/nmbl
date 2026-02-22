@@ -8,6 +8,7 @@ export enum ErrorCode {
   UnterminatedTemplateLiteral = 'UNTERMINATED_TEMPLATE_LITERAL',
   UnterminatedAttributes = 'UNTERMINATED_ATTRIBUTES',
   UnterminatedBlockComment = 'UNTERMINATED_BLOCK_COMMENT',
+  UnterminatedExpression = 'UNTERMINATED_EXPRESSION',
   UnexpectedCharacter = 'UNEXPECTED_CHARACTER',
 
   // Parser errors

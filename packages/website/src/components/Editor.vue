@@ -35,6 +35,7 @@ const theme = EditorView.theme({
   },
   '.cm-content': {
     fontFamily: 'var(--font-mono)',
+    fontVariantLigatures: 'none',
     caretColor: 'var(--color-accent)',
     padding: '1rem',
   },

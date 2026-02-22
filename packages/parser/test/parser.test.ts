@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { Lexer } from '../src/lexer.js';
 import { Parser } from '../src/parser.js';
-import type { ElementNode, TextNode, CommentNode, HtmlCommentNode, ContentBlockNode } from '../src/ast.js';
+import type { ElementNode, TextNode, CommentNode, HtmlCommentNode, ContentBlockNode, BlockNode, InlineDirectiveNode } from '../src/ast.js';
 
 function parseSource(input: string) {
   const lexer = new Lexer(input);
@@ -179,8 +179,8 @@ describe('Parser', () => {
   });
 
   describe('block expansion', () => {
-    test('colon child', () => {
-      const { ast, errors } = parseSource('li: a Home');
+    test('child expansion', () => {
+      const { ast, errors } = parseSource('li > a Home');
       expect(errors).toHaveLength(0);
       const li = ast.children[0] as ElementNode;
       expect(li.tagName).toBe('li');
@@ -208,6 +208,94 @@ describe('Parser', () => {
       expect(block.type).toBe('ContentBlock');
       expect(block.mode).toBe('md');
       expect(block.body).toBe('# Title');
+    });
+  });
+
+  describe('control flow blocks', () => {
+    test('simple if block', () => {
+      const { ast, errors } = parseSource('{#if cond}\n  p Hello');
+      expect(errors).toHaveLength(0);
+      expect(ast.children).toHaveLength(1);
+      const block = ast.children[0] as BlockNode;
+      expect(block.type).toBe('Block');
+      expect(block.blockType).toBe('if');
+      expect(block.expression).toBe('cond');
+      expect(block.clauses).toHaveLength(1);
+      expect(block.clauses[0].children).toHaveLength(1);
+      expect((block.clauses[0].children[0] as ElementNode).tagName).toBe('p');
+    });
+
+    test('if/else block', () => {
+      const { ast, errors } = parseSource('{#if cond}\n  p Hello\n{:else}\n  p Bye');
+      expect(errors).toHaveLength(0);
+      const block = ast.children[0] as BlockNode;
+      expect(block.clauses).toHaveLength(2);
+      expect(block.clauses[0].clauseType).toBe(null);
+      expect(block.clauses[1].clauseType).toBe('else');
+      expect(block.clauses[1].children).toHaveLength(1);
+    });
+
+    test('if/else-if/else block', () => {
+      const { ast, errors } = parseSource('{#if a}\n  p A\n{:else if b}\n  p B\n{:else}\n  p C');
+      expect(errors).toHaveLength(0);
+      const block = ast.children[0] as BlockNode;
+      expect(block.clauses).toHaveLength(3);
+      expect(block.clauses[1].clauseType).toBe('else if');
+      expect(block.clauses[1].expression).toBe('b');
+      expect(block.clauses[2].clauseType).toBe('else');
+    });
+
+    test('each block', () => {
+      const { ast, errors } = parseSource('{#each items as item}\n  li {item.name}');
+      expect(errors).toHaveLength(0);
+      const block = ast.children[0] as BlockNode;
+      expect(block.blockType).toBe('each');
+      expect(block.expression).toBe('items as item');
+    });
+
+    test('inline directive', () => {
+      const { ast, errors } = parseSource('{@render header()}');
+      expect(errors).toHaveLength(0);
+      expect(ast.children).toHaveLength(1);
+      const dir = ast.children[0] as InlineDirectiveNode;
+      expect(dir.type).toBe('InlineDirective');
+      expect(dir.directiveType).toBe('render');
+      expect(dir.expression).toBe('header()');
+    });
+
+    test('block inside element', () => {
+      const { ast, errors } = parseSource('div\n  {#if cond}\n    p Hello');
+      expect(errors).toHaveLength(0);
+      const div = ast.children[0] as ElementNode;
+      expect(div.children).toHaveLength(1);
+      const block = div.children[0] as BlockNode;
+      expect(block.type).toBe('Block');
+      expect(block.blockType).toBe('if');
+    });
+
+    test('element inside block', () => {
+      const { ast, errors } = parseSource('{#if cond}\n  div\n    p Hello');
+      expect(errors).toHaveLength(0);
+      const block = ast.children[0] as BlockNode;
+      const div = block.clauses[0].children[0] as ElementNode;
+      expect(div.tagName).toBe('div');
+      expect((div.children[0] as ElementNode).tagName).toBe('p');
+    });
+
+    test('nested blocks', () => {
+      const { ast, errors } = parseSource('{#if a}\n  {#each items as item}\n    li {item}');
+      expect(errors).toHaveLength(0);
+      const outer = ast.children[0] as BlockNode;
+      expect(outer.blockType).toBe('if');
+      const inner = outer.clauses[0].children[0] as BlockNode;
+      expect(inner.blockType).toBe('each');
+    });
+
+    test('empty block', () => {
+      const { ast, errors } = parseSource('{#if cond}');
+      expect(errors).toHaveLength(0);
+      const block = ast.children[0] as BlockNode;
+      expect(block.clauses[0].children).toHaveLength(0);
     });
   });
 

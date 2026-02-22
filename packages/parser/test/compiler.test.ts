@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { compile, compileAst, parse } from '../src/index.js';
+import { compile, compileAst, parse, compileToHtml } from '../src/index.js';
+import type { SourceMapping } from '../src/index.js';
 
 function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
   let result = String.raw(strings, ...values);
@@ -119,6 +120,31 @@ describe('Compiler', () => {
       const { html } = compile('a(href="/" target="_blank")');
       expect(html.trim()).toBe('<a href="/" target="_blank"></a>');
     });
+
+    test('directive attribute without value', () => {
+      const { html } = compile('Comp(client:load)');
+      expect(html.trim()).toBe('<Comp client:load></Comp>');
+    });
+
+    test('directive attribute with value', () => {
+      const { html } = compile('Comp(client:only="vue")');
+      expect(html.trim()).toBe('<Comp client:only="vue"></Comp>');
+    });
+
+    test('expression attribute value', () => {
+      const { html } = compile('Code(code={EXAMPLE})');
+      expect(html.trim()).toBe('<Code code={EXAMPLE}></Code>');
+    });
+
+    test('bound attribute with expression value', () => {
+      const { html } = compile('div(:class={a + b})');
+      expect(html.trim()).toBe('<div :class={a + b}></div>');
+    });
+
+    test('expression with nested braces', () => {
+      const { html } = compile('Code(code={items.map(i => fn(i))})');
+      expect(html.trim()).toBe('<Code code={items.map(i => fn(i))}></Code>');
+    });
   });
 
   describe('class merging', () => {
@@ -168,6 +194,29 @@ describe('Compiler', () => {
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe('<!-- visible comment -->');
     });
+
+    test('blank line after comment is not absorbed', () => {
+      const input = dedent`
+        // comment
+
+        p Hello
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe('<p>Hello</p>');
+    });
+
+    test('blank line after comment with siblings', () => {
+      const input = dedent`
+        div
+          // comment
+
+          p Hello
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<p>Hello</p>');
+    });
   });
 
   describe('text', () => {
@@ -195,8 +244,8 @@ describe('Compiler', () => {
   });
 
   describe('block expansion', () => {
-    test('colon child', () => {
-      const { html, errors } = compile('li: a(href="/") Home');
+    test('child expansion', () => {
+      const { html, errors } = compile('li > a(href="/") Home');
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe('<li><a href="/">Home</a></li>');
     });
@@ -228,6 +277,227 @@ describe('Compiler', () => {
     });
   });
 
+  describe('control flow - svelte', () => {
+    test('simple if block', () => {
+      const input = dedent`
+        {#if loggedIn}
+          p Welcome
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {#if loggedIn}
+          <p>Welcome</p>
+        {/if}
+      `.trim());
+    });
+
+    test('if/else block', () => {
+      const input = dedent`
+        {#if loggedIn}
+          p Welcome
+        {:else}
+          p Please log in
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {#if loggedIn}
+          <p>Welcome</p>
+        {:else}
+          <p>Please log in</p>
+        {/if}
+      `.trim());
+    });
+
+    test('if/else-if/else block', () => {
+      const input = dedent`
+        {#if a}
+          p A
+        {:else if b}
+          p B
+        {:else}
+          p C
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {#if a}
+          <p>A</p>
+        {:else if b}
+          <p>B</p>
+        {:else}
+          <p>C</p>
+        {/if}
+      `.trim());
+    });
+
+    test('each block', () => {
+      const input = dedent`
+        {#each items as item, i}
+          li {item.name}
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {#each items as item, i}
+          <li>{item.name}</li>
+        {/each}
+      `.trim());
+    });
+
+    test('nested blocks', () => {
+      const input = dedent`
+        {#if items.length}
+          {#each items as item}
+            li {item}
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {#if items.length}
+          {#each items as item}
+            <li>{item}</li>
+          {/each}
+        {/if}
+      `.trim());
+    });
+
+    test('inline directive @render', () => {
+      const { html, errors } = compile('{@render header()}');
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe('{@render header()}');
+    });
+
+    test('inline directive @html', () => {
+      const { html, errors } = compile('{@html rawContent}');
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe('{@html rawContent}');
+    });
+
+    test('block inside element', () => {
+      const input = dedent`
+        div
+          {#if cond}
+            p Hello
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        <div>
+          {#if cond}
+            <p>Hello</p>
+          {/if}
+        </div>
+      `.trim());
+    });
+  });
+
+  describe('control flow - astro', () => {
+    test('if without else uses &&', () => {
+      const input = dedent`
+        {#if loggedIn}
+          p Welcome
+      `;
+      const { html, errors } = compile(input, { framework: 'astro' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {loggedIn && (
+          <p>Welcome</p>
+        )}
+      `.trim());
+    });
+
+    test('if/else uses ternary', () => {
+      const input = dedent`
+        {#if loggedIn}
+          p Welcome
+        {:else}
+          p Please log in
+      `;
+      const { html, errors } = compile(input, { framework: 'astro' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {loggedIn ? (
+          <p>Welcome</p>
+        ) : (
+          <p>Please log in</p>
+        )}
+      `.trim());
+    });
+
+    test('if/else-if/else uses nested ternary', () => {
+      const input = dedent`
+        {#if a}
+          p A
+        {:else if b}
+          p B
+        {:else}
+          p C
+      `;
+      const { html, errors } = compile(input, { framework: 'astro' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {a ? (
+          <p>A</p>
+        ) : b ? (
+          <p>B</p>
+        ) : (
+          <p>C</p>
+        )}
+      `.trim());
+    });
+
+    test('each uses .map()', () => {
+      const input = dedent`
+        {#each items as item}
+          li {item.name}
+      `;
+      const { html, errors } = compile(input, { framework: 'astro' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {items.map((item) => (
+          <li>{item.name}</li>
+        ))}
+      `.trim());
+    });
+
+    test('each with index uses .map()', () => {
+      const input = dedent`
+        {#each items as item, i}
+          li {item.name}
+      `;
+      const { html, errors } = compile(input, { framework: 'astro' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe(dedent`
+        {items.map((item, i) => (
+          <li>{item.name}</li>
+        ))}
+      `.trim());
+    });
+
+    test('@html uses Fragment set:html', () => {
+      const { html, errors } = compile('{@html rawContent}', { framework: 'astro' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe('<Fragment set:html={rawContent} />');
+    });
+  });
+
+  describe('raw HTML passthrough', () => {
+    test('doctype passes through', () => {
+      const input = dedent`
+        <!DOCTYPE html>
+        html
+          head
+            title Hello
+      `;
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<!DOCTYPE html>');
+      expect(html).toContain('<html>');
+    });
+  });
+
   describe('compiler options', () => {
     test('minified output (indent=0)', () => {
       const input = dedent`
@@ -236,6 +506,146 @@ describe('Compiler', () => {
       `;
       const { html } = compile(input, { indent: 0 });
       expect(html).not.toContain('  ');
+    });
+  });
+
+  describe('position tracking', () => {
+    test('tracks element positions', () => {
+      const input = 'div';
+      const result = compile(input);
+      expect(result.mappings).toBeDefined();
+      expect(result.mappings.length).toBeGreaterThan(0);
+
+      // Find mapping for the div element
+      const divMapping = result.mappings.find(m =>
+        m.metadata?.nodeType === 'Element' &&
+        result.html.substring(m.generatedSpan.start.offset, m.generatedSpan.end.offset).includes('div')
+      );
+      expect(divMapping).toBeDefined();
+    });
+
+    test('tracks attribute positions', () => {
+      const input = 'div(id="test" class="foo")';
+      const result = compile(input);
+
+      // Find mapping for id attribute
+      const idMapping = result.mappings.find(m =>
+        m.metadata?.nodeType === 'Attribute' &&
+        m.metadata?.attributeName === 'id'
+      );
+      expect(idMapping).toBeDefined();
+
+      // Find mapping for class attribute
+      const classMapping = result.mappings.find(m =>
+        m.metadata?.nodeType === 'Attribute' &&
+        m.metadata?.attributeName === 'class'
+      );
+      expect(classMapping).toBeDefined();
+    });
+
+    test('tracks text node positions', () => {
+      const input = 'p Hello world';
+      const result = compile(input);
+
+      // Find mapping for text node
+      const textMapping = result.mappings.find(m =>
+        m.metadata?.nodeType === 'Text'
+      );
+      expect(textMapping).toBeDefined();
+
+      const mappedText = result.html.substring(
+        textMapping!.generatedSpan.start.offset,
+        textMapping!.generatedSpan.end.offset
+      );
+      expect(mappedText).toBe('Hello world');
+    });
+
+    test('tracks nested element positions', () => {
+      const input = dedent`
+        div
+          p Hello
+          span World
+      `;
+      const result = compile(input);
+
+      // Should have mappings for all elements
+      const elementMappings = result.mappings.filter(m =>
+        m.metadata?.nodeType === 'Element'
+      );
+
+      // Each element has tag name mappings (open + close = 2 per element, 3 elements = 6)
+      expect(elementMappings.length).toBeGreaterThanOrEqual(6);
+    });
+
+    test('omits mappings for silent comments', () => {
+      const input = dedent`
+        // This is a silent comment
+        div
+      `;
+      const result = compile(input);
+
+      // Should not have any Comment node mappings (only HtmlComment)
+      const commentMappings = result.mappings.filter(m =>
+        m.metadata?.nodeType === 'Comment'
+      );
+      expect(commentMappings).toHaveLength(0);
+    });
+
+    test('tracks HTML comment positions', () => {
+      const input = '//! This is an HTML comment';
+      const result = compile(input);
+
+      const htmlCommentMappings = result.mappings.filter(m =>
+        m.metadata?.nodeType === 'HtmlComment'
+      );
+      expect(htmlCommentMappings.length).toBeGreaterThan(0);
+    });
+
+    test('tracks control flow block positions', () => {
+      const input = dedent`
+        {#if condition}
+          p True
+        {/if}
+      `;
+      const result = compile(input);
+
+      const blockMappings = result.mappings.filter(m =>
+        m.metadata?.nodeType === 'Block'
+      );
+      expect(blockMappings.length).toBeGreaterThan(0);
+    });
+
+    test('backward compatibility with compileToHtml', () => {
+      const input = 'div Hello';
+      const oldResult = compileToHtml(input);
+      const newResult = compile(input);
+
+      // compileToHtml should return same html and errors
+      expect(oldResult.html).toBe(newResult.html);
+      expect(oldResult.errors).toEqual(newResult.errors);
+    });
+
+    test('mappings are sorted and non-overlapping', () => {
+      const input = dedent`
+        div#main.container
+          p Hello
+          span World
+      `;
+      const result = compile(input);
+
+      // Sort mappings by generated position
+      const sortedMappings = [...result.mappings].sort((a, b) =>
+        a.generatedSpan.start.offset - b.generatedSpan.start.offset
+      );
+
+      // Check that mappings don't overlap
+      for (let i = 0; i < sortedMappings.length - 1; i++) {
+        const current = sortedMappings[i];
+        const next = sortedMappings[i + 1];
+        expect(current.generatedSpan.end.offset).toBeLessThanOrEqual(
+          next.generatedSpan.start.offset
+        );
+      }
     });
   });
 });

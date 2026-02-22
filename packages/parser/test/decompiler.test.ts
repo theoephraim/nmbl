@@ -88,7 +88,7 @@ describe('Decompiler', () => {
     test('deeply nested (inline HTML)', () => {
       const html = '<div><p><span>Hello</span></p></div>';
       // Inline HTML → chained block expansion
-      expect(decompile(html).trim()).toBe('div: p: span Hello');
+      expect(decompile(html).trim()).toBe('div > p > span Hello');
     });
 
     test('deeply nested (formatted HTML)', () => {
@@ -105,7 +105,7 @@ describe('Decompiler', () => {
   describe('block expansion', () => {
     test('single element child inlined', () => {
       const html = '<li><a href="/">Home</a></li>';
-      expect(decompile(html).trim()).toBe('li: a(href="/") Home');
+      expect(decompile(html).trim()).toBe('li > a(href="/") Home');
     });
 
     test('navigation structure', () => {
@@ -120,8 +120,8 @@ describe('Decompiler', () => {
       const expected = dedent`
         nav
           ul
-            li: a(href="/") Home
-            li: a(href="/about") About
+            li > a(href="/") Home
+            li > a(href="/about") About
       `;
       expect(decompile(html).trim()).toBe(expected.trim());
     });
@@ -185,9 +185,9 @@ describe('Decompiler', () => {
       roundTrip(dedent`
         nav
           ul
-            li: a(href="/") Home
-            li: a(href="/about") About
-            li: a(href="/contact") Contact
+            li > a(href="/") Home
+            li > a(href="/about") About
+            li > a(href="/contact") Contact
       `);
     });
 

@@ -12,17 +12,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   <section class="backstory">
     <div class="container">
-      <h2>Backstory</h2>
+      <h2>Why NMBL?</h2>
       <div class="prose">
-        <h3>Pug had an idea</h3>
+        <h3>Jade/Pug had an idea</h3>
         <p>
-          HTML is full of a lot of unnecessary noise, and keeping things cleanly indented is always a chore. <a href="https://pugjs.org/" target="_blank">Pug</a> (originally known as Jade) explored the notion that indentation-based HTML templates could be easier to read and write, and we can introduce extra shorthands to keep things even cleaner.
+          <a href="https://pugjs.org/" target="_blank">Pug</a> (originally known as Jade) explored the idea that indentation-based HTML templates could be easier to read and write. By using indentation to indicate nesting, and a few shorthands for the most common attributes (class/id), we can remove a ton of unnecessary noise, and along with it mental load.
         </p>
-        <p>But Pug was built as a <em>complete template engine</em> in an era before modern frameworks and web components. It handled everything itself &mdash; mixins, extends, includes, interpolation, conditionals, iteration, filters. That made sense in 2010 when you were rendering HTML on the server with Express. It doesn't make sense now.</p>
-        <p>Yet some continued to use pug with frameworks like Vue, ignoring most of its templating features. But it never gained wide adoption, and the project stopped evolving. It's effectively unmaintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.</p>
+        <p>
+          But Pug was built as a <em>complete templating engine</em> in an era before modern frameworks and web components. It handled everything itself &mdash; mixins, extends, includes, interpolation, conditionals, iteration, filters. That made sense in 2010 when you were rendering static HTML on the server with Express. It doesn't make sense now that we have powerful frameworks like Vue and Svelte, and the idea of components is well established.
+        </p>
+        <p>
+          Yet some continued to use Pug, ignoring half of its features. But it never gained wide adoption, and the project stopped evolving. It's effectively unmaintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.
+        </p>
 
-        <h3>Keep the good parts, drop the rest</h3>
-        <p>NMBL takes the ideas that work &mdash; indentation for nesting, shorthands for id and class &mdash; and strips away everything that modern frameworks already handle better.</p>
+        <h3>Keep the good parts, fix the rough edges, drop the rest</h3>
+        <p>NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.</p>
         <p>Vue has <code>v-for</code> and <code>v-if</code>. Svelte has <code>{'{'}#each}</code> and <code>{'{'}#if}</code>. Astro has component composition. You don't need another template engine reinventing control flow. You need a cleaner way to write the markup that sits <em>between</em> the framework directives.</p>
         <p>That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.</p>
       </div>
@@ -34,8 +38,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h2>Design principles</h2>
       <div class="principles-grid">
         <div class="principle">
-          <h3>Notation, not a language</h3>
-          <p>No mixins, no extends, no built-in loops or conditionals. NMBL is a <em>notation</em> for HTML structure &mdash; it compiles to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.</p>
+          <h3>Shorthand notation -- not a language</h3>
+          <p>No mixins, no extends, no built-in loops or conditionals. NMBL is simply a <em>shorthand notation</em> for HTML &mdash; it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.</p>
         </div>
         <div class="principle">
           <h3>Nothing to learn</h3>

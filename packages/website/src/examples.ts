@@ -1,4 +1,9 @@
-import { decompile } from "@nmbl/parser";
+import { compile, decompile } from "@nmbl/parser";
+
+function nmblToHtml(nmbl: string): string {
+  const { html } = compile(nmbl);
+  return html.trimEnd();
+}
 
 export const HOMEPAGE_EXAMPLE_HTML = `
 <div id="app">
@@ -45,3 +50,61 @@ export const HOMEPAGE_EXAMPLE_HTML = `
   </main>
 </div>`;
 export const HOMEPAGE_EXAMPLE_NMBL = decompile(HOMEPAGE_EXAMPLE_HTML);
+
+export const FEATURE_EMBEDDED_MD = `article:md
+  ## My Post
+  This is *markdown* that gets
+  compiled to HTML at build time.`;
+
+export const COMMENT_VISIBILITY = `nav
+  // TODO: add auth links
+  //! Navigation links
+  ul
+    li > a(href="/") Home
+    li > a(href="/about") About`;
+export const COMMENT_VISIBILITY_HTML = nmblToHtml(COMMENT_VISIBILITY);
+
+export const COMMENT_ATTR = `button(
+  type="submit"
+  // disabled
+  class="btn"
+  /* aria-label="Save" */
+) Save`;
+export const COMMENT_ATTR_HTML = nmblToHtml(COMMENT_ATTR);
+
+export const SVELTE_CONTROL_FLOW = `{#if loggedIn}
+  p Welcome back, {user.name}!
+  a(href="/dashboard") Dashboard
+{:else}
+  p Please log in
+
+{#each items as item, i}
+  li
+    span.name {item.name}
+    span.price {item.price}`;
+export const SVELTE_CONTROL_FLOW_HTML = nmblToHtml(SVELTE_CONTROL_FLOW);
+
+export const PLAYGROUND_EXAMPLE_NMBL = `
+//! This comment is preserved in HTML output
+// this comment is not :)
+
+nav.main-nav
+  ul
+    li > a(href="/") Home
+    li > a(href="/about") About
+    li > a(href="/contact") Contact
+
+section#hero.dark
+  h1 Welcome to NMBL
+  p A concise template language for HTML
+
+form(action="/subscribe" method="post")
+  input(type="email" name="email" required)
+  button(type="submit") Subscribe
+
+SomeComponent(
+  :prop // note about this prop
+  // anotherProp="temporarily disabled via commenting!"
+  another="foo"
+)
+`;

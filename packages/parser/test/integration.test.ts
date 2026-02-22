@@ -59,9 +59,9 @@ describe('Integration', () => {
       const input = dedent`
         nav
           ul
-            li: a(href="/") Home
-            li: a(href="/about") About
-            li: a(href="/contact") Contact
+            li > a(href="/") Home
+            li > a(href="/about") About
+            li > a(href="/contact") Contact
       `;
       const expected = dedent`
         <nav>

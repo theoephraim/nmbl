@@ -1,0 +1,28 @@
+{
+  "name": "@nmbl/svelte",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "bun run build --watch"
+  },
+  "dependencies": {
+    "@nmbl/parser": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": ">=5.0.0"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "svelte": "catalog:"
+  }
+}

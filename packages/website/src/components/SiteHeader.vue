@@ -5,9 +5,9 @@ header.site-header
       span.logo-mark &gt;&lt;
       |  NMBL
     ul.nav-links
-      li: a(href="/") Home
-      li: a(href="/about") About
-      li: a(href="/playground") Playground
+      li > a(href="/") Home
+      li > a(href="/about") About
+      li > a(href="/playground") Playground
 </template>
 
 <script setup lang="ts">

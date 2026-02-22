@@ -121,7 +121,7 @@ function decompileElement(el: HElement, depth: number, indentSize: number): stri
     const childEl = significant[0] as HElement;
     const childLines = decompileElement(childEl, 0, indentSize);
     if (childLines.length === 1) {
-      return [`${indent}${selector}${attrStr}: ${childLines[0].trim()}`];
+      return [`${indent}${selector}${attrStr} > ${childLines[0].trim()}`];
     }
   }
 

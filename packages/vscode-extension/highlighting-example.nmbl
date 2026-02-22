@@ -8,6 +8,11 @@ CustomComponent
   | using the bar to extend
   | more here
 
+ul
+  li > a(href="/") Home
+  li > a(href="/about") About
+  li > a(href="/contact") Contact
+
 div:
   indented text
   goes here

@@ -4,6 +4,7 @@ import { TokenType, type Token } from './tokens.js';
 import type {
   DocumentNode, ElementNode, AttributeNode, TextNode,
   CommentNode, HtmlCommentNode, ContentBlockNode, AstNode,
+  BlockNode, BlockClauseNode, InlineDirectiveNode,
 } from './ast.js';
 import { ErrorCode, type NmblError, createError } from './errors.js';
 import { VOID_ELEMENTS } from './constants.js';
@@ -100,6 +101,15 @@ export class Parser {
         return this.parseBlockComment(true);
       case TokenType.ContentMode:
         return this.parseStandaloneContentBlock();
+      case TokenType.BlockOpen:
+        return this.parseBlock_();
+      case TokenType.InlineDirective:
+        return this.parseInlineDirective();
+      case TokenType.BlockContinuation:
+        // Continuation without a matching block open — error recovery
+        this.addError(ErrorCode.UnexpectedToken, 'Unexpected block continuation without matching block open', this.current().span);
+        this.advance();
+        return null;
       case TokenType.Newline:
         this.advance();
         return null;
@@ -135,15 +145,19 @@ export class Parser {
     const isVoid = VOID_ELEMENTS.has(tagName.toLowerCase());
 
     let id: string | null = null;
+    let idSpan: SourceSpan | undefined;
     const classes: string[] = [];
+    const classSpans: SourceSpan[] = [];
 
     // Consume CSS shorthand (#id, .class)
     while (this.peek() === TokenType.Id || this.peek() === TokenType.Class) {
-      const tok = this.advance() as Token & { name: string };
+      const tok = this.advance() as Token & { name: string; span: SourceSpan };
       if (tok.type === TokenType.Id) {
         id = tok.name;
+        idSpan = tok.span;
       } else {
         classes.push(tok.name);
+        classSpans.push(tok.span);
       }
     }
 
@@ -153,7 +167,7 @@ export class Parser {
       this.advance(); // consume AttrStart
       while (this.peek() === TokenType.Attribute) {
         const attr = this.advance() as Token & {
-          name: string; value: string | null; bound: boolean; templateLiteral: boolean;
+          name: string; value: string | null; bound: boolean; templateLiteral: boolean; expression: boolean;
         };
         attributes.push({
           type: 'Attribute',
@@ -161,6 +175,7 @@ export class Parser {
           value: attr.value,
           bound: attr.bound,
           templateLiteral: attr.templateLiteral,
+          expression: attr.expression,
           span: attr.span,
         });
       }
@@ -179,8 +194,8 @@ export class Parser {
       contentMode = modeTok.name;
       children = this.parseContentChildren();
     }
-    // Block expansion (colon)
-    else if (this.peek() === TokenType.Colon) {
+    // Block expansion (child expansion >)
+    else if (this.peek() === TokenType.ChildExpansion) {
       this.advance();
       isBlockExpansion = true;
       const child = this.parseExpr();
@@ -219,7 +234,7 @@ export class Parser {
     }
 
     const end = this.current().span.start;
-    return {
+    const element: ElementNode = {
       type: 'Element',
       tagName,
       isComponent,
@@ -233,6 +248,12 @@ export class Parser {
       contentMode,
       span: span(start, end),
     };
+
+    // Add optional spans if CSS shorthand was used
+    if (idSpan) element.idSpan = idSpan;
+    if (classSpans.length > 0) element.classSpans = classSpans;
+
+    return element;
   }
 
   private parseContentChildren(): AstNode[] {
@@ -360,6 +381,80 @@ export class Parser {
       mode: modeTok.name,
       body: lines.join('\n'),
       span: modeTok.span,
+    };
+  }
+
+  // ─── Control Flow Blocks ──────────────────────────────────
+
+  private parseBlock_(): BlockNode {
+    const openTok = this.advance() as Token & { blockType: string; expression: string };
+    const start = openTok.span.start;
+
+    const clauses: BlockClauseNode[] = [];
+
+    // First clause (from the opening block)
+    const firstClauseChildren = this.parseBlockChildren();
+    clauses.push({
+      type: 'BlockClause',
+      clauseType: null,
+      expression: openTok.expression,
+      children: firstClauseChildren,
+      span: openTok.span,
+    });
+
+    // Continuation clauses ({:else}, {:then}, {:catch}, {:else if})
+    while (this.peek() === TokenType.BlockContinuation) {
+      const contTok = this.advance() as Token & { clauseType: string; expression: string };
+      const contChildren = this.parseBlockChildren();
+      clauses.push({
+        type: 'BlockClause',
+        clauseType: contTok.clauseType,
+        expression: contTok.expression,
+        children: contChildren,
+        span: contTok.span,
+      });
+    }
+
+    const end = this.current().span.start;
+    return {
+      type: 'Block',
+      blockType: openTok.blockType,
+      expression: openTok.expression,
+      clauses,
+      span: span(start, end),
+    };
+  }
+
+  private parseBlockChildren(): AstNode[] {
+    if (this.peek() !== TokenType.Indent) {
+      return [];
+    }
+    this.advance(); // consume Indent
+    const children = this.parseBlockContent();
+    if (this.peek() === TokenType.Outdent) this.advance();
+    return children;
+  }
+
+  private parseBlockContent(): AstNode[] {
+    const nodes: AstNode[] = [];
+    while (
+      this.peek() !== TokenType.Outdent
+      && this.peek() !== TokenType.EOF
+      && this.peek() !== TokenType.BlockContinuation
+    ) {
+      const node = this.parseExpr();
+      if (node) nodes.push(node);
+    }
+    return nodes;
+  }
+
+  private parseInlineDirective(): InlineDirectiveNode {
+    const tok = this.advance() as Token & { directiveType: string; expression: string };
+    return {
+      type: 'InlineDirective',
+      directiveType: tok.directiveType,
+      expression: tok.expression,
+      span: tok.span,
     };
   }
 }

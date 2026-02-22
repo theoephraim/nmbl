@@ -14,7 +14,9 @@ export interface ElementNode {
   isImplicitDiv: boolean;
   isBlockExpansion: boolean;
   id: string | null;
+  idSpan?: SourceSpan;  // Source span for CSS shorthand ID
   classes: string[];
+  classSpans?: SourceSpan[];  // Source spans for CSS shorthand classes
   attributes: AttributeNode[];
   children: AstNode[];
   contentMode: string | null;
@@ -27,6 +29,7 @@ export interface AttributeNode {
   value: string | null;
   bound: boolean;
   templateLiteral: boolean;
+  expression: boolean;
   span: SourceSpan;
 }
 
@@ -58,9 +61,34 @@ export interface ContentBlockNode {
   span: SourceSpan;
 }
 
+export interface BlockNode {
+  type: 'Block';
+  blockType: string;
+  expression: string;
+  clauses: BlockClauseNode[];
+  span: SourceSpan;
+}
+
+export interface BlockClauseNode {
+  type: 'BlockClause';
+  clauseType: string | null;
+  expression: string;
+  children: AstNode[];
+  span: SourceSpan;
+}
+
+export interface InlineDirectiveNode {
+  type: 'InlineDirective';
+  directiveType: string;
+  expression: string;
+  span: SourceSpan;
+}
+
 export type AstNode =
   | ElementNode
   | TextNode
   | CommentNode
   | HtmlCommentNode
-  | ContentBlockNode;
+  | ContentBlockNode
+  | BlockNode
+  | InlineDirectiveNode;
