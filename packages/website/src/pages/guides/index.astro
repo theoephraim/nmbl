@@ -1,0 +1,230 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Integration Guides">
+  <section class="guides-hero">
+    <div class="container">
+      <h1>Integration Guides</h1>
+      <p class="lead">Learn how to use NMBL with your favorite framework</p>
+    </div>
+  </section>
+
+  <section class="guides-list">
+    <div class="container">
+      <div class="guides-grid">
+        <a href="/guides/vue" class="guide-card">
+          <div class="guide-icon">
+            <svg viewBox="0 0 128 128" width="48" height="48">
+              <path fill="#4FC08D" d="M78.8 10L64 35.4 49.2 10H0l64 110L128 10z"/>
+              <path fill="#35495E" d="M78.8 10L64 35.4 49.2 10H25.6L64 76 102.4 10z"/>
+            </svg>
+          </div>
+          <h3>Vue</h3>
+          <p>Full intellisense support for NMBL templates in Vue Single File Components with Volar integration.</p>
+          <span class="guide-status stable">Stable</span>
+        </a>
+
+        <a href="/guides/svelte" class="guide-card coming-soon">
+          <div class="guide-icon">
+            <svg viewBox="0 0 128 128" width="48" height="48">
+              <path fill="#FF3E00" d="M107.3 13.4c-12.1-17.9-36.5-17.9-48.6 0L20.7 65c-6 8.9-6 20.7 0 29.6l38 51.6c12.1 17.9 36.5 17.9 48.6 0l38-51.6c6-8.9 6-20.7 0-29.6l-38-51.6z"/>
+            </svg>
+          </div>
+          <h3>Svelte</h3>
+          <p>Use NMBL's clean syntax in Svelte components. Preprocessor support for seamless integration.</p>
+          <span class="guide-status">Coming Soon</span>
+        </a>
+
+        <a href="/guides/astro" class="guide-card coming-soon">
+          <div class="guide-icon">
+            <svg viewBox="0 0 128 128" width="48" height="48">
+              <path fill="url(#astro-gradient)" d="M50.4 78.5a12.5 12.5 0 0 0 6.3 3.7c8.5 2.1 16.4-3.1 17.7-11.6l6.2-38.7h12.2l-8.4 52.5c-2.3 14.6-15.4 24.9-30 23.5-7.8-.7-14.8-4.8-19.3-10.9l10.3-18.5z"/>
+              <defs>
+                <linearGradient id="astro-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#C026D3"/>
+                  <stop offset="100%" style="stop-color:#FF6B6B"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <h3>Astro</h3>
+          <p>Build fast static sites with NMBL templates in Astro components and pages.</p>
+          <span class="guide-status">Coming Soon</span>
+        </a>
+
+        <a href="/guides/vite" class="guide-card coming-soon">
+          <div class="guide-icon">
+            <svg viewBox="0 0 128 128" width="48" height="48">
+              <linearGradient id="vite-gradient" x1="-.456" x2="1.319" y1="-6.568" y2="17.176" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#41D1FF"/>
+                <stop offset="100%" stop-color="#BD34FE"/>
+              </linearGradient>
+              <path fill="url(#vite-gradient)" d="M120.8 18.7L66.5 125.2c-.9 1.8-3.5 1.8-4.4 0L7.2 18.7c-1-2 .8-4.2 3-3.6l54.7 14.5c.6.2 1.2.2 1.8 0L120.5 15c2.1-.6 4 1.6 3 3.6z"/>
+            </svg>
+          </div>
+          <h3>Vite</h3>
+          <p>Transform NMBL files on the fly with Vite's blazing fast HMR and build pipeline.</p>
+          <span class="guide-status">Coming Soon</span>
+        </a>
+      </div>
+
+      <div class="other-integrations">
+        <h2>More Integrations</h2>
+        <p>NMBL can work with any tool that processes HTML. The core compiler outputs standard HTML, making it compatible with any modern web framework or build tool.</p>
+
+        <div class="integration-links">
+          <a href="https://github.com/nmbl-lang/nmbl#compiler-api" target="_blank" class="integration-link">
+            <span>Compiler API</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+          <a href="https://github.com/nmbl-lang/nmbl#vscode-extension" target="_blank" class="integration-link">
+            <span>VS Code Extension</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .guides-hero {
+    padding: 4rem 0;
+    background: linear-gradient(to bottom, var(--color-bg-subtle), transparent);
+  }
+
+  .guides-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    color: var(--color-text-muted);
+  }
+
+  .guides-list {
+    padding: 4rem 0;
+  }
+
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .guide-card {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+
+  .guide-card:hover:not(.coming-soon) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-accent);
+  }
+
+  .guide-card.coming-soon {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .guide-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+  }
+
+  .guide-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .guide-card p {
+    color: var(--color-text-muted);
+    flex: 1;
+    margin-bottom: 1rem;
+  }
+
+  .guide-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 4px;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-muted);
+  }
+
+  .guide-status.stable {
+    background: rgba(79, 192, 141, 0.1);
+    color: #4FC08D;
+  }
+
+  .other-integrations {
+    padding: 3rem;
+    background: var(--color-bg-subtle);
+    border-radius: 12px;
+  }
+
+  .other-integrations h2 {
+    margin-bottom: 1rem;
+  }
+
+  .other-integrations p {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .integration-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .integration-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .integration-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 768px) {
+    .guides-hero h1 {
+      font-size: 2rem;
+    }
+
+    .guides-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

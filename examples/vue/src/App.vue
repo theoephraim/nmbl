@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import ItemCard from './components/ItemCard.vue';
 import Badge from './components/Badge.vue';
-import Button from './components/Button.vue';
+import VButton from './components/VButton.vue';
 
 interface Item {
   id: number;
@@ -80,7 +80,7 @@ div#app
 
   // comment
   //- another comment
-  Button(
+  VButton(
     :label="loggedIn ? 'Log out' : 'Log in'"
     variant="primary"
     size="lg"
@@ -123,7 +123,7 @@ div#app
             outline
             style="margin-right: 0.5rem"
           )
-          Button(
+          VButton(
             label="Remove"
             variant="danger"
             size="sm"
@@ -159,7 +159,7 @@ div#app
           option(value="medium") Medium
           option(value="high") High
 
-      Button(
+      VButton(
         variant="success"
         size="lg"
         icon="+"
@@ -174,6 +174,7 @@ div#app
           rounded
           style="margin-left: 0.5rem"
         )
+        
 
   div.login-prompt(v-else)
     p.info Please log in to see and manage your items.

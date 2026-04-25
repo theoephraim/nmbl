@@ -9,7 +9,8 @@
     { "include": "#embedded-script" },
     { "include": "#embedded-style" },
     { "include": "#control-flow-block" },
-    { "include": "#control-flow-continuation" },
+    { "include": "#control-flow-continuation-expr" },
+    { "include": "#control-flow-continuation-bare" },
     { "include": "#control-flow-directive" },
     { "include": "#element-component" },
     { "include": "#element-tag" },
@@ -70,21 +71,30 @@
       }
     },
     "control-flow-block": {
-      "match": "^(\\s*)(\\{#)(\\w+)\\s*(.*?)(\\})\\s*$",
+      "match": "^(\\s*)(@)(if|each|await|key|snippet)(\\()(.*?)(\\))\\s*$",
       "captures": {
         "2": { "name": "punctuation.definition.block.begin.nmbl" },
         "3": { "name": "keyword.control.nmbl" },
-        "4": { "patterns": [{ "include": "source.js" }] },
-        "5": { "name": "punctuation.definition.block.end.nmbl" }
+        "4": { "name": "punctuation.section.parens.begin.nmbl" },
+        "5": { "patterns": [{ "include": "source.js" }] },
+        "6": { "name": "punctuation.section.parens.end.nmbl" }
       }
     },
-    "control-flow-continuation": {
-      "match": "^(\\s*)(\\{:)(\\w+(?:\\s+\\w+)?)\\s*(.*?)(\\})\\s*$",
+    "control-flow-continuation-expr": {
+      "match": "^(\\s*)(@)(elseif|then|catch)(\\()(.*?)(\\))\\s*$",
       "captures": {
         "2": { "name": "punctuation.definition.block.begin.nmbl" },
         "3": { "name": "keyword.control.nmbl" },
-        "4": { "patterns": [{ "include": "source.js" }] },
-        "5": { "name": "punctuation.definition.block.end.nmbl" }
+        "4": { "name": "punctuation.section.parens.begin.nmbl" },
+        "5": { "patterns": [{ "include": "source.js" }] },
+        "6": { "name": "punctuation.section.parens.end.nmbl" }
+      }
+    },
+    "control-flow-continuation-bare": {
+      "match": "^(\\s*)(@)(else)\\s*$",
+      "captures": {
+        "2": { "name": "punctuation.definition.block.begin.nmbl" },
+        "3": { "name": "keyword.control.nmbl" }
       }
     },
     "control-flow-directive": {

@@ -280,7 +280,7 @@ describe('Compiler', () => {
   describe('control flow - svelte', () => {
     test('simple if block', () => {
       const input = dedent`
-        {#if loggedIn}
+        @if(loggedIn)
           p Welcome
       `;
       const { html, errors } = compile(input);
@@ -294,9 +294,9 @@ describe('Compiler', () => {
 
     test('if/else block', () => {
       const input = dedent`
-        {#if loggedIn}
+        @if(loggedIn)
           p Welcome
-        {:else}
+        @else
           p Please log in
       `;
       const { html, errors } = compile(input);
@@ -312,11 +312,11 @@ describe('Compiler', () => {
 
     test('if/else-if/else block', () => {
       const input = dedent`
-        {#if a}
+        @if(a)
           p A
-        {:else if b}
+        @elseif(b)
           p B
-        {:else}
+        @else
           p C
       `;
       const { html, errors } = compile(input);
@@ -334,7 +334,7 @@ describe('Compiler', () => {
 
     test('each block', () => {
       const input = dedent`
-        {#each items as item, i}
+        @each(items as item, i)
           li {item.name}
       `;
       const { html, errors } = compile(input);
@@ -348,8 +348,8 @@ describe('Compiler', () => {
 
     test('nested blocks', () => {
       const input = dedent`
-        {#if items.length}
-          {#each items as item}
+        @if(items.length)
+          @each(items as item)
             li {item}
       `;
       const { html, errors } = compile(input);
@@ -378,7 +378,7 @@ describe('Compiler', () => {
     test('block inside element', () => {
       const input = dedent`
         div
-          {#if cond}
+          @if(cond)
             p Hello
       `;
       const { html, errors } = compile(input);
@@ -396,7 +396,7 @@ describe('Compiler', () => {
   describe('control flow - astro', () => {
     test('if without else uses &&', () => {
       const input = dedent`
-        {#if loggedIn}
+        @if(loggedIn)
           p Welcome
       `;
       const { html, errors } = compile(input, { framework: 'astro' });
@@ -410,9 +410,9 @@ describe('Compiler', () => {
 
     test('if/else uses ternary', () => {
       const input = dedent`
-        {#if loggedIn}
+        @if(loggedIn)
           p Welcome
-        {:else}
+        @else
           p Please log in
       `;
       const { html, errors } = compile(input, { framework: 'astro' });
@@ -428,11 +428,11 @@ describe('Compiler', () => {
 
     test('if/else-if/else uses nested ternary', () => {
       const input = dedent`
-        {#if a}
+        @if(a)
           p A
-        {:else if b}
+        @elseif(b)
           p B
-        {:else}
+        @else
           p C
       `;
       const { html, errors } = compile(input, { framework: 'astro' });
@@ -450,7 +450,7 @@ describe('Compiler', () => {
 
     test('each uses .map()', () => {
       const input = dedent`
-        {#each items as item}
+        @each(items as item)
           li {item.name}
       `;
       const { html, errors } = compile(input, { framework: 'astro' });
@@ -464,7 +464,7 @@ describe('Compiler', () => {
 
     test('each with index uses .map()', () => {
       const input = dedent`
-        {#each items as item, i}
+        @each(items as item, i)
           li {item.name}
       `;
       const { html, errors } = compile(input, { framework: 'astro' });
@@ -603,9 +603,8 @@ describe('Compiler', () => {
 
     test('tracks control flow block positions', () => {
       const input = dedent`
-        {#if condition}
+        @if(condition)
           p True
-        {/if}
       `;
       const result = compile(input);
 

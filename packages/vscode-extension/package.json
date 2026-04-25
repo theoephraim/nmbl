@@ -3,7 +3,7 @@
   "displayName": "NMBL",
   "version": "0.1.0",
   "private": true,
-  "description": "NMBL language support — syntax highlighting for .nmbl, .svelte, and .vue files",
+  "description": "NMBL language support — syntax highlighting for .nmbl, .astro, .svelte, and .vue files",
   "publisher": "nmbl",
   "license": "MIT",
   "scripts": {
@@ -48,6 +48,14 @@
         "scopeName": "vue.nmbl",
         "path": "./syntaxes/vue-nmbl.tmLanguage.json",
         "injectTo": ["source.vue", "text.html.vue"],
+        "embeddedLanguages": {
+          "text.nmbl": "nmbl"
+        }
+      },
+      {
+        "scopeName": "astro.nmbl",
+        "path": "./syntaxes/astro-nmbl.tmLanguage.json",
+        "injectTo": ["source.astro"],
         "embeddedLanguages": {
           "text.nmbl": "nmbl"
         }

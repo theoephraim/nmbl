@@ -361,48 +361,48 @@ describe('Lexer', () => {
   });
 
   describe('control flow blocks', () => {
-    test('{#if} produces BlockOpen token', () => {
-      const { tokens } = lex('{#if loggedIn}');
+    test('@if produces BlockOpen token', () => {
+      const { tokens } = lex('@if(loggedIn)');
       const block = tokens.find(t => t.type === TokenType.BlockOpen);
       expect(block).toBeDefined();
       expect((block as any).blockType).toBe('if');
       expect((block as any).expression).toBe('loggedIn');
     });
 
-    test('{#each} produces BlockOpen token', () => {
-      const { tokens } = lex('{#each items as item, i}');
+    test('@each produces BlockOpen token', () => {
+      const { tokens } = lex('@each(items as item, i)');
       const block = tokens.find(t => t.type === TokenType.BlockOpen);
       expect(block).toBeDefined();
       expect((block as any).blockType).toBe('each');
       expect((block as any).expression).toBe('items as item, i');
     });
 
-    test('{:else} produces BlockContinuation token', () => {
-      const { tokens } = lex('{:else}');
+    test('@else produces BlockContinuation token', () => {
+      const { tokens } = lex('@else');
       const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
       expect(cont).toBeDefined();
       expect((cont as any).clauseType).toBe('else');
       expect((cont as any).expression).toBe('');
     });
 
-    test('{:else if} produces BlockContinuation token', () => {
-      const { tokens } = lex('{:else if condition}');
+    test('@elseif produces BlockContinuation token with clause type "else if"', () => {
+      const { tokens } = lex('@elseif(condition)');
       const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
       expect(cont).toBeDefined();
       expect((cont as any).clauseType).toBe('else if');
       expect((cont as any).expression).toBe('condition');
     });
 
-    test('{:then} produces BlockContinuation token', () => {
-      const { tokens } = lex('{:then data}');
+    test('@then produces BlockContinuation token', () => {
+      const { tokens } = lex('@then(data)');
       const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
       expect(cont).toBeDefined();
       expect((cont as any).clauseType).toBe('then');
       expect((cont as any).expression).toBe('data');
     });
 
-    test('{:catch} produces BlockContinuation token', () => {
-      const { tokens } = lex('{:catch error}');
+    test('@catch produces BlockContinuation token', () => {
+      const { tokens } = lex('@catch(error)');
       const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
       expect(cont).toBeDefined();
       expect((cont as any).clauseType).toBe('catch');
@@ -426,7 +426,7 @@ describe('Lexer', () => {
     });
 
     test('block with indented children produces indent/outdent', () => {
-      const types = tokenTypes('{#if cond}\n  p Hello');
+      const types = tokenTypes('@if(cond)\n  p Hello');
       expect(types).toEqual([
         TokenType.BlockOpen,
         TokenType.Indent,
@@ -438,7 +438,7 @@ describe('Lexer', () => {
     });
 
     test('block with continuation at same indent', () => {
-      const types = tokenTypes('{#if cond}\n  p Hello\n{:else}\n  p Bye');
+      const types = tokenTypes('@if(cond)\n  p Hello\n@else\n  p Bye');
       expect(types).toEqual([
         TokenType.BlockOpen,
         TokenType.Indent,
@@ -452,6 +452,40 @@ describe('Lexer', () => {
         TokenType.Outdent,
         TokenType.EOF,
       ]);
+    });
+
+    test('balanced parens in expression', () => {
+      const { tokens } = lex('@if(a && (b || c))');
+      const block = tokens.find(t => t.type === TokenType.BlockOpen);
+      expect(block).toBeDefined();
+      expect((block as any).expression).toBe('a && (b || c)');
+    });
+
+    test('string with parens inside expression', () => {
+      const { tokens } = lex('@if(name === "foo(bar)")');
+      const block = tokens.find(t => t.type === TokenType.BlockOpen);
+      expect(block).toBeDefined();
+      expect((block as any).expression).toBe('name === "foo(bar)"');
+    });
+
+    test('unknown directive produces error', () => {
+      const { errors } = lex('@unknown(expr)');
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    test('@else without parens has empty expression', () => {
+      const { tokens } = lex('@else');
+      const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
+      expect(cont).toBeDefined();
+      expect((cont as any).expression).toBe('');
+    });
+
+    test('@then without parens has empty expression', () => {
+      const { tokens } = lex('@then');
+      const cont = tokens.find(t => t.type === TokenType.BlockContinuation);
+      expect(cont).toBeDefined();
+      expect((cont as any).clauseType).toBe('then');
+      expect((cont as any).expression).toBe('');
     });
   });
 

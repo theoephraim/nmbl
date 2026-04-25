@@ -7,6 +7,7 @@ header.site-header
     ul.nav-links
       li > a(href="/") Home
       li > a(href="/about") About
+      li > a(href="/guides") Guides
       li > a(href="/playground") Playground
 </template>
 

@@ -72,17 +72,17 @@ export const COMMENT_ATTR = `button(
 ) Save`;
 export const COMMENT_ATTR_HTML = nmblToHtml(COMMENT_ATTR);
 
-export const SVELTE_CONTROL_FLOW = `{#if loggedIn}
+export const CONTROL_FLOW = `@if(loggedIn)
   p Welcome back, {user.name}!
   a(href="/dashboard") Dashboard
-{:else}
+@else
   p Please log in
 
-{#each items as item, i}
+@each(items as item, i)
   li
     span.name {item.name}
     span.price {item.price}`;
-export const SVELTE_CONTROL_FLOW_HTML = nmblToHtml(SVELTE_CONTROL_FLOW);
+export const CONTROL_FLOW_HTML = nmblToHtml(CONTROL_FLOW);
 
 export const PLAYGROUND_EXAMPLE_NMBL = `
 //! This comment is preserved in HTML output

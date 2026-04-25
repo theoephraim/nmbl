@@ -1,5 +1,8 @@
 :root {
   --color-bg: #0f1117;
+  --color-bg-subtle: #141721;
+  --color-bg-card: #1a1d27;
+  --color-bg-code: #0a0c10;
   --color-surface: #1a1d27;
   --color-border: #2a2d3a;
   --color-text: #e1e4ed;

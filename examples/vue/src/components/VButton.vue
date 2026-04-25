@@ -1,5 +1,6 @@
 <script setup lang="ts">
 interface Props {
+  /** some description of the label */
   label?: string;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning';

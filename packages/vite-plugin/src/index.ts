@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { compile } from '@nmbl/parser';
 import type { NmblError } from '@nmbl/parser';
 import type { Plugin } from 'vite';
@@ -57,5 +58,46 @@ export default function nmblPlugin(_options: NmblPluginOptions = {}): Plugin[] {
     },
   };
 
-  return [vueSfcPreprocess, nmblTransform];
+  // Astro's own Vite plugin uses enforce:'pre' and runs its transform before
+  // integration plugins. We use a `load` hook to intercept the file content
+  // before any transform hooks run, compile NMBL to HTML, and return the
+  // result so Astro's compiler sees standard HTML.
+  const astroSfcPreprocess: Plugin = {
+    name: 'nmbl:astro-sfc',
+    enforce: 'pre',
+
+    load(id) {
+      // Skip sub-resource requests (e.g. ?astro&type=style)
+      if (id.includes('?')) return;
+      if (!id.endsWith('.astro')) return;
+
+      let src: string;
+      try {
+        src = readFileSync(id, 'utf-8');
+      } catch {
+        return;
+      }
+
+      if (!src.includes('lang="nmbl"')) return;
+
+      const templateRegex = /<template\s+lang="nmbl"\s*>([\s\S]*?)<\/template>/g;
+      let result = src;
+      let match;
+
+      while ((match = templateRegex.exec(src)) !== null) {
+        const nmblSource = match[1];
+        const { html, errors } = compile(nmblSource, { framework: 'astro' });
+        if (errors.length > 0) {
+          this.warn(`NMBL compilation warnings in ${id}:\n${formatErrors(errors)}`);
+        }
+        // Replace <template lang="nmbl">...</template> with just the compiled HTML
+        // (no <template> wrapper — in Astro, <template> is a regular HTML element)
+        result = result.replace(match[0], html);
+      }
+
+      return result;
+    },
+  };
+
+  return [vueSfcPreprocess, astroSfcPreprocess, nmblTransform];
 }

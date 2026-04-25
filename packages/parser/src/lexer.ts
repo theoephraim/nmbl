@@ -200,13 +200,11 @@ export class Lexer {
     } else if (this.peek() === ':') {
       // Standalone content block (:md, :css, etc.)
       this.scanStandaloneContentMode();
+    } else if (this.peek() === '@') {
+      this.scanAtDirective();
     } else if (this.peek() === '{') {
       const next = this.peekAt(1);
-      if (next === '#') {
-        this.scanBlockOpen();
-      } else if (next === ':') {
-        this.scanBlockContinuation();
-      } else if (next === '@') {
+      if (next === '@') {
         this.scanInlineDirective();
       } else {
         const start = this.position();
@@ -777,79 +775,97 @@ export class Lexer {
 
   // ─── Control Flow Block Scanning ─────────────────────────
 
-  private scanBlockOpen(): void {
+  private scanAtDirective(): void {
     const start = this.position();
-    this.advance(); // consume '{'
-    this.advance(); // consume '#'
+    this.advance(); // consume '@'
 
-    // Read block type word
-    let blockType = '';
+    // Read directive name
+    let name = '';
     while (!this.isAtEnd() && this.isTagChar(this.peek())) {
-      blockType += this.advance();
+      name += this.advance();
     }
 
-    // Read expression (rest until closing '}')
+    if (!name) {
+      this.addError(ErrorCode.UnexpectedCharacter, "Expected directive name after '@'", start);
+      this.skipToEndOfLine();
+      return;
+    }
+
+    // Read expression in parens if present
     let expression = '';
-    if (this.peek() === ' ') this.advance(); // skip space after block type
-    while (!this.isAtEnd() && this.peek() !== '}') {
-      expression += this.advance();
-    }
-    if (this.peek() === '}') {
-      this.advance(); // consume '}'
-    } else {
-      this.addError(ErrorCode.UnterminatedExpression, 'Unterminated block open', start);
+    if (this.peek() === '(') {
+      expression = this.scanBalancedParenExpression();
     }
 
-    this.emitTokenSpan(TokenType.BlockOpen, start, { blockType, expression: expression.trim() });
-    this.consumeNewline();
+    // Determine token type
+    const blockOpenTypes = ['if', 'each', 'await', 'key', 'snippet'];
+    const blockContinuationTypes = ['else', 'elseif', 'then', 'catch'];
+
+    if (blockOpenTypes.includes(name)) {
+      this.emitTokenSpan(TokenType.BlockOpen, start, { blockType: name, expression: expression.trim() });
+      this.consumeNewline();
+    } else if (blockContinuationTypes.includes(name)) {
+      // Map 'elseif' to 'else if' for AST compatibility
+      const clauseType = name === 'elseif' ? 'else if' : name;
+      this.emitTokenSpan(TokenType.BlockContinuation, start, { clauseType, expression: expression.trim() });
+      this.consumeNewline();
+    } else {
+      this.addError(ErrorCode.UnexpectedCharacter, `Unknown directive '@${name}'`, start);
+      this.skipToEndOfLine();
+    }
   }
 
-  private scanBlockContinuation(): void {
+  private scanBalancedParenExpression(): string {
     const start = this.position();
-    this.advance(); // consume '{'
-    this.advance(); // consume ':'
-
-    // Read clause type word
-    let clauseType = '';
-    while (!this.isAtEnd() && this.isTagChar(this.peek())) {
-      clauseType += this.advance();
-    }
-
-    // Handle {:else if ...} as a special case
-    if (clauseType === 'else' && this.peek() === ' ' && this.peekAt(1) === 'i' && this.peekAt(2) === 'f') {
-      // Check if it's actually "else if"
-      const savedOffset = this.offset;
-      const savedLine = this.line;
-      const savedColumn = this.column;
-      this.advance(); // consume space
-      let nextWord = '';
-      while (!this.isAtEnd() && this.isTagChar(this.peek())) {
-        nextWord += this.advance();
-      }
-      if (nextWord === 'if') {
-        clauseType = 'else if';
-      } else {
-        // Restore — it wasn't "else if"
-        this.offset = savedOffset;
-        this.line = savedLine;
-        this.column = savedColumn;
-      }
-    }
-
-    // Read expression (rest until closing '}')
+    this.advance(); // consume '('
+    let depth = 1;
     let expression = '';
-    if (this.peek() === ' ') this.advance(); // skip space
-    while (!this.isAtEnd() && this.peek() !== '}') {
-      expression += this.advance();
-    }
-    if (this.peek() === '}') {
-      this.advance(); // consume '}'
-    } else {
-      this.addError(ErrorCode.UnterminatedExpression, 'Unterminated block continuation', start);
+
+    while (!this.isAtEnd() && depth > 0) {
+      const ch = this.peek();
+
+      if (ch === '\n') {
+        this.addError(ErrorCode.UnterminatedExpression, 'Unterminated expression in directive', start);
+        return expression;
+      }
+
+      if (ch === '(') {
+        depth++;
+        expression += this.advance();
+      } else if (ch === ')') {
+        depth--;
+        if (depth === 0) {
+          this.advance(); // consume closing )
+          return expression;
+        }
+        expression += this.advance();
+      } else if (ch === '"' || ch === "'" || ch === '`') {
+        // Skip string contents to avoid counting parens inside strings
+        const quote = ch;
+        expression += this.advance(); // opening quote
+        while (!this.isAtEnd() && this.peek() !== '\n') {
+          if (this.peek() === '\\') {
+            expression += this.advance(); // backslash
+            if (!this.isAtEnd() && this.peek() !== '\n') {
+              expression += this.advance(); // escaped char
+            }
+          } else if (this.peek() === quote) {
+            expression += this.advance(); // closing quote
+            break;
+          } else {
+            expression += this.advance();
+          }
+        }
+      } else {
+        expression += this.advance();
+      }
     }
 
-    this.emitTokenSpan(TokenType.BlockContinuation, start, { clauseType, expression: expression.trim() });
-    this.consumeNewline();
+    if (depth > 0) {
+      this.addError(ErrorCode.UnterminatedExpression, 'Unterminated expression in directive', start);
+    }
+
+    return expression;
   }
 
   private scanInlineDirective(): void {

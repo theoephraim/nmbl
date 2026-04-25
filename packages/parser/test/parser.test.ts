@@ -213,7 +213,7 @@ describe('Parser', () => {
 
   describe('control flow blocks', () => {
     test('simple if block', () => {
-      const { ast, errors } = parseSource('{#if cond}\n  p Hello');
+      const { ast, errors } = parseSource('@if(cond)\n  p Hello');
       expect(errors).toHaveLength(0);
       expect(ast.children).toHaveLength(1);
       const block = ast.children[0] as BlockNode;
@@ -226,7 +226,7 @@ describe('Parser', () => {
     });
 
     test('if/else block', () => {
-      const { ast, errors } = parseSource('{#if cond}\n  p Hello\n{:else}\n  p Bye');
+      const { ast, errors } = parseSource('@if(cond)\n  p Hello\n@else\n  p Bye');
       expect(errors).toHaveLength(0);
       const block = ast.children[0] as BlockNode;
       expect(block.clauses).toHaveLength(2);
@@ -236,7 +236,7 @@ describe('Parser', () => {
     });
 
     test('if/else-if/else block', () => {
-      const { ast, errors } = parseSource('{#if a}\n  p A\n{:else if b}\n  p B\n{:else}\n  p C');
+      const { ast, errors } = parseSource('@if(a)\n  p A\n@elseif(b)\n  p B\n@else\n  p C');
       expect(errors).toHaveLength(0);
       const block = ast.children[0] as BlockNode;
       expect(block.clauses).toHaveLength(3);
@@ -246,7 +246,7 @@ describe('Parser', () => {
     });
 
     test('each block', () => {
-      const { ast, errors } = parseSource('{#each items as item}\n  li {item.name}');
+      const { ast, errors } = parseSource('@each(items as item)\n  li {item.name}');
       expect(errors).toHaveLength(0);
       const block = ast.children[0] as BlockNode;
       expect(block.blockType).toBe('each');
@@ -264,7 +264,7 @@ describe('Parser', () => {
     });
 
     test('block inside element', () => {
-      const { ast, errors } = parseSource('div\n  {#if cond}\n    p Hello');
+      const { ast, errors } = parseSource('div\n  @if(cond)\n    p Hello');
       expect(errors).toHaveLength(0);
       const div = ast.children[0] as ElementNode;
       expect(div.children).toHaveLength(1);
@@ -274,7 +274,7 @@ describe('Parser', () => {
     });
 
     test('element inside block', () => {
-      const { ast, errors } = parseSource('{#if cond}\n  div\n    p Hello');
+      const { ast, errors } = parseSource('@if(cond)\n  div\n    p Hello');
       expect(errors).toHaveLength(0);
       const block = ast.children[0] as BlockNode;
       const div = block.clauses[0].children[0] as ElementNode;
@@ -283,7 +283,7 @@ describe('Parser', () => {
     });
 
     test('nested blocks', () => {
-      const { ast, errors } = parseSource('{#if a}\n  {#each items as item}\n    li {item}');
+      const { ast, errors } = parseSource('@if(a)\n  @each(items as item)\n    li {item}');
       expect(errors).toHaveLength(0);
       const outer = ast.children[0] as BlockNode;
       expect(outer.blockType).toBe('if');
@@ -292,7 +292,7 @@ describe('Parser', () => {
     });
 
     test('empty block', () => {
-      const { ast, errors } = parseSource('{#if cond}');
+      const { ast, errors } = parseSource('@if(cond)');
       expect(errors).toHaveLength(0);
       const block = ast.children[0] as BlockNode;
       expect(block.clauses[0].children).toHaveLength(0);

@@ -7,7 +7,7 @@ export default function nmblAstro(): AstroIntegration {
     hooks: {
       'astro:config:setup'({ updateConfig }) {
         updateConfig({
-          vite: { plugins: [nmblVitePlugin()] },
+          vite: { plugins: [nmblVitePlugin({ framework: 'astro' })] },
         });
       },
     },

@@ -41,7 +41,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
       if (sfc.template?.lang === 'nmbl') {
         return [{
           id: 'template',
-          lang: sfc.template.lang,
+          lang: 'pug',  // Tell Volar to treat this like Pug for pattern detection
         }];
       }
       return [];
@@ -49,7 +49,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
 
     resolveEmbeddedCode(_fileName, sfc, embeddedFile) {
       if (embeddedFile.id === 'template' && sfc.template?.lang === 'nmbl') {
-        // Just pass through the NMBL content - we'll transform it in compileSFCTemplate
+        // Pass through the NMBL content - transformation happens in compileSFCTemplate
         embeddedFile.content.push([
           sfc.template.content,
           sfc.template.name,
@@ -60,7 +60,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
             semantic: true,
             navigation: true,
             structure: true,
-            format: false, // Don't format HTML, let NMBL handle formatting
+            format: false,
           },
         ]);
       }
@@ -76,7 +76,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
       const map = new SourceMap(parsed.mappings);
 
       // Parse HTML to Vue AST
-      let ast = CompilerDOM.parse(parsed.htmlCode, {
+      let ast = CompilerDOM.parse(parsed.htmlString, {
         ...options,
         comments: true,
         onWarn(warning) {
@@ -144,7 +144,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
               return mapped[0];
             }
           }
-          if (htmlOffset + delta < parsed.htmlCode.length) {
+          if (htmlOffset + delta < parsed.htmlString.length) {
             for (const mapped of map.toSourceLocation(htmlOffset + delta)) {
               return mapped[0];
             }
@@ -201,7 +201,8 @@ function compileWithMappings(nmblCode: string) {
   }
 
   return {
-    htmlCode: toString(codes),
+    htmlCode: codes,  // Return the segments array directly for Volar
+    htmlString: toString(codes),  // Also provide the string version if needed
     mappings: buildMappings(codes),
     errors,
   };

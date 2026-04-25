@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "tbuild": "turbo run build",
     "dev": "bun run build --watch"
   },
   "dependencies": {
