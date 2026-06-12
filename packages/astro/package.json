@@ -32,6 +32,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^6.3.10",
     "@nmbl-lang/vite-plugin": "workspace:*"
   },
   "peerDependencies": {
