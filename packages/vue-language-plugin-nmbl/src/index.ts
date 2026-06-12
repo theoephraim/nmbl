@@ -162,7 +162,7 @@ function compileWithMappings(nmblCode: string) {
   const codes: Segment<any>[] = [];
 
   // Compile NMBL to HTML with native mappings
-  const { html, mappings, errors } = compile(nmblCode);
+  const { html, mappings, errors } = compile(nmblCode, { framework: 'vue' });
 
   if (errors.length > 0) {
     console.warn('NMBL compilation errors:', errors);

@@ -17,22 +17,23 @@
   "scripts": {
     "build": "tsdown",
     "tbuild": "turbo run build",
-    "dev": "tsdown --watch"
+    "dev": "tsdown --watch",
+    "test": "vitest run"
   },
   "peerDependencies": {
-    "@vue/language-core": "^2.1.0"
+    "@vue/language-core": "^3.0.0"
   },
   "dependencies": {
-    
     "@volar/source-map": "~2.4.0",
     "muggle-string": "^0.4.1",
-    "vscode-languageserver-textdocument": "^1.0.11"
+    "vscode-languageserver-textdocument": "^1.0.12"
   },
   "devDependencies": {
     "@nmbl/parser": "workspace:*",
     "@vue/compiler-dom": "catalog:",
-    "@vue/language-core": "^2.1.0",
+    "@vue/language-core": "^3.3.4",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
