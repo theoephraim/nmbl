@@ -25,8 +25,16 @@ module.exports = grammar({
     $.newline,
     $._flow_lparen,
     $._flow_rparen,
-    $.template_chars,
+    $._flow_lparen_immediate,
     $.template_chars
+  ],
+
+  conflicts: $ => [
+    [$.text_soup, $.pipe_text],
+    [$.text_soup, $.tag_head],
+    [$.text_soup, $.at_block],
+    [$.text_soup, $.element],
+    [$.element],
   ],
 
   rules: {
@@ -38,11 +46,11 @@ module.exports = grammar({
 
     attr: $ => seq($.attr_name, optional(seq("=", $.attr_value))),
 
-    attr_list: $ => seq($._flow_lparen, repeat($.attr), $._flow_rparen),
+    attr_list: $ => seq($._flow_lparen_immediate, repeat($.attr), $._flow_rparen),
 
     text_soup: $ => repeat1(choice($.text_chunk, $.tag_name, $.component_name, $.id_sel, $.class_sel, $.at_keyword, $.attr_name, $.dqstring, $.sqstring, $.template, $.bare_value, "=", ">", "|", $._flow_lparen, $._flow_rparen, ",")),
 
-    tag_head: $ => choice(seq(choice($.tag_name, $.component_name), repeat(choice($.id_sel, $.class_sel))), repeat1(choice($.id_sel, $.class_sel))),
+    tag_head: $ => choice(seq(choice($.tag_name, $.component_name), repeat(choice(alias(token.immediate(/#[a-zA-Z0-9\-_]+/), $.id_sel), alias(token.immediate(/\.[a-zA-Z0-9\-_]+/), $.class_sel)))), seq(choice($.id_sel, $.class_sel), repeat(choice(alias(token.immediate(/#[a-zA-Z0-9\-_]+/), $.id_sel), alias(token.immediate(/\.[a-zA-Z0-9\-_]+/), $.class_sel))))),
 
     element: $ => choice(seq($.tag_head, optional($.attr_list), $.raw_content), seq($.tag_head, optional($.attr_list), optional(choice(seq(">", $.element), $.text_soup)), optional(seq($.indent, $.lines, $.dedent)))),
 
@@ -50,7 +58,7 @@ module.exports = grammar({
 
     at_block: $ => seq($.at_keyword, optional(seq($._flow_lparen, optional($.expr_body), $._flow_rparen)), optional(seq($.indent, $.lines, $.dedent))),
 
-    line: $ => choice($.at_block, $.pipe_text, $.rendered_comment, $.rendered_block_comment, $.raw_content, $.element, $.text_soup),
+    line: $ => choice($.at_block, $.pipe_text, $.rendered_comment, $.rendered_block_comment, $.raw_content, $.element, prec.dynamic(-1, $.text_soup)),
 
     lines: $ => seq($.line, repeat(seq($.newline, $.line))),
 
@@ -62,9 +70,9 @@ module.exports = grammar({
 
     at_keyword: $ => token(/@[a-zA-Z]+/),
 
-    component_name: $ => token(/[A-Z][a-zA-Z0-9\-_]*/),
+    component_name: $ => token(prec(1, /[A-Z][a-zA-Z0-9\-_]*/)),
 
-    tag_name: $ => token(/[a-z][a-zA-Z0-9\-_]*/),
+    tag_name: $ => token(prec(1, /[a-z][a-zA-Z0-9\-_]*/)),
 
     rendered_block_comment: $ => token(/\/\*!(?:[\s\S])*?\*\//),
 
@@ -90,15 +98,7 @@ module.exports = grammar({
       "`"
     ),
 
-    template_substitution: $ => seq("${", blank(), "}"),
-
-    template: $ => seq(
-      "`",
-      repeat(choice($.template_chars, $.template_interpolation_1)),
-      "`"
-    ),
-
-    template_interpolation_1: $ => seq("${", blank(), "}")
+    template_substitution: $ => seq("${", blank(), "}")
   }
 });
 

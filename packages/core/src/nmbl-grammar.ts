@@ -23,7 +23,7 @@
 import {
   token, rule, defineGrammar, alt, many, many1, opt,
   altPattern, seq, oneOf, noneOf, range, star, plus, never, anyChar,
-  notFollowedBy,
+  notFollowedBy, adjacent, tsPrecDynamic,
 } from 'monogram/src/api.ts';
 import type { IndentConfig } from 'monogram/src/types.ts';
 
@@ -59,12 +59,14 @@ const AtKeyword = token(seq('@', plus(alpha)), {
 const ComponentName = token(seq(range('A', 'Z'), star(nameChar)), {
   blockOnly: true,
   identifier: true,
+  tsPrec: 1,
   scope: 'support.class.component',
 });
 // A tag name at a structural position (lowercase-led).
 const TagName = token(seq(range('a', 'z'), star(nameChar)), {
   blockOnly: true,
   identifier: true,
+  tsPrec: 1,
   scope: 'entity.name.tag',
 });
 // Raw content block (`script:`, `article:md`, bare `:md`) — EMITTED by the
@@ -136,12 +138,6 @@ const Template = token(
   {
     template: { open: '`', interpOpen: '${', interpClose: '}' },
     scope: 'string.template',
-    interpolation: [{
-      begin: '${', end: '}',
-      beginScope: 'punctuation.definition.template-expression.begin',
-      endScope: 'punctuation.definition.template-expression.end',
-      contentScope: 'meta.embedded.expression',
-    }],
   },
 );
 // Bare attribute values (`colspan=2`, `href=/a/b`) and expression chunks.
@@ -195,8 +191,8 @@ const TextSoup = rule(() => [
 // The head of a tag line: `tag`, `Component`, `tag#id.class`, or selector-led
 // implicit div.
 const TagHead = rule(() => [
-  [alt(TagName, ComponentName), many(alt(IdSel, ClassSel))],
-  [many1(alt(IdSel, ClassSel))],
+  [alt(TagName, ComponentName), many(adjacent, alt(IdSel, ClassSel))],
+  [alt(IdSel, ClassSel), many(adjacent, alt(IdSel, ClassSel))],
 ]);
 
 // A full element line: head, optional attrs, then ONE of:
@@ -205,8 +201,8 @@ const TagHead = rule(() => [
 //   - block expansion (`li > a(href="/") Home`),
 //   - inline text, then an optional indented block of children.
 const Element = rule(() => [
-  [TagHead, opt(AttrList), RawContent],
-  [TagHead, opt(AttrList), opt(alt(['>', Element], TextSoup)), opt(Indent, Lines, Dedent)],
+  [TagHead, opt(adjacent, AttrList), RawContent],
+  [TagHead, opt(adjacent, AttrList), opt(alt(['>', Element], TextSoup)), opt(Indent, Lines, Dedent)],
 ]);
 
 // Pipe text line: `| raw text`
@@ -232,7 +228,11 @@ const Line = rule(() => [
   [RenderedBlockComment],
   [RawContent],
   Element,
-  [TextSoup],
+  // `TextSoup` is the catch-all last alternative (the interpreted parser only reaches it when nothing
+  // earlier matched). For tree-sitter's GLR — which explores all alternatives at once — give it a
+  // negative dynamic precedence so a real element/pipe/comment line outranks parsing the same line as
+  // a bare run of text. Transparent to every other generator.
+  [tsPrecDynamic(-1, TextSoup)],
 ]);
 
 // Sibling lines at one indentation level.
@@ -294,6 +294,20 @@ const grammar = defineGrammar({
   },
   entry: Document,
   indent,
+  // tree-sitter GLR conflicts: NMBL's grammar is ordered-choice (the interpreted parser tries Line
+  // alternatives in order); tree-sitter's GLR explores them simultaneously, so the catch-all TextSoup
+  // line genuinely conflicts with the structured line types. Declared so tree-sitter generates (the
+  // `tsPrecDynamic` above then steers which interpretation wins). Inert for every other generator.
+  // tree-sitter: a structural token (tag/selector/attr name) inside an inline-text run is plain
+  // text, not its structural role (`p hello` — `hello` is text). Inert for every other generator.
+  tsTextRules: ['TextSoup'],
+  conflicts: [
+    ['TextSoup', 'PipeText'],
+    ['TextSoup', 'TagHead'],
+    ['TextSoup', 'AtBlock'],
+    ['TextSoup', 'Element'],
+    ['Element'],
+  ],
 });
 
 export default grammar as unknown as NmblGrammar;

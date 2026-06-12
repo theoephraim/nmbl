@@ -92,6 +92,47 @@ describe('Compiler', () => {
       const { html } = compile('.container');
       expect(html.trim()).toBe('<div class="container"></div>');
     });
+
+    test('implicit div with chained classes', () => {
+      const { html } = compile('.box.foo hi');
+      expect(html.trim()).toBe('<div class="box foo">hi</div>');
+    });
+  });
+
+  // Selectors and attribute lists must be GLUED (no whitespace) to the tag head.
+  // A space breaks the head, so what follows is text — `div .card` is the tag
+  // `div` with the text `.card`, not a div with a class. (Enforced by the
+  // `adjacent` grammar assertion.)
+  describe('selector/attr gluing', () => {
+    test('spaced class is text, not a class', () => {
+      const { html } = compile('div .card x');
+      expect(html.trim()).toBe('<div>.card x</div>');
+    });
+
+    test('glued class still binds', () => {
+      const { html } = compile('div.card x');
+      expect(html.trim()).toBe('<div class="card">x</div>');
+    });
+
+    test('partially-spaced classes: only the glued ones bind', () => {
+      const { html } = compile('div.card .dark x');
+      expect(html.trim()).toBe('<div class="card">.dark x</div>');
+    });
+
+    test('spaced id is text, not an id', () => {
+      const { html } = compile('div #app x');
+      expect(html.trim()).toBe('<div>#app x</div>');
+    });
+
+    test('spaced paren is text, not an attribute list', () => {
+      const { html } = compile('h3 (Almost) Nothing to learn');
+      expect(html.trim()).toBe('<h3>(Almost) Nothing to learn</h3>');
+    });
+
+    test('glued attribute list still binds', () => {
+      const { html } = compile('h3(data-x="1") Title');
+      expect(html.trim()).toBe('<h3 data-x="1">Title</h3>');
+    });
   });
 
   describe('attributes', () => {

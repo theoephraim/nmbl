@@ -28,7 +28,7 @@
       "include": "#blockcomment"
     },
     {
-      "include": "#tagname"
+      "include": "#taghead"
     },
     {
       "include": "#dqstring"
@@ -37,16 +37,7 @@
       "include": "#sqstring"
     },
     {
-      "include": "#template"
-    },
-    {
       "include": "#atkeyword"
-    },
-    {
-      "include": "#componentname"
-    },
-    {
-      "include": "#barevalue"
     },
     {
       "include": "#punctuation"
@@ -64,16 +55,7 @@
       "include": "#rawcontent"
     },
     {
-      "include": "#idsel"
-    },
-    {
-      "include": "#classsel"
-    },
-    {
       "include": "#textchunk"
-    },
-    {
-      "include": "#attrname"
     }
   ],
   "repository": {
@@ -192,6 +174,67 @@
     "punctuation": {
       "match": "=|>|\\||,|\\(|\\)|\\{|\\}",
       "name": "punctuation.nmbl"
+    },
+    "attrlist": {
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.nmbl"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.nmbl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#attrname"
+        },
+        {
+          "include": "#dqstring"
+        },
+        {
+          "include": "#sqstring"
+        },
+        {
+          "include": "#template"
+        },
+        {
+          "include": "#barevalue"
+        },
+        {
+          "include": "#punctuation"
+        }
+      ]
+    },
+    "taghead": {
+      "begin": "(?:^[ \\t]*|(?<=>)[ \\t]*)(?=(?:[a-z][a-zA-Z0-9\\-_]*|[A-Z][a-zA-Z0-9\\-_]*|#[a-zA-Z0-9\\-_]+|\\.[a-zA-Z0-9\\-_]+|#[a-zA-Z0-9\\-_]+|\\.[a-zA-Z0-9\\-_]+))",
+      "end": "(?=[ \\t]|$)",
+      "patterns": [
+        {
+          "include": "#tagname"
+        },
+        {
+          "include": "#componentname"
+        },
+        {
+          "include": "#idsel"
+        },
+        {
+          "include": "#classsel"
+        },
+        {
+          "include": "#idsel"
+        },
+        {
+          "include": "#classsel"
+        },
+        {
+          "include": "#attrlist"
+        }
+      ]
     },
     "nmbl-script-block": {
       "comment": "NMBL script: content block — body embeds JavaScript",

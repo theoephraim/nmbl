@@ -16,7 +16,7 @@ enum TokenType {
   NEWLINE,
   _FLOW_LPAREN,
   _FLOW_RPAREN,
-  TEMPLATE_CHARS,
+  _FLOW_LPAREN_IMMEDIATE,
   TEMPLATE_CHARS,
 };
 
@@ -132,7 +132,12 @@ bool tree_sitter_nmbl_external_scanner_scan(void *payload, TSLexer *lexer, const
   // at those positions the flow token isn't valid and we fall through. Skip inline space/tab first (the
   // flow newline skip above already ran when in flow; in block a newline still drives the indent logic).
   {
-    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') skip(lexer);
+    if (lexer->lookahead == '(' && valid_symbols[_FLOW_LPAREN_IMMEDIATE]) {
+      advance(lexer); lexer->mark_end(lexer); lexer->result_symbol = _FLOW_LPAREN_IMMEDIATE;
+      if (s->flow_depth < UINT16_MAX) s->flow_depth++;
+      s->started = true; return true;
+    }
+        while (lexer->lookahead == ' ' || lexer->lookahead == '\t') skip(lexer);
     int32_t fc = lexer->lookahead;
     if (fc == '(' && valid_symbols[_FLOW_LPAREN]) {
       advance(lexer); lexer->mark_end(lexer); lexer->result_symbol = _FLOW_LPAREN;

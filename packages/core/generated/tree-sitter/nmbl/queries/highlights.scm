@@ -6,15 +6,17 @@
 ;; structural inference the TextMate generator uses.
 ;; -----------------------------------------------------------------
 
-;; Bare identifier (lowest priority; specific patterns below win).
-(component_name) @variable
-
 ;; Literal token nodes.
+(id_sel) @attribute
+(class_sel) @attribute
 (at_keyword) @keyword
+(component_name) @type
+(tag_name) @tag
 (rendered_block_comment) @comment
 (rendered_comment) @comment
 (silent_comment) @comment
 (block_comment) @comment
+(attr_name) @attribute
 (dqstring) @string
 (sqstring) @string
 (template_chars) @string
@@ -22,11 +24,16 @@
 (template "`") @string
 (template_substitution "${") @punctuation.special
 (template_substitution "}") @punctuation.special
-(template_chars) @string
-(template_interpolation_1 "${") @punctuation.special
-(template_interpolation_1 "}") @punctuation.special
 
 ;; Keyword, operator, and punctuation literals.
 [
-  "=" ">" "|" "," "(" ")" "{" "}"
+  "=" ">" "|" "," "{" "}"
 ] @punctuation.delimiter
+
+
+;; text_soup: structural tokens are plain text here
+(text_soup (attr_name) @none)
+(text_soup (class_sel) @none)
+(text_soup (component_name) @none)
+(text_soup (id_sel) @none)
+(text_soup (tag_name) @none)

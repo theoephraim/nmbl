@@ -1109,7 +1109,7 @@ export function matchTextSoup(t: TreeAccess, n: NodeEntry<"TextSoup">, tb: numbe
 
 export type TagHeadMatch =
   | { arm: "tagName"; alt: { branch: "tagName"; tagName: LeafEntry } | { branch: "componentName"; componentName: LeafEntry }; alt2: ({ branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry })[] }
-  | { arm: "idSel"; alt: ({ branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry })[] };
+  | { arm: "idSel"; alt: { branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry }; alt2: ({ branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry })[] };
 
 function _TagHead$tagName(t: TreeAccess, n: number, cc: number, tb: number, src: string): TagHeadMatch | null {
   let alt: ({ branch: "tagName"; tagName: LeafEntry } | { branch: "componentName"; componentName: LeafEntry }) | undefined;
@@ -1179,75 +1179,70 @@ function _TagHead$tagName(t: TreeAccess, n: number, cc: number, tb: number, src:
 }
 
 function _TagHead$idSel(t: TreeAccess, n: number, cc: number, tb: number, src: string): TagHeadMatch | null {
-  const alt: ({ branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry })[] = [];
+  let alt: ({ branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry }) | undefined;
+  const alt2: ({ branch: "idSel"; idSel: LeafEntry } | { branch: "classSel"; classSel: LeafEntry })[] = [];
   let i = 0;
   {
-    const _t0 = i; let _t1 = true;
-    _b2: {
-      {
-        let _t3 = false;
-        if (!_t3) {
-          let _t7_idSel: (LeafEntry) | undefined;
-          const _t4 = i; let _t5 = true;
-          _b6: {
-            if (!(__tok(t, cc, tb, i, 9))) { _t5 = false; break _b6; }
-            _t7_idSel = __SC[i] as LeafEntry;
-            i++;
-          }
-          if (_t5) { _t3 = true; alt.push({ branch: "idSel", idSel: _t7_idSel! } as never); }
-          else i = _t4;
-        }
-        if (!_t3) {
-          let _t11_classSel: (LeafEntry) | undefined;
-          const _t8 = i; let _t9 = true;
-          _b10: {
-            if (!(__tok(t, cc, tb, i, 10))) { _t9 = false; break _b10; }
-            _t11_classSel = __SC[i] as LeafEntry;
-            i++;
-          }
-          if (_t9) { _t3 = true; alt.push({ branch: "classSel", classSel: _t11_classSel! } as never); }
-          else i = _t8;
-        }
-        if (!_t3) { _t1 = false; break _b2; }
+    let _t0 = false;
+    if (!_t0) {
+      let _t4_idSel: (LeafEntry) | undefined;
+      const _t1 = i; let _t2 = true;
+      _b3: {
+        if (!(__tok(t, cc, tb, i, 9))) { _t2 = false; break _b3; }
+        _t4_idSel = __SC[i] as LeafEntry;
+        i++;
       }
+      if (_t2) { _t0 = true; alt = ({ branch: "idSel", idSel: _t4_idSel! }) as typeof alt; }
+      else i = _t1;
     }
-    if (!_t1) return null;
+    if (!_t0) {
+      let _t8_classSel: (LeafEntry) | undefined;
+      const _t5 = i; let _t6 = true;
+      _b7: {
+        if (!(__tok(t, cc, tb, i, 10))) { _t6 = false; break _b7; }
+        _t8_classSel = __SC[i] as LeafEntry;
+        i++;
+      }
+      if (_t6) { _t0 = true; alt = ({ branch: "classSel", classSel: _t8_classSel! }) as typeof alt; }
+      else i = _t5;
+    }
+    if (!_t0) return null;
   }
   for (;;) {
-    const _t12 = i; let _t13 = true;
-    _b14: {
+    const _t9 = i; let _t10 = true;
+    _b11: {
       {
-        let _t15 = false;
-        if (!_t15) {
-          let _t19_idSel: (LeafEntry) | undefined;
-          const _t16 = i; let _t17 = true;
-          _b18: {
-            if (!(__tok(t, cc, tb, i, 9))) { _t17 = false; break _b18; }
-            _t19_idSel = __SC[i] as LeafEntry;
+        let _t12 = false;
+        if (!_t12) {
+          let _t16_idSel: (LeafEntry) | undefined;
+          const _t13 = i; let _t14 = true;
+          _b15: {
+            if (!(__tok(t, cc, tb, i, 9))) { _t14 = false; break _b15; }
+            _t16_idSel = __SC[i] as LeafEntry;
             i++;
           }
-          if (_t17) { _t15 = true; alt.push({ branch: "idSel", idSel: _t19_idSel! } as never); }
-          else i = _t16;
+          if (_t14) { _t12 = true; alt2.push({ branch: "idSel", idSel: _t16_idSel! } as never); }
+          else i = _t13;
         }
-        if (!_t15) {
-          let _t23_classSel: (LeafEntry) | undefined;
-          const _t20 = i; let _t21 = true;
-          _b22: {
-            if (!(__tok(t, cc, tb, i, 10))) { _t21 = false; break _b22; }
-            _t23_classSel = __SC[i] as LeafEntry;
+        if (!_t12) {
+          let _t20_classSel: (LeafEntry) | undefined;
+          const _t17 = i; let _t18 = true;
+          _b19: {
+            if (!(__tok(t, cc, tb, i, 10))) { _t18 = false; break _b19; }
+            _t20_classSel = __SC[i] as LeafEntry;
             i++;
           }
-          if (_t21) { _t15 = true; alt.push({ branch: "classSel", classSel: _t23_classSel! } as never); }
-          else i = _t20;
+          if (_t18) { _t12 = true; alt2.push({ branch: "classSel", classSel: _t20_classSel! } as never); }
+          else i = _t17;
         }
-        if (!_t15) { _t13 = false; break _b14; }
+        if (!_t12) { _t10 = false; break _b11; }
       }
     }
-    if (!_t13) { i = _t12; break; }
-    if (i === _t12) break;
+    if (!_t10) { i = _t9; break; }
+    if (i === _t9) break;
   }
   if (i !== cc) return null;
-  return { arm: "idSel", alt };
+  return { arm: "idSel", alt: alt!, alt2 };
 }
 
 export function matchTagHead(t: TreeAccess, n: NodeEntry<"TagHead">, tb: number, src: string): TagHeadMatch {

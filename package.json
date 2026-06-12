@@ -29,9 +29,6 @@
     "examples/*"
   ],
   "packageManager": "bun@1.3.14",
-  "patchedDependencies": {
-    "monogram@github:johnsoncodehk/monogram#70a8019": "patches/monogram.patch"
-  },
   "catalog": {
     "astro": "^6.4.6",
     "htmlparser2": "^12.0.0",

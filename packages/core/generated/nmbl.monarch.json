@@ -393,9 +393,55 @@
       ]
     ],
     "root": [
-      {
-        "include": "@exprBody"
-      }
+      [
+        "[a-z][a-zA-Z0-9\\-_]*",
+        {
+          "token": "tag",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "[A-Z][a-zA-Z0-9\\-_]*",
+        {
+          "token": "tag",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "(?=.)",
+        {
+          "token": "",
+          "next": "@adj_linebody"
+        }
+      ]
     ],
     "value": [
       {
@@ -462,6 +508,105 @@
       [
         "=|>|\\||,|\\(|\\)|\\{|\\}",
         "delimiter"
+      ]
+    ],
+    "adj_attrlist": [
+      [
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        "attribute.name"
+      ],
+      [
+        "\"(?:\\\\[\"\\\\]|[^\"\\\\])*\"",
+        "string"
+      ],
+      [
+        "'(?:\\\\['\\\\]|[^'\\\\])*'",
+        "string"
+      ],
+      [
+        "`(?:[^`\\\\$]|\\\\[`\\\\$]|\\$(?!\\{))*`",
+        "string"
+      ],
+      [
+        "[^ \\t\\n\\r(){}\"'`=>|,]+",
+        "string"
+      ],
+      [
+        "[ \\t]+",
+        "white"
+      ],
+      [
+        "\\)",
+        {
+          "token": "delimiter.parenthesis",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "adj_taghead": [
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        "attribute.name"
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        "attribute.name"
+      ],
+      [
+        "\\(",
+        {
+          "token": "delimiter.parenthesis",
+          "next": "@adj_attrlist"
+        }
+      ],
+      [
+        "[ \\t]+",
+        {
+          "token": "white",
+          "next": "@adj_tagbody"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ],
+      [
+        ".",
+        {
+          "token": "",
+          "next": "@adj_tagbody"
+        }
+      ]
+    ],
+    "adj_tagbody": [
+      [
+        "[^\\n]+",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "adj_linebody": [
+      {
+        "include": "@exprBody"
+      },
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
       ]
     ]
   }
