@@ -113,6 +113,17 @@ describe('findNmblTemplates — scanner', () => {
 
 // ─── Placeholder substitution tests ──────────────────────────────────────────
 
+describe('compileTemplate — :md content blocks', () => {
+  it('renders markdown into dangerouslySetInnerHTML (raw HTML is not JSX)', () => {
+    const result = compileTemplate('div.prose:md\n  ### Hi\n\n  Some `{x}` code.', [], { attributeAliases: REACT_ALIASES });
+    expect(result.error).toBeUndefined();
+    expect(result.code).toContain('dangerouslySetInnerHTML={{ __html:');
+    expect(result.code).toContain('<h3>Hi</h3>');
+    // body is a JS string literal — braces/tags inside never parse as JSX
+    expect(result.code).toContain('&#123;x&#125;');
+  });
+});
+
 describe('compileTemplate — placeholder substitution', () => {
   it('substitutes hole in text position', () => {
     const result = compileTemplate('h3 __NMBL_X0__', ['item.name'], { attributeAliases: REACT_ALIASES });

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { compile } from '@nmbl-lang/core';
+import { mdFilter } from '@nmbl-lang/core/markdown';
 import type { NmblError } from '@nmbl-lang/core';
 import type { Plugin } from 'vite';
 import MagicString from 'magic-string';
@@ -27,6 +28,9 @@ export interface NmblPluginOptions {
    * Content-block filters: `div.prose:md` hands its raw body to `filters.md`
    * and splices the result into the output. Unlike core's sync `filters`,
    * these may be async (e.g. a remark-based markdown renderer).
+   *
+   * An `md` filter (CommonMark + GFM via `@nmbl-lang/core/markdown`) is
+   * provided by default; supply your own `md` to override it.
    */
   filters?: Record<string, (body: string) => string | Promise<string>>;
 }
@@ -82,12 +86,14 @@ function dedent(src: string): string {
 }
 
 export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
+  const filters: AsyncFilters = { md: mdFilter, ...options.filters };
+
   const nmblTransform: Plugin = {
     name: 'nmbl:transform',
 
     async transform(code, id) {
       if (!id.endsWith('.nmbl')) return;
-      const { html, errors } = await compileAsync(code, { framework: options.framework }, options.filters);
+      const { html, errors } = await compileAsync(code, { framework: options.framework }, filters);
       if (errors.length > 0) {
         this.warn(`NMBL compilation errors in ${id}:\n${formatErrors(errors)}`);
       }
@@ -114,7 +120,7 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
       const tpl = descriptor.template;
       if (!tpl || tpl.lang !== 'nmbl') return;
 
-      const { html, errors } = await compileAsync(dedent(tpl.content), { framework: 'vue' }, options.filters);
+      const { html, errors } = await compileAsync(dedent(tpl.content), { framework: 'vue' }, filters);
       if (errors.length > 0) {
         this.error(`NMBL compilation failed in ${id}:\n${formatErrors(errors)}`);
       }
@@ -169,7 +175,7 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
       let match;
 
       while ((match = templateRegex.exec(body)) !== null) {
-        const { html, errors } = await compileAsync(dedent(match[2]), { framework: 'astro' }, options.filters);
+        const { html, errors } = await compileAsync(dedent(match[2]), { framework: 'astro' }, filters);
         if (errors.length > 0) {
           this.error(`NMBL compilation failed in ${id}:\n${formatErrors(errors)}`);
         }

@@ -63,7 +63,7 @@ article:md
 
 ### Markdown sections (`:md`)
 
-In Astro projects using `@nmbl-lang/astro`, `:md` works out of the box: the body renders through the project's own Astro markdown pipeline (same remark/rehype plugins and syntax highlighting as `.md` files). Prefer it over stacks of inline `<h3>`/`<p>`/`<code>` for prose-heavy sections:
+`:md` works out of the box in EVERY integration — prefer it over stacks of inline `<h3>`/`<p>`/`<code>` for prose-heavy sections:
 
 ```
 .prose:md
@@ -73,9 +73,12 @@ In Astro projects using `@nmbl-lang/astro`, `:md` works out of the box: the body
   paragraphs. Raw inline HTML works too (<a target="_blank" …>).
 ```
 
-- The rendered HTML is spliced into the Astro template, so `{expr}` interpolation and `<Component />` tags still work inside the prose (MDX-like); braces inside code spans/fences are auto-escaped.
+- **Astro** (`@nmbl-lang/astro`): renders through the project's own Astro markdown pipeline — same remark/rehype plugins and syntax highlighting as `.md` files.
+- **Vue / Svelte / `.nmbl` files / `nmbl`…`` JSX templates**: a default CommonMark+GFM renderer (`@nmbl-lang/core/markdown`) is built in. Override with `filters: { md }` (vite plugin options accept async filters; svelte via `compiler.filters`).
+- The rendered HTML is spliced into the host template, so `{expr}` / `{{ expr }}` interpolation and `<Component />` tags still work inside the prose (MDX-like); braces inside code spans/fences are auto-escaped so they never parse as host expressions.
+- **JSX targets**: a content-mode body compiles to `dangerouslySetInnerHTML` on the host element (raw HTML is not JSX). A bare `:md` block with no host element is a compile error in jsx — attach it to an element (`div:md`).
 - Body is dedented relative to the block — relative indentation (nested lists) is preserved.
-- Other setups: pass `filters: { md: async (body) => html }` to `@nmbl-lang/vite-plugin` (filters may be async), or sync `filters` to core `compile()`.
+- Core `compile()` takes sync `filters`; the default md filter is importable: `import { mdFilter } from '@nmbl-lang/core/markdown'`.
 
 ## Control flow — one notation, host-native output
 

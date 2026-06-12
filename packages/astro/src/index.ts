@@ -1,5 +1,6 @@
 import type { AstroIntegration } from 'astro';
 import nmblVitePlugin from '@nmbl-lang/vite-plugin';
+import { escapeCodeBraces } from '@nmbl-lang/core/markdown';
 import { createMarkdownProcessor, type MarkdownProcessor } from '@astrojs/markdown-remark';
 
 type ConfigSetup = NonNullable<AstroIntegration['hooks']['astro:config:setup']>;
@@ -14,20 +15,6 @@ export interface NmblAstroOptions {
    * syntax highlighting `.md` files get. Default: true.
    */
   markdown?: boolean;
-}
-
-/**
- * The rendered markdown is spliced into the Astro template, so Astro still
- * parses it — `{expr}` interpolation and `<Component />` tags keep working
- * inside prose (the MDX-like behavior we want). But a brace inside a CODE
- * element is content, not an expression, so escape those.
- */
-function escapeCodeBraces(html: string): string {
-  return html.replace(
-    /(<code[^>]*>)([\s\S]*?)(<\/code>)/g,
-    (_m, open: string, body: string, close: string) =>
-      open + body.replace(/[{}]/g, c => (c === '{' ? '&#123;' : '&#125;')) + close,
-  );
 }
 
 export default function nmblAstro(options: NmblAstroOptions = {}): AstroIntegration {

@@ -311,6 +311,73 @@ describe('Compiler', () => {
       expect(errors).toHaveLength(0);
       expect(html).toContain('<h1>Hello</h1>');
     });
+
+    test('jsx: element content block compiles to dangerouslySetInnerHTML', () => {
+      const input = dedent`
+        div.prose:md
+          # Hello
+      `;
+      const { html, errors } = compile(input, {
+        framework: 'jsx',
+        filters: { md: (body: string) => `<h1>${body.replace('# ', '')}</h1>` },
+      });
+      expect(errors).toHaveLength(0);
+      // Raw HTML is not JSX (braces become expressions, unclosed tags become
+      // elements) — the body must land in dangerouslySetInnerHTML.
+      expect(html).toContain('dangerouslySetInnerHTML={{ __html: "<h1>Hello</h1>" }}');
+      expect(html).not.toContain('<h1>Hello</h1></div>');
+    });
+
+    test('jsx: script content block also uses dangerouslySetInnerHTML', () => {
+      const input = dedent`
+        script:
+          if (a) { b(); }
+      `;
+      const { html, errors } = compile(input, { framework: 'jsx' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<script dangerouslySetInnerHTML=');
+      expect(html).toContain('if (a) { b(); }');
+    });
+
+    test('jsx: bare content block is a compile error with a hint', () => {
+      const input = dedent`
+        :md
+          # Hello
+      `;
+      const { errors } = compile(input, { framework: 'jsx' });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('attach it to an element');
+    });
+  });
+
+  describe('markdown filter (@nmbl-lang/core/markdown)', async () => {
+    const { mdFilter, escapeCodeBraces } = await import('../src/markdown.js');
+
+    test('renders markdown with GFM and passes raw inline HTML through', () => {
+      const out = mdFilter('### Hi\n\nA [link](/x), **bold**, and <a target="_blank" href="/y">raw</a>.\n\n- ~~done~~\n');
+      expect(out).toContain('<h3>Hi</h3>');
+      expect(out).toContain('<a href="/x">link</a>');
+      expect(out).toContain('<strong>bold</strong>');
+      expect(out).toContain('<a target="_blank" href="/y">raw</a>');
+      expect(out).toContain('<del>done</del>'); // gfm strikethrough
+    });
+
+    test('escapes braces inside code spans and fences (host frameworks parse { } as expressions)', () => {
+      const out = mdFilter('Write `{#each x}` or:\n\n```\nif (a) { b(); }\n```\n');
+      expect(out).not.toMatch(/<code[^>]*>[^<]*\{/);
+      expect(out).toContain('&#123;#each x&#125;');
+      expect(out).toContain('if (a) &#123; b(); &#125;');
+    });
+
+    test('works as a compile() filter end to end', () => {
+      const { html, errors } = compile('div.prose:md\n  Some `{x}` code.', { filters: { md: mdFilter } });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<div class="prose"><p>Some <code>&#123;x&#125;</code> code.</p>');
+    });
+
+    test('escapeCodeBraces leaves braces outside code elements alone', () => {
+      expect(escapeCodeBraces('<p>{expr}</p><code>{x}</code>')).toBe('<p>{expr}</p><code>&#123;x&#125;</code>');
+    });
   });
 
   describe('control flow - svelte', () => {

@@ -130,6 +130,35 @@ div.wrapper
     });
   });
 
+  describe(':md content blocks', () => {
+    test('renders markdown by default, with code-span braces escaped', () => {
+      const content = `<template lang="nmbl">
+div.prose:md
+  ### Hi
+
+  Some \`{#if x}\` and **bold**.
+</template>`;
+      const preprocessor = nmblPreprocess();
+      const result = preprocessor.markup({ content, filename: 'Md.svelte' });
+      expect(result).toBeDefined();
+      expect(result!.code).toContain('<h3>Hi</h3>');
+      expect(result!.code).toContain('<strong>bold</strong>');
+      // svelte parses { } as expressions — code-span braces must be entities
+      expect(result!.code).toContain('&#123;#if x&#125;');
+    });
+
+    test('a user md filter via options.compiler.filters overrides the default', () => {
+      const content = `<template lang="nmbl">
+div:md
+  # ignored
+</template>`;
+      const preprocessor = nmblPreprocess({ compiler: { filters: { md: () => 'CUSTOM' } } });
+      const result = preprocessor.markup({ content, filename: 'Md.svelte' });
+      expect(result!.code).toContain('CUSTOM');
+      expect(result!.code).not.toContain('<h1>');
+    });
+  });
+
   describe('Svelte control flow: @if / @else', () => {
     test('@if compiles to {#if}...{/if}', () => {
       const content = `<template lang="nmbl">

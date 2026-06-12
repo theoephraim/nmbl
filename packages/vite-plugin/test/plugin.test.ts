@@ -26,6 +26,22 @@ describe('nmbl:transform (.nmbl files)', () => {
     expect(await p.transform.call(ctx, 'div', '/x/test.txt')).toBeUndefined();
   });
 
+  it('renders :md content blocks as markdown by DEFAULT (no config)', async () => {
+    const p = getPlugin('nmbl:transform');
+    const out = await p.transform.call(ctx, 'div.prose:md\n  ### Hi\n\n  Some `{x}` and **bold**.', '/x/test.nmbl');
+    expect(out.code).toContain('<h3>Hi</h3>');
+    expect(out.code).toContain('<strong>bold</strong>');
+    // braces inside code spans are escaped so host frameworks don't parse them
+    expect(out.code).toContain('&#123;x&#125;');
+  });
+
+  it('a user-supplied md filter overrides the default', async () => {
+    const p = getPlugin('nmbl:transform', { filters: { md: () => 'CUSTOM' } });
+    const out = await p.transform.call(ctx, 'div:md\n  # ignored', '/x/test.nmbl');
+    expect(out.code).toContain('CUSTOM');
+    expect(out.code).not.toContain('<h1>');
+  });
+
   it('renders :md content blocks through an async filter', async () => {
     const md = async (body: string) => `<h1>${body.replace('# ', '')}</h1>`;
     const p = getPlugin('nmbl:transform', { filters: { md } });

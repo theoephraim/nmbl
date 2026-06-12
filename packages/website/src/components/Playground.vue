@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { compile, decompile } from '@nmbl-lang/core';
+import { mdFilter } from '@nmbl-lang/core/markdown';
 import Editor from './Editor.vue';
 import { PLAYGROUND_EXAMPLE_NMBL } from '../examples';
 
@@ -69,7 +70,7 @@ compileNmbl(PLAYGROUND_EXAMPLE_NMBL);
 
 function compileNmbl(source: string) {
   try {
-    const { html, errors } = compile(source, { framework: framework.value });
+    const { html, errors } = compile(source, { framework: framework.value, filters: { md: mdFilter } });
     if (errors.length > 0) {
       error.value = errors.map(e => e.message).join('\n');
     } else {

@@ -1,7 +1,7 @@
 {
   "name": "@nmbl-lang/core",
   "version": "0.1.0",
-  "description": "Lexer, parser, compiler, formatter, linter, and HTML→NMBL decompiler for the NMBL templating language",
+  "description": "Lexer, parser, compiler, formatter, linter, and HTML\u2192NMBL decompiler for the NMBL templating language",
   "keywords": [
     "nmbl",
     "template",
@@ -26,6 +26,10 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.mts"
+    },
+    "./markdown": {
+      "import": "./dist/markdown.mjs",
+      "types": "./dist/markdown.d.mts"
     }
   },
   "scripts": {
@@ -37,7 +41,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "htmlparser2": "catalog:"
+    "htmlparser2": "catalog:",
+    "marked": "catalog:"
   },
   "devDependencies": {
     "@types/node": "^25.0.0",

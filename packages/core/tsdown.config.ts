@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/markdown.ts'],
   format: ['esm'],
   // resolve monogram's types into our .d.ts (it ships raw .ts, no typings dist)
   dts: { resolve: ['monogram'] },

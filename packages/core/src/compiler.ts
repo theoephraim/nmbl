@@ -227,6 +227,15 @@ export class Compiler {
       return;
     }
 
+    // JSX: a raw content-mode body (script:, style:, a :md filter's HTML) is not
+    // JSX — its braces would parse as expressions and unclosed tags as elements.
+    // The only faithful encoding is dangerouslySetInnerHTML on the host element.
+    if (node.contentMode && this.framework === 'jsx') {
+      const body = this.compileContentModeBody(node);
+      this.write(` dangerouslySetInnerHTML={{ __html: ${JSON.stringify(body)} }} />`);
+      return;
+    }
+
     // Close opening tag
     this.write('>');
 
@@ -316,6 +325,11 @@ export class Compiler {
     // Content mode: raw text body
     if (node.contentMode) {
       const body = this.compileContentModeBody(node);
+      // JSX: raw bodies aren't JSX (braces parse as expressions, unclosed tags as
+      // elements) — encode via dangerouslySetInnerHTML on the host element.
+      if (this.framework === 'jsx') {
+        return `${indent}<${tag}${attrStr} dangerouslySetInnerHTML={{ __html: ${JSON.stringify(body)} }} />`;
+      }
       if (!body) {
         return `${indent}<${tag}${attrStr}></${tag}>`;
       }
@@ -769,7 +783,21 @@ export class Compiler {
     return `${indent}<!-- ${node.value} -->`;
   }
 
+  // A bare content block has no host element to carry dangerouslySetInnerHTML,
+  // so its raw body cannot be expressed in JSX at all — error with the fix.
+  private reportBareContentBlockJsx(node: ContentBlockNode): void {
+    this.errors.push(createError(
+      ErrorCode.UnexpectedToken,
+      `a bare \`:${node.mode}\` content block is not supported in jsx — attach it to an element (e.g. \`div:${node.mode}\`) so the body can compile to dangerouslySetInnerHTML`,
+      node.span,
+    ));
+  }
+
   private compileContentBlockTracked(node: ContentBlockNode, depth: number): void {
+    if (this.framework === 'jsx') {
+      this.reportBareContentBlockJsx(node);
+      return;
+    }
     const indent = this.getIndent(depth);
     if (indent) this.write(indent);
     const filter = this.filters[node.mode];
@@ -778,6 +806,10 @@ export class Compiler {
   }
 
   private compileContentBlock(node: ContentBlockNode, depth: number): string {
+    if (this.framework === 'jsx') {
+      this.reportBareContentBlockJsx(node);
+      return '';
+    }
     const indent = this.getIndent(depth);
     const filter = this.filters[node.mode];
     const body = filter ? filter(node.body) : node.body;

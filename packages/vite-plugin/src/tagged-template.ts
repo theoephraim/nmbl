@@ -6,6 +6,7 @@
  */
 
 import { compile } from '@nmbl-lang/core';
+import { mdFilter } from '@nmbl-lang/core/markdown';
 import type { CompilerOptions } from '@nmbl-lang/core';
 import MagicString from 'magic-string';
 
@@ -535,6 +536,10 @@ export function compileTemplate(
   const compilerOpts: CompilerOptions = {
     framework: 'jsx',
     attributeAliases: opts.attributeAliases,
+    // Default `md` filter so `:md` content blocks work in nmbl`…` templates too.
+    // The body lands in dangerouslySetInnerHTML (the compiler's jsx encoding for
+    // raw content-mode bodies), so the rendered HTML never parses as JSX.
+    filters: { md: mdFilter },
   };
 
   const dedented = dedent(content.replace(/^\n/, ''));

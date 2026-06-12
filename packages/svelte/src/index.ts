@@ -1,4 +1,5 @@
 import { compile, type CompilerOptions, type SourceMapping } from '@nmbl-lang/core';
+import { mdFilter } from '@nmbl-lang/core/markdown';
 
 function dedent(text: string): { text: string; indent: number; leadingNewlines: number } {
   // Count and strip leading newlines
@@ -246,6 +247,9 @@ export function nmblPreprocess(options: NmblPreprocessOptions = {}) {
       const { text: nmblSource, indent: dedentAmount, leadingNewlines } = dedent(innerContent);
       const { html, mappings, errors } = compile(nmblSource, {
         ...options.compiler,
+        // Default `md` filter so `:md` content blocks render as markdown; a
+        // user-supplied md filter in options.compiler.filters wins.
+        filters: { md: mdFilter, ...options.compiler?.filters },
         framework: 'svelte',
         filename,
       });
