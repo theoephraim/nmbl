@@ -1,0 +1,9 @@
+{
+  "$schema": "../node_modules/@varlock/bumpy/config-schema.json",
+  "baseBranch": "main",
+  "access": "public",
+  "changelog": "github",
+  "publish": {
+    "provenance": true
+  }
+}

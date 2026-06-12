@@ -1,0 +1,30 @@
+name: Bumpy Check
+
+on: pull_request_target
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: oven-sh/setup-bun@v2
+
+      # Run the same bumpy version the base branch declares, so a PR can't
+      # change which CLI validates it.
+      - name: Resolve bumpy version from base
+        run: |
+          git fetch origin main --depth=1
+          VERSION=$(git show "origin/main:package.json" \
+            | jq -r '.devDependencies["@varlock/bumpy"] // .dependencies["@varlock/bumpy"]' \
+            | sed 's/[\^~]//')
+          echo "BUMPY_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - run: bunx "@varlock/bumpy@$BUMPY_VERSION" ci check
+        env:
+          GH_TOKEN: ${{ github.token }}
