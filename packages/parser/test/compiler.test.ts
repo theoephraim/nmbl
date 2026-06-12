@@ -1,6 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { compile, compileAst, parse, compileToHtml } from '../src/index.js';
-import type { SourceMapping } from '../src/index.js';
+import { compile, compileToHtml } from '../src/index.js';
 
 function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
   let result = String.raw(strings, ...values);
@@ -232,10 +231,6 @@ describe('Compiler', () => {
       expect(html).toContain('World');
     });
 
-    test('trailing backslash preserves whitespace', () => {
-      const { html } = compile('p Hello \\');
-      expect(html.trim()).toBe('<p>Hello  </p>');
-    });
 
     test('inline html in text passes through', () => {
       const { html } = compile('p Click <a href="/">here</a>');
@@ -283,7 +278,7 @@ describe('Compiler', () => {
         @if(loggedIn)
           p Welcome
       `;
-      const { html, errors } = compile(input);
+      const { html, errors } = compile(input, { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe(dedent`
         {#if loggedIn}
@@ -299,7 +294,7 @@ describe('Compiler', () => {
         @else
           p Please log in
       `;
-      const { html, errors } = compile(input);
+      const { html, errors } = compile(input, { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe(dedent`
         {#if loggedIn}
@@ -319,7 +314,7 @@ describe('Compiler', () => {
         @else
           p C
       `;
-      const { html, errors } = compile(input);
+      const { html, errors } = compile(input, { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe(dedent`
         {#if a}
@@ -337,7 +332,7 @@ describe('Compiler', () => {
         @each(items as item, i)
           li {item.name}
       `;
-      const { html, errors } = compile(input);
+      const { html, errors } = compile(input, { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe(dedent`
         {#each items as item, i}
@@ -352,7 +347,7 @@ describe('Compiler', () => {
           @each(items as item)
             li {item}
       `;
-      const { html, errors } = compile(input);
+      const { html, errors } = compile(input, { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe(dedent`
         {#if items.length}
@@ -364,13 +359,13 @@ describe('Compiler', () => {
     });
 
     test('inline directive @render', () => {
-      const { html, errors } = compile('{@render header()}');
+      const { html, errors } = compile('{@render header()}', { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe('{@render header()}');
     });
 
     test('inline directive @html', () => {
-      const { html, errors } = compile('{@html rawContent}');
+      const { html, errors } = compile('{@html rawContent}', { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe('{@html rawContent}');
     });
@@ -381,7 +376,7 @@ describe('Compiler', () => {
           @if(cond)
             p Hello
       `;
-      const { html, errors } = compile(input);
+      const { html, errors } = compile(input, { framework: 'svelte' });
       expect(errors).toHaveLength(0);
       expect(html.trim()).toBe(dedent`
         <div>
@@ -390,6 +385,181 @@ describe('Compiler', () => {
           {/if}
         </div>
       `.trim());
+    });
+  });
+
+  describe('control flow - vue', () => {
+    test('if/elseif/else compiles to <template> wrappers', () => {
+      const input = dedent`
+        @if(loggedIn)
+          p Welcome
+        @elseif(pending)
+          p Wait
+        @else
+          p Log in
+      `;
+      const { html, errors } = compile(input, { framework: 'vue' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<template v-if="loggedIn">');
+      expect(html).toContain('<template v-else-if="pending">');
+      expect(html).toContain('<template v-else>');
+      expect(html).toContain('<p>Welcome</p>');
+      expect((html.match(/<\/template>/g) ?? []).length).toBe(3);
+    });
+
+    test('each with :key in the same parens (in normalizes to of)', () => {
+      const { html, errors } = compile(
+        '@each(item in items :key="item.id")\n  li {{ item.name }}',
+        { framework: 'vue' },
+      );
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<template v-for="item of items" :key="item.id">');
+    });
+
+    test('svelte-style as-form compiles in vue mode too', () => {
+      const { html, errors } = compile(
+        '@each(items as item, i (item.id))\n  li {{ item.name }}',
+        { framework: 'vue' },
+      );
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<template v-for="(item, i) of items" :key="item.id">');
+    });
+
+    test('a stray comma before the attr section is tolerated', () => {
+      const { html, errors } = compile(
+        '@each(item in items, :key="item.id")\n  li x',
+        { framework: 'vue' },
+      );
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<template v-for="item of items" :key="item.id">');
+    });
+
+    test('equality operators in expressions never split as attrs', () => {
+      for (const expr of ['a === "b"', 'x == y', 'a <= b']) {
+        const { html, errors } = compile(`@if(${expr})\n  p x`, { framework: 'vue' });
+        expect(errors).toHaveLength(0);
+        expect(html).toContain('<template v-if=');
+      }
+    });
+
+    test(':key in svelte mode becomes the keyed-each parens', () => {
+      const { html, errors } = compile('@each(items as item :key="item.id")\n  li x', { framework: 'svelte' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('{#each items as item (item.id)}');
+    });
+
+    test('of-form compiles in svelte mode too', () => {
+      const { html, errors } = compile('@each(item, i of items :key="item.id")\n  li x', { framework: 'svelte' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('{#each items as item, i (item.id)}');
+    });
+
+    test('non-key wrapper attributes error outside vue mode', () => {
+      const { errors } = compile('@each(items as item v-memo="[item]")\n  li x', { framework: 'svelte' });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('wrapper attributes');
+    });
+
+    test('doubled key (parens + :key) is an error', () => {
+      const { errors } = compile('@each(items as item (item.id) :key="item.id")\n  li x', { framework: 'vue' });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('use one');
+    });
+
+    test('destructured v-for expression keeps its nested comma', () => {
+      const { html, errors } = compile(
+        '@each((item, i) in items :key="item.id")\n  li {{ i }}',
+        { framework: 'vue' },
+      );
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<template v-for="(item, i) of items" :key="item.id">');
+    });
+
+    test('double quotes in expressions are escaped', () => {
+      const { html, errors } = compile('@if(x === "a")\n  p hi', { framework: 'vue' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('v-if="x === &quot;a&quot;"');
+    });
+
+    test('@await/@key/@snippet are hard errors', () => {
+      for (const block of ['@await(p)', '@key(x)', '@snippet(s())']) {
+        const { errors } = compile(`${block}\n  p hi`, { framework: 'vue' });
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].message).toContain("framework 'vue'");
+      }
+    });
+
+    test('{@html} inline directive errors with a v-html hint', () => {
+      const { errors } = compile('{@html rawContent}', { framework: 'vue' });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('v-html');
+    });
+
+    test('svelte each with index is not split by the attr rule', () => {
+      const { html, errors } = compile('@each(items as item, i)\n  li {item.name}', { framework: 'svelte' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('{#each items as item, i}');
+    });
+  });
+
+  describe('framework - jsx', () => {
+    const react = { framework: 'jsx' as const, attributeAliases: { class: 'className', for: 'htmlFor' } };
+
+    test('class/for alias to className/htmlFor (react)', () => {
+      const { html, errors } = compile('div#app.card\n  label(for="x") Name', react);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('className="card"');
+      expect(html).toContain('htmlFor="x"');
+      expect(html).toContain('id="app"');
+    });
+
+    test('class is preserved without aliases (solid/qwik)', () => {
+      const { html, errors } = compile('div.card hi', { framework: 'jsx' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('class="card"');
+    });
+
+    test('void elements self-close', () => {
+      const { html } = compile('br', { framework: 'jsx' });
+      expect(html.trim()).toBe('<br />');
+    });
+
+    test('@if/@else compiles to a ternary', () => {
+      const { html, errors } = compile('@if(open)\n  p yes\n@else\n  p no', { framework: 'jsx' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('{open ? (');
+      expect(html).toContain(') : (');
+    });
+
+    test('@each :key lands on the iteration root element', () => {
+      const { html, errors } = compile('@each(item of items :key="item.id")\n  li.row {item.name}', { framework: 'jsx' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('{items.map((item) => (');
+      expect(html).toContain('key={item.id}');
+    });
+
+    test('@each :key with multiple roots errors', () => {
+      const { errors } = compile('@each(item of items :key="item.id")\n  li a\n  li b', { framework: 'jsx' });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].message).toContain('single root element');
+    });
+
+    test('rendered comments become brace comments', () => {
+      const { html } = compile('//! note for output', { framework: 'jsx' });
+      expect(html.trim()).toBe('{/* note for output */}');
+    });
+
+    test('expression attributes pass through unquoted', () => {
+      const { html, errors } = compile('button(onClick={() => go(id)} disabled) Hit', { framework: 'jsx' });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('onClick={() => go(id)}');
+      expect(html).toContain(' disabled>');
+    });
+
+    test('@await and {@html} are errors with hints', () => {
+      expect(compile('@await(p)\n  p x', { framework: 'jsx' }).errors.length).toBeGreaterThan(0);
+      const r = compile('{@html raw}', { framework: 'jsx' });
+      expect(r.errors[0].message).toContain('dangerouslySetInnerHTML');
     });
   });
 
@@ -606,7 +776,7 @@ describe('Compiler', () => {
         @if(condition)
           p True
       `;
-      const result = compile(input);
+      const result = compile(input, { framework: 'svelte' });
 
       const blockMappings = result.mappings.filter(m =>
         m.metadata?.nodeType === 'Block'

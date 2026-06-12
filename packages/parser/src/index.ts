@@ -1,36 +1,35 @@
-export { Lexer } from './lexer.js';
-export { Parser } from './parser.js';
 export { Compiler, type CompilerOptions, type SourceMapping, type CompileResult } from './compiler.js';
 export { decompile, type DecompileOptions } from './decompiler.js';
-export { TokenType, type Token } from './tokens.js';
 export type { SourcePosition, SourceSpan } from './source-location.js';
 export type {
   DocumentNode, ElementNode, AttributeNode, TextNode,
-  CommentNode, HtmlCommentNode, ContentBlockNode, AstNode,
-  BlockNode, BlockClauseNode, InlineDirectiveNode,
+  HtmlCommentNode, ContentBlockNode, AstNode,
+  BlockNode, BlockClauseNode, InlineDirectiveNode, EachExpr,
 } from './ast.js';
 export { ErrorCode, type NmblError } from './errors.js';
 export { VOID_ELEMENTS, INLINE_ELEMENTS } from './constants.js';
+export { parseToAst, tokenizeSource, type ParseToAstResult, type NmblToken } from './cst-to-ast.js';
+export { recoverComments, type RecoveredComment } from './comments.js';
+export { default as nmblGrammar, type NmblGrammar } from './nmbl-grammar.js';
 
-import { Lexer } from './lexer.js';
-import { Parser } from './parser.js';
 import { Compiler, type CompilerOptions, type CompileResult } from './compiler.js';
-import type { Token } from './tokens.js';
+import { parseToAst, tokenizeSource } from './cst-to-ast.js';
 import type { DocumentNode } from './ast.js';
 import type { NmblError } from './errors.js';
 
-/** Tokenize source into a token stream. */
-export function tokenize(source: string, filename?: string): { tokens: Token[]; errors: NmblError[] } {
-  const lexer = new Lexer(source, filename);
-  return lexer.tokenize();
+/**
+ * Tokenize source into monogram's token stream.
+ * (The token shape changed in the monogram rewrite — tokens carry
+ * `type`/`text`/`offset`; structural Indent/Dedent/Newline are tokens.)
+ */
+export function tokenize(source: string, _filename?: string) {
+  return tokenizeSource(source);
 }
 
-/** Parse source into an AST. */
-export function parse(source: string, filename?: string): { ast: DocumentNode; errors: NmblError[] } {
-  const { tokens, errors: lexErrors } = tokenize(source, filename);
-  const parser = new Parser(tokens);
-  const { ast, errors: parseErrors } = parser.parse();
-  return { ast, errors: [...lexErrors, ...parseErrors] };
+/** Parse source into the compiler AST. */
+export function parse(source: string, _filename?: string): { ast: DocumentNode; errors: NmblError[] } {
+  const { ast, errors } = parseToAst(source);
+  return { ast, errors };
 }
 
 /** Compile a pre-parsed AST to HTML with source mappings. */
@@ -43,7 +42,6 @@ export function compileAst(ast: DocumentNode, options?: CompilerOptions & { sour
 export function compile(source: string, options?: CompilerOptions & { filename?: string }): CompileResult {
   const { ast, errors } = parse(source, options?.filename);
   const result = compileAst(ast, { ...options, source });
-  // Merge parse errors with compile errors
   result.errors = [...errors, ...result.errors];
   return result;
 }

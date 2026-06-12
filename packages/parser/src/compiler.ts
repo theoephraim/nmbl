@@ -1,16 +1,38 @@
 import type {
   DocumentNode, ElementNode, AttributeNode, TextNode,
-  CommentNode, HtmlCommentNode, ContentBlockNode, AstNode,
-  BlockNode, BlockClauseNode, InlineDirectiveNode,
+  HtmlCommentNode, ContentBlockNode, AstNode,
+  BlockNode, InlineDirectiveNode,
 } from './ast.js';
 import type { SourceSpan, SourcePosition } from './source-location.js';
 import { span } from './source-location.js';
-import type { NmblError } from './errors.js';
+import { ErrorCode, createError, type NmblError } from './errors.js';
 
 export interface CompilerOptions {
   indent?: number;
   xhtml?: boolean;
-  framework?: 'svelte' | 'astro';
+  /**
+   * The host framework — decides what `@if`-style blocks compile to:
+   * - 'svelte': native Svelte blocks ({#if}/{:else}/{#each}/{#await}/…)
+   * - 'vue':    renderless <template v-if>/<template v-for> wrappers (only
+   *             @if/@elseif/@else/@each)
+   * - 'astro':  JSX expressions ({cond && (…)}, {items.map(…)}); only @if/@each
+   * - 'jsx':    like 'astro' but for JSX-the-language (React/Solid/Qwik/Preact
+   *             via the tagged-template transform): self-closing voids,
+   *             brace-comment output for rendered comments, @each :key → a
+   *             JSX key attribute on the iteration root, attribute aliasing
+   *             (class→className)
+   * - 'html':   @-blocks are a compile ERROR
+   * @each accepts BOTH `item of items` and `items as item (key)` forms and
+   * compiles each host's native syntax from the parsed structure.
+   * Defaults to 'html' (plain markup; no control-flow blocks).
+   */
+  framework?: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx';
+  /**
+   * Attribute-name aliases applied at emission (jsx dialects): e.g.
+   * { class: 'className', for: 'htmlFor' } for React. Applies to shorthand
+   * selectors (`.btn` → className="btn") and explicit attributes alike.
+   */
+  attributeAliases?: Record<string, string>;
   filters?: Record<string, (body: string) => string>;
 }
 
@@ -32,7 +54,8 @@ export interface CompileResult {
 export class Compiler {
   private indentSize: number;
   private xhtml: boolean;
-  private framework: 'svelte' | 'astro';
+  private framework: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx';
+  private attributeAliases: Record<string, string>;
   private filters: Record<string, (body: string) => string>;
 
   // Position tracking fields
@@ -44,8 +67,10 @@ export class Compiler {
 
   constructor(options: CompilerOptions = {}) {
     this.indentSize = options.indent ?? 2;
-    this.xhtml = options.xhtml ?? false;
-    this.framework = options.framework ?? 'svelte';
+    this.framework = options.framework ?? 'html';
+    // JSX requires self-closing void elements (<br />)
+    this.xhtml = options.xhtml ?? (this.framework === 'jsx');
+    this.attributeAliases = options.attributeAliases ?? {};
     this.filters = options.filters ?? {};
 
     // Initialize position tracking
@@ -76,6 +101,11 @@ export class Compiler {
       mappings: this.mappings,
       errors: this.errors
     };
+  }
+
+  // Attribute-name aliasing (jsx dialects: class→className, for→htmlFor)
+  private aliasAttr(name: string): string {
+    return this.attributeAliases[name] ?? name;
   }
 
   private spanWithPrefix(span: SourceSpan): SourceSpan {
@@ -143,7 +173,6 @@ export class Compiler {
     switch (node.type) {
       case 'Element': return this.compileElement(node, depth);
       case 'Text': return this.compileText(node, depth);
-      case 'Comment': return null; // Silent comments omitted
       case 'HtmlComment': return this.compileHtmlComment(node, depth);
       case 'ContentBlock': return this.compileContentBlock(node, depth);
       case 'Block': return this.compileBlock(node, depth);
@@ -158,9 +187,6 @@ export class Compiler {
         break;
       case 'Text':
         this.compileTextTracked(node, depth);
-        break;
-      case 'Comment':
-        // Silent comments are omitted from output - no mapping needed
         break;
       case 'HtmlComment':
         this.compileHtmlCommentTracked(node, depth);
@@ -380,7 +406,7 @@ export class Compiler {
       // Include the opening quote in the mapping, aligned with the '#' prefix in NMBL.
       // Vue's CompilerDOM stores value.loc starting at the quote, and Volar adds +1
       // to skip it. By mapping " to #, the +1 correctly skips to the ID content.
-      this.write('id=');
+      this.write(this.aliasAttr('id') + '=');
       const idSpanWithPrefix = this.spanWithPrefix(idSourceSpan);
       this.write('"' + node.id, idSpanWithPrefix, { nodeType: 'Attribute', attributeName: 'id' });
       this.write('"');
@@ -389,7 +415,7 @@ export class Compiler {
     // Emit merged classes
     if (allClasses.length > 0) {
       this.write(' ');
-      this.write('class=');
+      this.write(this.aliasAttr('class') + '=');
 
       // Write each class with its specific source mapping.
       // For CSS shorthand classes, include the HTML quote character in the mapping
@@ -479,10 +505,11 @@ export class Compiler {
 
   private compileAttributeTracked(attr: AttributeNode): void {
     const prefix = attr.bound ? ':' : '';
+    const name = this.aliasAttr(attr.name);
 
     if (attr.value === null) {
       // Boolean attribute - map the whole thing
-      this.write(prefix + attr.name, attr.span, { nodeType: 'Attribute', attributeName: attr.name });
+      this.write(prefix + name, attr.span, { nodeType: 'Attribute', attributeName: attr.name });
       return;
     }
 
@@ -492,7 +519,7 @@ export class Compiler {
       attr.span.start,
       this.calculatePosition(nameEndOffset)
     );
-    this.write(prefix + attr.name, nameSpan, { nodeType: 'Attribute', attributeName: attr.name });
+    this.write(prefix + name, nameSpan, { nodeType: 'Attribute', attributeName: attr.name });
     this.write('=');
 
     // Find where the value starts (at the opening quote/brace/backtick)
@@ -557,11 +584,6 @@ export class Compiler {
     // and Volar adds +1 to skip it. By including the quote in our mapping, the positions align.
     this.write('"' + attr.value, valueSpan, { nodeType: 'Attribute', attributeName: attr.name });
     this.write('"');
-  }
-
-  private getSourceText(span: SourceSpan): string {
-    if (!this.source) return '';
-    return this.source.substring(span.start.offset, span.end.offset);
   }
 
   private findQuoteInAttribute(attr: AttributeNode): number {
@@ -638,12 +660,12 @@ export class Compiler {
 
     // Emit id from CSS shorthand
     if (node.id) {
-      parts.push(`id="${node.id}"`);
+      parts.push(`${this.aliasAttr('id')}="${node.id}"`);
     }
 
     // Emit merged classes
     if (allClasses.length > 0) {
-      parts.push(`class="${allClasses.join(' ')}"`);
+      parts.push(`${this.aliasAttr('class')}="${allClasses.join(' ')}"`);
     }
 
     // Emit bound class separately
@@ -661,21 +683,22 @@ export class Compiler {
 
   private compileAttribute(attr: AttributeNode): string {
     const prefix = attr.bound ? ':' : '';
+    const name = this.aliasAttr(attr.name);
 
     if (attr.value === null) {
       // Boolean attribute
-      return `${prefix}${attr.name}`;
+      return `${prefix}${name}`;
     }
 
     if (attr.expression) {
-      return `${prefix}${attr.name}=${attr.value}`;
+      return `${prefix}${name}=${attr.value}`;
     }
 
     if (attr.templateLiteral) {
-      return `${prefix}${attr.name}="\`${attr.value}\`"`;
+      return `${prefix}${name}="\`${attr.value}\`"`;
     }
 
-    return `${prefix}${attr.name}="${attr.value}"`;
+    return `${prefix}${name}="${attr.value}"`;
   }
 
   private compileTextTracked(node: TextNode, depth: number): void {
@@ -698,6 +721,15 @@ export class Compiler {
   private compileHtmlCommentTracked(node: HtmlCommentNode, depth: number): void {
     const indent = this.getIndent(depth);
     if (indent) this.write(indent);
+
+    // JSX has no HTML comments — rendered comments become brace comments.
+    if (this.framework === 'jsx') {
+      const value = node.value.split('*/').join('*\u200B/');
+      this.write('{/* ', node.span, { nodeType: 'HtmlComment' });
+      this.write(value, node.span, { nodeType: 'HtmlComment' });
+      this.write(' */}', node.span, { nodeType: 'HtmlComment' });
+      return;
+    }
 
     if (node.value.includes('\n')) {
       // Multi-line comment
@@ -725,6 +757,10 @@ export class Compiler {
 
   private compileHtmlComment(node: HtmlCommentNode, depth: number): string {
     const indent = this.getIndent(depth);
+    if (this.framework === 'jsx') {
+      const value = node.value.split('*/').join('*\u200B/');
+      return `${indent}{/* ${value} */}`;
+    }
     if (node.value.includes('\n')) {
       const innerIndent = this.getIndent(depth + 1);
       const body = node.value.split('\n').map(line => line ? `${innerIndent}${line}` : '').join('\n');
@@ -766,23 +802,153 @@ export class Compiler {
   // ─── Control Flow Block Compilation ──────────────────────
 
   private compileBlockTracked(node: BlockNode, depth: number): void {
-    if (this.framework === 'astro') {
+    this.checkBlockAttributes(node);
+    if (node.blockType === 'each') this.injectJsxKey(node);
+    if (this.framework === 'astro' || this.framework === 'jsx') {
       this.compileBlockAstroTracked(node, depth);
-    } else {
+    } else if (this.framework === 'svelte') {
       this.compileBlockSvelteTracked(node, depth);
+    } else if (this.framework === 'vue') {
+      this.compileBlockVueTracked(node, depth);
+    } else {
+      this.reportBlockUnsupported(node);
     }
+  }
+
+  // @-blocks are a thin skin over the HOST framework's block syntax — in
+  // plain HTML there is none.
+  private reportBlockUnsupported(node: BlockNode): void {
+    const hint = this.framework === 'vue'
+      ? `Vue supports @if/@elseif/@else and @each (compiled to <template v-if/v-for> wrappers)`
+      : `control-flow blocks need a framework target (framework: 'vue' | 'svelte' | 'astro')`;
+    this.errors.push(createError(
+      ErrorCode.UnexpectedToken,
+      `@${node.blockType} is not supported with framework '${this.framework}' — ${hint}`,
+      node.span,
+    ));
+  }
+
+  // ── Vue: @-blocks compile to renderless <template> wrappers carrying the
+  //    native directive — @if → <template v-if="…">, @each → <template
+  //    v-for="…"> (+ wrapper attributes like :key from the comma section). ──
+
+  private vueDirectiveFor(blockType: string, clauseType: string | null): string | null {
+    if (blockType === 'each') return 'v-for';
+    if (blockType !== 'if') return null;
+    if (clauseType === null) return 'v-if';
+    if (clauseType === 'else if') return 'v-else-if';
+    if (clauseType === 'else') return 'v-else';
+    return null;
+  }
+
+  // Quote an expression as an HTML attribute value (escape double quotes).
+  private vueAttrValue(expr: string): string {
+    return expr.replace(/"/g, '&quot;');
+  }
+
+  private compileBlockVueTracked(node: BlockNode, depth: number): void {
+    if (node.blockType !== 'if' && node.blockType !== 'each') {
+      this.reportBlockUnsupported(node);
+      return;
+    }
+    const indent = this.getIndent(depth);
+
+    for (let i = 0; i < node.clauses.length; i++) {
+      const clause = node.clauses[i];
+      const directive = this.vueDirectiveFor(node.blockType, i === 0 ? null : clause.clauseType);
+      const span = i === 0 ? node.span : clause.span;
+      if (directive === null) {
+        this.errors.push(createError(
+          ErrorCode.UnexpectedToken,
+          `@${clause.clauseType ?? node.blockType} clause is not supported with framework 'vue'`,
+          clause.span,
+        ));
+        continue;
+      }
+      let expression: string | null = clause.expression;
+      if (node.blockType === 'each') {
+        expression = this.vueEachExpression(node);
+        if (expression === null) return;
+      }
+      if (i > 0) this.write('\n');
+      if (indent) this.write(indent);
+      this.write('<template ');
+      this.write(directive, span, { nodeType: 'Block' });
+      if (expression) {
+        this.write('="');
+        this.write(this.vueAttrValue(expression), span, { nodeType: 'Block' });
+        this.write('"');
+      }
+      if (node.blockType === 'each' && node.each?.key) {
+        this.write(' :key="');
+        this.write(this.vueAttrValue(node.each.key), span, { nodeType: 'Block' });
+        this.write('"');
+      }
+      if (i === 0 && node.attributes) {
+        for (const attr of node.attributes) {
+          this.write(' ');
+          this.compileAttributeTracked(attr);
+        }
+      }
+      this.write('>');
+      if (clause.children.length) {
+        this.write('\n');
+        this.compileChildNodesTracked(clause.children, depth + 1);
+      }
+      this.write('\n');
+      if (indent) this.write(indent);
+      this.write('</template>');
+    }
+  }
+
+  private compileBlockVue(node: BlockNode, depth: number): string {
+    if (node.blockType !== 'if' && node.blockType !== 'each') {
+      this.reportBlockUnsupported(node);
+      return '';
+    }
+    const indent = this.getIndent(depth);
+    const parts: string[] = [];
+
+    for (let i = 0; i < node.clauses.length; i++) {
+      const clause = node.clauses[i];
+      const directive = this.vueDirectiveFor(node.blockType, i === 0 ? null : clause.clauseType);
+      if (directive === null) {
+        this.errors.push(createError(
+          ErrorCode.UnexpectedToken,
+          `@${clause.clauseType ?? node.blockType} clause is not supported with framework 'vue'`,
+          clause.span,
+        ));
+        continue;
+      }
+      let expression: string | null = clause.expression;
+      if (node.blockType === 'each') {
+        expression = this.vueEachExpression(node);
+        if (expression === null) return '';
+      }
+      const keyStr = node.blockType === 'each' && node.each?.key
+        ? ` :key="${this.vueAttrValue(node.each.key)}"` : '';
+      const exprStr = (expression ? `="${this.vueAttrValue(expression)}"` : '') + keyStr;
+      const attrStr = i === 0 && node.attributes
+        ? node.attributes.map(a => ' ' + this.compileAttribute(a)).join('')
+        : '';
+      const open = `${indent}<template ${directive}${exprStr}${attrStr}>`;
+      const body = clause.children.length ? this.compileChildNodes(clause.children, depth + 1) : '';
+      parts.push(body ? `${open}\n${body}\n${indent}</template>` : `${open}</template>`);
+    }
+    return parts.join('\n');
   }
 
   private compileBlockSvelteTracked(node: BlockNode, depth: number): void {
     const indent = this.getIndent(depth);
 
     // Opening: {#blockType expression}
+    const expression = node.blockType === 'each' ? this.svelteEachExpression(node) : node.expression;
     if (indent) this.write(indent);
     this.write('{#', node.span, { nodeType: 'Block' });
     this.write(node.blockType, node.span, { nodeType: 'Block' });
-    if (node.expression) {
+    if (expression) {
       this.write(' ', node.span, { nodeType: 'Block' });
-      this.write(node.expression, node.span, { nodeType: 'Block' });
+      this.write(expression, node.span, { nodeType: 'Block' });
     }
     this.write('}', node.span, { nodeType: 'Block' });
 
@@ -826,21 +992,66 @@ export class Compiler {
     } else if (node.blockType === 'each') {
       this.compileEachAstroTracked(node, depth);
     } else {
-      // Unsupported block
+      // Astro has no analogue for @await/@key/@snippet — hard error, never a
+      // silent comment in the output.
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `@${node.blockType} is not supported with framework '${this.framework}' — only @if/@else/@elseif and @each compile to JSX expressions`,
+        node.span,
+      ));
       if (indent) this.write(indent);
-      this.write('{/* Unsupported block: {#', node.span, { nodeType: 'Block' });
-      this.write(node.blockType, node.span, { nodeType: 'Block' });
-      this.write(' ', node.span, { nodeType: 'Block' });
-      this.write(node.expression, node.span, { nodeType: 'Block' });
-      this.write('} */}', node.span, { nodeType: 'Block' });
+    }
+  }
+
+  // JSX lists key the iteration ROOT element: @each's :key becomes a
+  // key={expr} attribute on the body's single root element (jsx mode only).
+  private injectJsxKey(node: BlockNode): void {
+    if (this.framework !== 'jsx' || !node.each?.key) return;
+    const roots = node.clauses[0]?.children ?? [];
+    if (roots.length !== 1 || roots[0].type !== 'Element') {
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `@each :key in jsx mode requires a single root element in the loop body (the key lands on it)`,
+        node.span,
+      ));
+      return;
+    }
+    const root = roots[0];
+    if (!root.attributes.some(a => a.name === 'key')) {
+      root.attributes.unshift({
+        type: 'Attribute', name: 'key', value: `{${node.each.key}}`,
+        bound: false, templateLiteral: false, expression: true, span: node.span,
+      });
+    }
+  }
+
+  // Wrapper attributes (`@each(item in items :key="…")`) only exist for hosts
+  // whose blocks compile to a wrapper element (Vue). Anywhere else they would
+  // be silently dropped — error instead.
+  private checkBlockAttributes(node: BlockNode): void {
+    if (node.attributes && this.framework !== 'vue') {
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `Block wrapper attributes are only supported with framework 'vue' (they become attributes on the <template> wrapper)`,
+        node.span,
+      ));
     }
   }
 
   private compileBlock(node: BlockNode, depth: number): string {
-    if (this.framework === 'astro') {
+    this.checkBlockAttributes(node);
+    if (node.blockType === 'each') this.injectJsxKey(node);
+    if (this.framework === 'astro' || this.framework === 'jsx') {
       return this.compileBlockAstro(node, depth);
     }
-    return this.compileBlockSvelte(node, depth);
+    if (this.framework === 'svelte') {
+      return this.compileBlockSvelte(node, depth);
+    }
+    if (this.framework === 'vue') {
+      return this.compileBlockVue(node, depth);
+    }
+    this.reportBlockUnsupported(node);
+    return '';
   }
 
   private compileBlockSvelte(node: BlockNode, depth: number): string {
@@ -848,7 +1059,8 @@ export class Compiler {
     const parts: string[] = [];
 
     // Opening: {#blockType expression}
-    const expr = node.expression ? ` ${node.expression}` : '';
+    const expression = node.blockType === 'each' ? this.svelteEachExpression(node) : node.expression;
+    const expr = expression ? ` ${expression}` : '';
     parts.push(`${indent}{#${node.blockType}${expr}}`);
 
     // First clause children
@@ -874,7 +1086,6 @@ export class Compiler {
 
   private compileBlockAstro(node: BlockNode, depth: number): string {
     const indent = this.getIndent(depth);
-    const innerIndent = this.getIndent(depth + 1);
 
     if (node.blockType === 'if') {
       return this.compileIfAstro(node, depth);
@@ -884,8 +1095,13 @@ export class Compiler {
       return this.compileEachAstro(node, depth);
     }
 
-    // For unsupported blocks (await, snippet, key), emit as comment
-    return `${indent}{/* Unsupported block: {#${node.blockType} ${node.expression}} */}`;
+    // Astro has no analogue for @await/@key/@snippet — hard error.
+    this.errors.push(createError(
+      ErrorCode.UnexpectedToken,
+      `@${node.blockType} is not supported with framework 'astro' — only @if/@else/@elseif and @each compile to Astro JSX`,
+      node.span,
+    ));
+    return indent;
   }
 
   private compileIfAstroTracked(node: BlockNode, depth: number): void {
@@ -993,7 +1209,6 @@ export class Compiler {
 
   private compileIfAstro(node: BlockNode, depth: number): string {
     const indent = this.getIndent(depth);
-    const innerIndent = this.getIndent(depth + 1);
     const clauses = node.clauses;
 
     // Collect if/else-if/else chains
@@ -1049,22 +1264,64 @@ export class Compiler {
     return `${indent}{${first.expression} ? (\n${body}\n${indent}) : ${nestedTrimmed}}`;
   }
 
+  // Structured @each parts for function-style hosts (Astro JSX / .map()).
+  // Vue's 3-binding object-iteration form has no analogue here.
+  private eachParts(node: BlockNode): { collection: string; params: string } | null {
+    if (!node.each) {
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `Could not parse @each expression '${node.expression}' — use 'item of items' or 'items as item'`,
+        node.span,
+      ));
+      return null;
+    }
+    if (node.each.bindings.length > 2) {
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `@each with ${node.each.bindings.length} bindings is not supported with framework '${this.framework}' (object iteration is Vue-only)`,
+        node.span,
+      ));
+      return null;
+    }
+    return { collection: node.each.collection, params: node.each.bindings.join(', ') };
+  }
+
+  // The Svelte-native each expression, reconstructed from the structured
+  // parts (either input form normalizes here): `items as item, i (item.id)`.
+  private svelteEachExpression(node: BlockNode): string {
+    if (!node.each) return node.expression;   // leniency: svelte validates
+    if (node.each.bindings.length > 2) {
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `@each with ${node.each.bindings.length} bindings is not supported with framework 'svelte' (object iteration is Vue-only)`,
+        node.span,
+      ));
+    }
+    const key = node.each.key ? ` (${node.each.key})` : '';
+    return `${node.each.collection} as ${node.each.bindings.join(', ')}${key}`;
+  }
+
+  // The Vue-native v-for expression: `(item, i) of items`.
+  private vueEachExpression(node: BlockNode): string | null {
+    if (!node.each) {
+      this.errors.push(createError(
+        ErrorCode.UnexpectedToken,
+        `Could not parse @each expression '${node.expression}' — use 'item of items' or 'items as item'`,
+        node.span,
+      ));
+      return null;
+    }
+    const b = node.each.bindings;
+    const lhs = b.length === 1 && !b[0].includes(',') ? b[0] : `(${b.join(', ')})`;
+    return `${lhs} of ${node.each.collection}`;
+  }
+
   private compileEachAstroTracked(node: BlockNode, depth: number): void {
     const indent = this.getIndent(depth);
 
-    // Parse "items as item, i" or "items as item"
-    const expr = node.expression;
-    const asMatch = expr.match(/^(.+?)\s+as\s+(.+)$/);
-    if (!asMatch) {
-      if (indent) this.write(indent);
-      this.write('{/* Invalid each expression: ', node.span, { nodeType: 'Block' });
-      this.write(expr, node.span, { nodeType: 'Block' });
-      this.write(' */}', node.span, { nodeType: 'Block' });
-      return;
-    }
-
-    const collection = asMatch[1].trim();
-    const params = asMatch[2].trim();
+    const parsed = this.eachParts(node);
+    if (!parsed) return;
+    const { collection, params } = parsed;
 
     if (indent) this.write(indent);
     this.write('{', node.span, { nodeType: 'Block' });
@@ -1082,15 +1339,9 @@ export class Compiler {
   private compileEachAstro(node: BlockNode, depth: number): string {
     const indent = this.getIndent(depth);
 
-    // Parse "items as item, i" or "items as item"
-    const expr = node.expression;
-    const asMatch = expr.match(/^(.+?)\s+as\s+(.+)$/);
-    if (!asMatch) {
-      return `${indent}{/* Invalid each expression: ${expr} */}`;
-    }
-
-    const collection = asMatch[1].trim();
-    const params = asMatch[2].trim();
+    const parsed = this.eachParts(node);
+    if (!parsed) return '';
+    const { collection, params } = parsed;
     const body = this.compileChildNodes(node.clauses[0]?.children ?? [], depth + 1);
 
     return `${indent}{${collection}.map((${params}) => (\n${body}\n${indent}))}`;
@@ -1101,6 +1352,10 @@ export class Compiler {
 
     if (this.framework === 'astro') {
       this.compileInlineDirectiveAstroTracked(node, depth);
+      return;
+    }
+    if (this.framework === 'vue' || this.framework === 'html' || this.framework === 'jsx') {
+      this.reportInlineDirectiveUnsupported(node);
       return;
     }
 
@@ -1141,10 +1396,27 @@ export class Compiler {
     if (this.framework === 'astro') {
       return this.compileInlineDirectiveAstro(node, depth);
     }
+    if (this.framework === 'vue' || this.framework === 'html' || this.framework === 'jsx') {
+      this.reportInlineDirectiveUnsupported(node);
+      return '';
+    }
 
     // Svelte: passthrough
     const expr = node.expression ? ` ${node.expression}` : '';
     return `${indent}{@${node.directiveType}${expr}}`;
+  }
+
+  private reportInlineDirectiveUnsupported(node: InlineDirectiveNode): void {
+    const hint = this.framework === 'vue'
+      ? `use the v-html attribute instead (e.g. span(v-html="${node.expression}"))`
+      : this.framework === 'jsx'
+        ? `use dangerouslySetInnerHTML on an element instead`
+        : `inline directives need a framework target (framework: 'svelte' | 'astro')`;
+    this.errors.push(createError(
+      ErrorCode.UnexpectedToken,
+      `{@${node.directiveType}} is not supported with framework '${this.framework}' — ${hint}`,
+      node.span,
+    ));
   }
 
   private compileInlineDirectiveAstro(node: InlineDirectiveNode, depth: number): string {

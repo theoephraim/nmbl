@@ -11,7 +11,8 @@
     }
   },
   "scripts": {
-    "build": "tsdown src/index.ts --format esm --dts",
+    "build": "tsdown",
+    "gen": "bun scripts/gen-artifacts.ts",
     "tbuild": "turbo run build",
     "dev": "bun run build --watch",
     "test": "vitest run",
@@ -21,6 +22,8 @@
     "htmlparser2": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "^25.0.0",
+    "monogram": "github:johnsoncodehk/monogram#70a801981b897098f0505c5a9e5bcd241a1bd8a4",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

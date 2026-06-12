@@ -162,9 +162,8 @@ describe('Integration', () => {
   });
 
   describe('tokenize API', () => {
-    test('returns tokens and errors', () => {
-      const { tokens, errors } = tokenize('div.foo');
-      expect(errors).toHaveLength(0);
+    test('returns a token stream', () => {
+      const tokens = tokenize('div.foo');
       expect(tokens.length).toBeGreaterThan(0);
     });
   });
