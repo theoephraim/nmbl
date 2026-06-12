@@ -51,18 +51,20 @@ NMBL keeps the good part — the shorthand notation — and drops the template-e
 - **Control flow blocks** — `@if` / `@elseif` / `@else` / `@each` / `@await` / `@key` / `@snippet` compile to the host framework's native syntax. `@each` accepts one canonical form everywhere: `@each(item of items :key="item.id")` — the `:key` attribute sits in the same paren list, whitespace-separated like any other NMBL attribute. Svelte's `as`-form (`@each(items as item, i)`) is also accepted. Templates using the canonical form are **portable across frameworks**: the same `@each` source compiles to `{#each items as item (item.id)}` in Svelte, `<template v-for="item of items" :key="item.id">` in Vue, and `{items.map((item) => …)}` in Astro (key not emitted). Vue compiles `@if`/`@elseif`/`@else` to renderless `<template v-if>`/`<template v-else-if>`/`<template v-else>` wrappers. Svelte gets the full block set (`@await`, `@key`, `@snippet`). Astro supports only `@if` and `@each`. Plain HTML treats `@`-blocks as hard errors
 - **Content blocks** — `script:` / `style:` capture nested content verbatim; named modes like `article:md` hand content to a filter you register via the compiler API
 - **Bidirectional** — a decompiler converts existing HTML to clean, idiomatic NMBL (round-trip tested)
-- **Built for tooling** — character-level source mappings, diagnostics with precise spans, real source maps for Svelte, full Vue IntelliSense via a Volar plugin
+- **Built for tooling** — a canonical formatter (CLI, Prettier plugin, format-on-save), a linter, character-level source mappings, diagnostics with precise spans, real source maps for Svelte, full Vue IntelliSense via a Volar plugin
 
 ## Packages
 
 | Package | Description |
 |---|---|
-| [`@nmbl/parser`](packages/parser) | Core lexer, parser, compiler (HTML + source mappings), and HTML→NMBL decompiler |
+| [`@nmbl/parser`](packages/parser) | Core lexer, parser, compiler (HTML + source mappings), HTML→NMBL decompiler, **formatter**, and **linter** |
+| [`@nmbl/cli`](packages/cli) | `nmbl format` / `nmbl lint` — standalone CLI for CI, pre-commit, and lint-staged |
+| [`@nmbl/prettier-plugin`](packages/prettier-plugin) | Prettier plugin for `.nmbl` files |
 | [`@nmbl/vite-plugin`](packages/vite-plugin) | Vite plugin: `.nmbl` files and `<template lang="nmbl">` in Vue SFCs |
 | [`@nmbl/svelte`](packages/svelte) | Svelte preprocessor with V3 source maps |
 | [`@nmbl/astro`](packages/astro) | Astro integration |
 | [`@nmbl/vue-language-plugin`](packages/vue-language-plugin-nmbl) | Volar plugin: full IntelliSense for NMBL templates in Vue SFCs |
-| [`@nmbl/vscode-extension`](packages/vscode-extension) | Syntax highlighting for `.nmbl` files and embedded templates (install from repo) |
+| [`@nmbl/vscode-extension`](packages/vscode-extension) | Syntax highlighting, format-on-save, and HTML conversion for `.nmbl` and embedded templates (install from repo) |
 | [`@nmbl/website`](packages/website) | [nmbl.tools](https://nmbl.tools) — docs and interactive playground |
 
 ## Usage
@@ -177,6 +179,35 @@ Transform rules:
 For Solid, pass `framework: 'solid'`; for Qwik/Preact, `framework: 'qwik'` / `framework: 'preact'`.
 
 See [examples/react](examples/react) and [examples/solid](examples/solid).
+
+### Formatting & linting
+
+NMBL has one canonical shape, and the tooling keeps your files in it — wherever NMBL lives: standalone `.nmbl`, `<template lang="nmbl">` blocks in Vue/Svelte/Astro SFCs, and `nmbl\`…\`` tagged templates in JSX.
+
+**CLI** ([`@nmbl/cli`](packages/cli)) — for npm scripts, CI, pre-commit, and lint-staged:
+
+```sh
+nmbl format src --write     # reformat in place
+nmbl format src --check     # exit non-zero if anything isn't formatted (CI)
+nmbl lint src               # report best-practice & correctness diagnostics
+```
+
+Paths may be files or directories; directories are searched for `.nmbl`, `.vue`, `.svelte`, `.astro`, `.jsx`, and `.tsx` (skipping `node_modules` and build output). The formatter never touches a file it can't fully parse, so it's safe on format-on-save.
+
+**Prettier** ([`@nmbl/prettier-plugin`](packages/prettier-plugin)) — drop it into an existing Prettier setup:
+
+```jsonc
+// .prettierrc
+{ "plugins": ["@nmbl/prettier-plugin"] }
+```
+
+```sh
+prettier --write "**/*.nmbl"
+```
+
+**VS Code** — the [extension](packages/vscode-extension) registers a document formatter for `.nmbl` (Format Document / format-on-save) and an `NMBL: Format Document` command that reformats NMBL regions inside SFC and JSX files.
+
+What the formatter canonicalizes: 2-space indentation, `tag#id.class` selector order, the redundant `div` before a shorthand (`div.card` → `.card`), and double-quoted attribute values. `@each` is rewritten to each target's idiomatic form — Svelte's native `@each(items as item (key))` inside `.svelte` files, and the portable `@each(item of items :key="…")` form everywhere else (which is also what Vue/Astro/JSX compile from). Multi-line attribute values (host-language arrays/objects/expressions) are preserved verbatim. The linter flags what a formatter shouldn't silently rewrite — duplicate attributes, duplicate classes, suspicious tag casing — and surfaces parser diagnostics with source positions.
 
 ### Agent skill
 

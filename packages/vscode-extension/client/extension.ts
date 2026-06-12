@@ -8,6 +8,7 @@ import {
 } from 'vscode-languageclient/node';
 import { registerEmbeddedForwarding } from './embedded-forwarding';
 import { registerConversions } from './convert';
+import { registerFormatting } from './format';
 
 let client: LanguageClient;
 
@@ -63,6 +64,9 @@ export function activate(context: ExtensionContext): void {
 
   // Register paste-HTML-as-NMBL provider + conversion commands.
   registerConversions(context);
+
+  // Register the document formatter (.nmbl) + format-document command.
+  registerFormatting(context);
 }
 
 export function deactivate(): Thenable<void> | undefined {

@@ -1,5 +1,14 @@
 export { Compiler, type CompilerOptions, type SourceMapping, type CompileResult } from './compiler.js';
 export { decompile, type DecompileOptions } from './decompiler.js';
+export { format, type FormatOptions, type FormatResult, type FormatFramework } from './formatter.js';
+export {
+  extractNmblRegions, formatFile, isSupportedFile,
+  type NmblRegion, type ExtractResult, type FormatFileResult, type Framework,
+} from './embedded.js';
+export {
+  lint, DEFAULT_RULES,
+  type LintMessage, type LintOptions, type LintSeverity, type RuleSetting,
+} from './linter.js';
 export type { SourcePosition, SourceSpan } from './source-location.js';
 export type {
   DocumentNode, ElementNode, AttributeNode, TextNode,

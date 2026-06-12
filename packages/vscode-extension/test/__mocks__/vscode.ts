@@ -51,6 +51,9 @@ export class TextEdit {
     public range: Range,
     public newText: string,
   ) {}
+  static replace(range: Range, newText: string): TextEdit {
+    return new TextEdit(range, newText);
+  }
 }
 
 export class Hover {

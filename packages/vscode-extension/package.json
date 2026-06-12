@@ -46,6 +46,10 @@
       {
         "command": "nmbl.convertNmblToHtml",
         "title": "NMBL: Convert Selection to HTML"
+      },
+      {
+        "command": "nmbl.formatDocument",
+        "title": "NMBL: Format Document"
       }
     ],
     "menus": {
@@ -58,6 +62,11 @@
         {
           "command": "nmbl.convertNmblToHtml",
           "when": "editorHasSelection && resourceExtname =~ /\\.(nmbl|vue|svelte|astro)$/",
+          "group": "nmbl"
+        },
+        {
+          "command": "nmbl.formatDocument",
+          "when": "resourceExtname =~ /\\.(nmbl|vue|svelte|astro|jsx|tsx)$/",
           "group": "nmbl"
         }
       ]

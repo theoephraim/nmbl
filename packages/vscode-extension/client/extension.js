@@ -6,6 +6,7 @@ const vscode_1 = require("vscode");
 const node_1 = require("vscode-languageclient/node");
 const embedded_forwarding_1 = require("./embedded-forwarding");
 const convert_1 = require("./convert");
+const format_1 = require("./format");
 let client;
 function activate(context) {
     // Resolve the language server module from the installed @nmbl/language-server package.
@@ -48,6 +49,8 @@ function activate(context) {
     (0, embedded_forwarding_1.registerEmbeddedForwarding)(context);
     // Register paste-HTML-as-NMBL provider + conversion commands.
     (0, convert_1.registerConversions)(context);
+    // Register the document formatter (.nmbl) + format-document command.
+    (0, format_1.registerFormatting)(context);
 }
 function deactivate() {
     if (!client)
