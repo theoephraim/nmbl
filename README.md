@@ -63,7 +63,7 @@ NMBL keeps the good part — the shorthand notation — and drops the template-e
 | [`@nmbl/astro`](packages/astro) | Astro integration |
 | [`@nmbl/vue-language-plugin`](packages/vue-language-plugin-nmbl) | Volar plugin: full IntelliSense for NMBL templates in Vue SFCs |
 | [`@nmbl/vscode-extension`](packages/vscode-extension) | Syntax highlighting for `.nmbl` files and embedded templates (install from repo) |
-| [`@nmbl/website`](packages/website) | nmbl.dev — docs and interactive playground |
+| [`@nmbl/website`](packages/website) | [nmbl.tools](https://nmbl.tools) — docs and interactive playground |
 
 ## Usage
 
