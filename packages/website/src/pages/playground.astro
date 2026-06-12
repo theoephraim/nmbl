@@ -3,15 +3,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Playground from '../components/Playground.vue';
 ---
 
-<BaseLayout title="Playground">
-  <section class="playground-section">
-    <div class="container">
-      <h1>Playground</h1>
-      <p class="subtitle">Write NMBL on the left, see HTML on the right. Or paste HTML to convert it to NMBL.</p>
-      <Playground client:only="vue" />
-    </div>
-  </section>
-</BaseLayout>
+<template lang="nmbl">
+BaseLayout(title="Playground")
+  section.playground-section
+    .container
+      h1 Playground
+      p.subtitle Write NMBL on the left, see HTML on the right. Or paste HTML to convert it to NMBL.
+      Playground(client:only="vue")
+</template>
 
 <style>
   .playground-section {

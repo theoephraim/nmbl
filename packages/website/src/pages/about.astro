@@ -2,61 +2,54 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="About">
-  <section class="about-hero">
-    <div class="container">
-      <h1>About NMBL</h1>
-      <p class="lead"><strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage &mdash; a concise notation for HTML structure.</p>
-    </div>
-  </section>
+<template lang="nmbl">
+BaseLayout(title="About")
+  section.about-hero
+    .container
+      h1 About NMBL
+      p.lead <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage &mdash; a concise notation for HTML structure.
 
-  <section class="backstory">
-    <div class="container">
-      <h2>Why NMBL?</h2>
-      <div class="prose">
-        <h3>Jade/Pug had an idea</h3>
-        <p>
-          <a href="https://pugjs.org/" target="_blank">Pug</a> (originally known as Jade) explored the idea that indentation-based HTML templates could be easier to read and write. By using indentation to indicate nesting, and a few shorthands for the most common attributes (class/id), we can remove a ton of unnecessary noise, and along with it mental load.
-        </p>
-        <p>
-          But Pug was built as a <em>complete templating engine</em> in an era before modern frameworks and web components. It handled everything itself &mdash; mixins, extends, includes, interpolation, conditionals, iteration, filters. That made sense in 2010 when you were rendering static HTML on the server with Express. It doesn't make sense now that we have powerful frameworks like Vue and Svelte, and the idea of components is well established.
-        </p>
-        <p>
-          Yet some continued to use Pug, ignoring half of its features. But it never gained wide adoption, and the project stopped evolving. It's effectively unmaintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.
-        </p>
+  section.backstory
+    .container
+      h2 Why NMBL?
+      .prose:md
+        ### Jade/Pug had an idea
 
-        <h3>Keep the good parts, fix the rough edges, drop the rest</h3>
-        <p>NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.</p>
-        <p>Your framework keeps its own control flow &mdash; and NMBL templates that use the canonical form are <strong>portable across frameworks</strong>. Write <code>@each(item of items :key="item.id")</code> once: it compiles to <code>{'{'}#each items as item (item.id){'}'}</code> in Svelte and <code>&lt;template v-for="item of items" :key="item.id"&gt;</code> in Vue. The <code>:key</code> attribute sits in the same paren list as the loop expression, whitespace-separated like any other NMBL attribute. Svelte's <code>as</code>-form (<code>@each(items as item, i)</code>) is also accepted for compatibility. <code>@if</code> / <code>@elseif</code> / <code>@else</code> are pure passthrough &mdash; each host renders them natively. Svelte gets the full block set (<code>@await</code>, <code>@key</code>, <code>@snippet</code>); Astro supports only <code>@if</code> and <code>@each</code> (compiling to JSX expressions).</p>
-        <p>That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.</p>
-      </div>
-    </div>
-  </section>
+        <a href="https://pugjs.org/" target="_blank">Pug</a> (originally known as Jade) explored the idea that indentation-based HTML templates could be easier to read and write. By using indentation to indicate nesting, and a few shorthands for the most common attributes (class/id), we can remove a ton of unnecessary noise, and along with it mental load.
 
-  <section class="principles">
-    <div class="container">
-      <h2>Design principles</h2>
-      <div class="principles-grid">
-        <div class="principle">
-          <h3>Shorthand notation &mdash; not a template engine</h3>
-          <p>No mixins, no extends, no expression language of its own. NMBL is simply a <em>shorthand notation</em> for HTML &mdash; it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.</p>
-        </div>
-        <div class="principle">
-          <h3>Nothing to learn</h3>
-          <p>If you know CSS selectors and HTML attributes, you already know NMBL. One syntax for everything. No <code>=</code> vs <code>!=</code> vs <code>#{'{'}...}</code> interpolation modes. No unbuffered code blocks. Just tags, selectors, and indentation.</p>
-        </div>
-        <div class="principle">
-          <h3>AI-native</h3>
-          <p>Simple, predictable syntax means fewer hallucinated tokens. Bidirectional conversion lets AI round-trip between HTML and NMBL freely. Models already have the intuition from Pug-like syntax in training data &mdash; they just need fewer rules to get it right.</p>
-        </div>
-        <div class="principle">
-          <h3>Fits your stack</h3>
-          <p>Use <code>&lt;template lang="nmbl"&gt;</code> in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use <code>nmbl`…`</code> tagged templates in React, Solid, and Qwik. NMBL is a compile step, not a runtime &mdash; it produces standard HTML that any framework already understands.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-</BaseLayout>
+        But Pug was built as a *complete templating engine* in an era before modern frameworks and web components. It handled everything itself — mixins, extends, includes, interpolation, conditionals, iteration, filters. That made sense in 2010 when you were rendering static HTML on the server with Express. It doesn't make sense now that we have powerful frameworks like Vue and Svelte, and the idea of components is well established.
+
+        Yet some continued to use Pug, ignoring half of its features. But it never gained wide adoption, and the project stopped evolving. It's effectively unmaintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.
+
+        ### Keep the good parts, fix the rough edges, drop the rest
+
+        NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.
+
+        Your framework keeps its own control flow — and NMBL templates that use the canonical form are **portable across frameworks**. Write `@each(item of items :key="item.id")` once: it compiles to `{#each items as item (item.id)}` in Svelte and `<template v-for="item of items" :key="item.id">` in Vue. The `:key` attribute sits in the same paren list as the loop expression, whitespace-separated like any other NMBL attribute. Svelte's `as`-form (`@each(items as item, i)`) is also accepted for compatibility. `@if` / `@elseif` / `@else` are pure passthrough — each host renders them natively. Svelte gets the full block set (`@await`, `@key`, `@snippet`); Astro supports only `@if` and `@each` (compiling to JSX expressions).
+
+        That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.
+
+  section.principles
+    .container
+      h2 Design principles
+      .principles-grid
+        .principle:md
+          ### Shorthand notation — not a template engine
+
+          No mixins, no extends, no expression language of its own. NMBL is simply a *shorthand notation* for HTML — it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.
+        .principle:md
+          ### Nothing to learn
+
+          If you know CSS selectors and HTML attributes, you already know NMBL. One syntax for everything. No `=` vs `!=` vs `#{...}` interpolation modes. No unbuffered code blocks. Just tags, selectors, and indentation.
+        .principle:md
+          ### AI-native
+
+          Simple, predictable syntax means fewer hallucinated tokens. Bidirectional conversion lets AI round-trip between HTML and NMBL freely. Models already have the intuition from Pug-like syntax in training data — they just need fewer rules to get it right.
+        .principle:md
+          ### Fits your stack
+
+          Use `<template lang="nmbl">` in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use ``nmbl`…`` tagged templates in React, Solid, and Qwik. NMBL is a compile step, not a runtime — it produces standard HTML that any framework already understands.
+</template>
 
 <style>
   .about-hero {

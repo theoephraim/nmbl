@@ -9,3 +9,6 @@ ignore
 
 .env.local
 .env.*.local
+# claude code local state (the skills symlink IS tracked)
+.claude/settings.local.json
+.claude/worktrees/

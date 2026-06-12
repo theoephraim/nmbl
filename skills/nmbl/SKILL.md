@@ -23,6 +23,15 @@ p
 <!DOCTYPE html>                        → lines starting with < pass through verbatim
 ```
 
+**Leave SVG as raw HTML.** Don't translate `<svg>…</svg>` blocks (icons, logos) into NMBL nodes — keep them verbatim under their parent (every line starts with `<`, so they pass through). SVG is generated/pasted markup, not authored structure; converting it gains nothing and churns diffs. The same goes for any pasted markup blob you wouldn't hand-edit. One constraint: all lines of the raw block must sit at the SAME indentation — a raw line indented deeper than the previous one is a parse error, so flatten the block's internal indentation:
+
+```
+.icon
+  <svg viewBox="0 0 24 24">
+  <path d="…"/>
+  </svg>
+```
+
 - **Nesting is indentation** (2 spaces). Children go on indented lines below the parent.
 - **Attributes**: whitespace-separated inside parens; parens may span multiple lines; values: `"str"`, `'str'`, `` `template ${x}` ``, bare (`colspan=2`), or raw expression `onClick={() => f(x)}`.
 - **Bound shorthand**: `:name` alone expands to `:name="name"`.
@@ -51,6 +60,22 @@ style:
 article:md
   ## markdown (transformed only if a filter is registered)
 ```
+
+### Markdown sections (`:md`)
+
+In Astro projects using `@nmbl-lang/astro`, `:md` works out of the box: the body renders through the project's own Astro markdown pipeline (same remark/rehype plugins and syntax highlighting as `.md` files). Prefer it over stacks of inline `<h3>`/`<p>`/`<code>` for prose-heavy sections:
+
+```
+.prose:md
+  ### A heading
+
+  A paragraph with [links](/x), `code`, and **bold**. Blank lines separate
+  paragraphs. Raw inline HTML works too (<a target="_blank" …>).
+```
+
+- The rendered HTML is spliced into the Astro template, so `{expr}` interpolation and `<Component />` tags still work inside the prose (MDX-like); braces inside code spans/fences are auto-escaped.
+- Body is dedented relative to the block — relative indentation (nested lists) is preserved.
+- Other setups: pass `filters: { md: async (body) => html }` to `@nmbl-lang/vite-plugin` (filters may be async), or sync `filters` to core `compile()`.
 
 ## Control flow — one notation, host-native output
 

@@ -9,136 +9,106 @@ import {
 } from '../examples';
 ---
 
-<BaseLayout title="Home">
-  <section class="hero">
-    <div class="container">
-      <h1><span class="hero-mark">&gt;&lt;</span> NMBL</h1>
-      <p class="acronym"><strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage</p>
-      <p class="tagline">A shorthand notation for HTML<br/>built for modern web frameworks and token efficiency.</p>
-      <p class="tagline-sub">Closing tags, angle brackets, id/class attributes &mdash; NMBL strips the noise so you and your AI can <b>do more with less</b>.</p>
-      <div class="hero-actions">
-        <a href="/playground" class="btn btn-primary">Try the Playground</a>
-      </div>
-    </div>
-  </section>
+<template lang="nmbl">
+BaseLayout(title="Home")
+  section.hero
+    .container
+      h1
+        span.hero-mark &gt;&lt;
+        |  NMBL
+      p.acronym <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage
+      p.tagline A shorthand notation for HTML<br/>built for modern web frameworks and token efficiency.
+      p.tagline-sub Closing tags, angle brackets, id/class attributes &mdash; NMBL strips the noise so you and your AI can <b>do more with less</b>.
+      .hero-actions
+        a.btn.btn-primary(href="/playground") Try the Playground
 
-  <section class="benefits">
-    <div class="container">
-      <div class="benefits-grid">
-        <div class="benefit">
-          <h3>Easier to read</h3>
-          <p>Indentation shows structure. No closing tags or brackets to scan past. You see the content and hierarchy immediately.</p>
-        </div>
-        <div class="benefit">
-          <h3>Faster to write</h3>
-          <p>CSS selector shorthand for ids and classes. Implicit <code>div</code> tags. No closing tags to keep in sync. A typical template is 30&ndash;40% shorter than equivalent HTML.</p>
-        </div>
-        <div class="benefit">
-          <h3>Increased token efficiency</h3>
-          <p>Every <code>&lt;/div&gt;</code> and <code>class=</code> burns tokens unnecessarily. NMBL lets LLMs read and write markup with fewer tokens &mdash; saving context window and generation time.</p>
-        </div>
-        <div class="benefit">
-          <h3>Fits your stack</h3>
-          <p>Use <code>&lt;template lang="nmbl"&gt;</code> in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use <code>nmbl`…`</code> tagged templates in React, Solid, and Qwik &mdash; compiled away at build time, zero runtime. NMBL compiles to standard HTML that any framework already understands.</p>
-        </div>
-        <div class="benefit">
-          <h3>(Almost) Nothing to learn</h3>
-          <p>NMBL is not a new language &mdash; it's a shorthand that maps directly to HTML. Give it 10 minutes and it will click.</p>
-        </div>
-        <div class="benefit">
-          <h3>Real editor support</h3>
-          <p>Full IntelliSense in Vue SFCs via a Volar plugin &mdash; hover, go-to-definition, error squiggles, refactoring. Source maps for Svelte. Syntax highlighting everywhere.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  section.benefits
+    .container
+      .benefits-grid
+        .benefit
+          h3 Easier to read
+          p Indentation shows structure. No closing tags or brackets to scan past. You see the content and hierarchy immediately.
+        .benefit
+          h3 Faster to write
+          p CSS selector shorthand for ids and classes. Implicit <code>div</code> tags. No closing tags to keep in sync. A typical template is 30&ndash;40% shorter than equivalent HTML.
+        .benefit
+          h3 Increased token efficiency
+          p Every <code>&lt;/div&gt;</code> and <code>class=</code> burns tokens unnecessarily. NMBL lets LLMs read and write markup with fewer tokens &mdash; saving context window and generation time.
+        .benefit
+          h3 Fits your stack
+          p Use <code>&lt;template lang="nmbl"&gt;</code> in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use <code>nmbl`…`</code> tagged templates in React, Solid, and Qwik &mdash; compiled away at build time, zero runtime. NMBL compiles to standard HTML that any framework already understands.
+        .benefit
+          h3 (Almost) Nothing to learn
+          p NMBL is not a new language &mdash; it's a shorthand that maps directly to HTML. Give it 10 minutes and it will click.
+        .benefit
+          h3 Real editor support
+          p Full IntelliSense in Vue SFCs via a Volar plugin &mdash; hover, go-to-definition, error squiggles, refactoring. Source maps for Svelte. Syntax highlighting everywhere.
 
-  <section class="comparison">
-    <div class="container">
-      <h2>Same structure. Less noise.</h2>
-      <div class="comparison-grid">
-        <div class="comparison-pane">
-          <div class="comparison-label">NMBL &mdash; {HOMEPAGE_EXAMPLE_NMBL.split('\n').length} lines, {HOMEPAGE_EXAMPLE_NMBL.length} chars</div>
-          <Code code={HOMEPAGE_EXAMPLE_NMBL} lang="nmbl" frame="none" />
-        </div>
-        <div class="comparison-pane">
-          <div class="comparison-label">HTML &mdash; {HOMEPAGE_EXAMPLE_HTML.split('\n').length} lines, {HOMEPAGE_EXAMPLE_HTML.length} chars</div>
-          <Code code={HOMEPAGE_EXAMPLE_HTML} lang="html" frame="none" />
-        </div>
-      </div>
-    </div>
-  </section>
+  section.comparison
+    .container
+      h2 Same structure. Less noise.
+      .comparison-grid
+        .comparison-pane
+          div.comparison-label:
+            NMBL &mdash; {HOMEPAGE_EXAMPLE_NMBL.split('\n').length} lines, {HOMEPAGE_EXAMPLE_NMBL.length} chars
+          Code(code={HOMEPAGE_EXAMPLE_NMBL} lang="nmbl" frame="none")
+        .comparison-pane
+          div.comparison-label:
+            HTML &mdash; {HOMEPAGE_EXAMPLE_HTML.split('\n').length} lines, {HOMEPAGE_EXAMPLE_HTML.length} chars
+          Code(code={HOMEPAGE_EXAMPLE_HTML} lang="html" frame="none")
 
-  <section class="comments-section">
-    <div class="container">
-      <h2>Comments that actually work.</h2>
-      <p class="section-subtitle">HTML has no way to comment out an attribute. Most template languages inherit that limitation. NMBL treats comments as a first-class feature &mdash; with control over what reaches production.</p>
+  section.comments-section
+    .container
+      h2 Comments that actually work.
+      p.section-subtitle HTML has no way to comment out an attribute. Most template languages inherit that limitation. NMBL treats comments as a first-class feature &mdash; with control over what reaches production.
 
-      <div class="comments-grid">
-        <div class="comment-card">
-          <h3>You control what ships</h3>
-          <p>Use <code>//</code> for developer notes that are <strong>stripped from output</strong> &mdash; TODOs, debug notes, nothing ships to production. Use <code>//!</code> when you <strong>explicitly want</strong> an HTML comment in the output.</p>
-          <div class="comment-compare">
-            <div class="comment-pane">
-              <div class="comment-pane-label">NMBL</div>
-              <Code code={COMMENT_VISIBILITY} lang="nmbl" frame="none" />
-            </div>
-            <div class="comment-pane">
-              <div class="comment-pane-label">HTML output</div>
-              <Code code={COMMENT_VISIBILITY_HTML} lang="html" frame="none" />
-            </div>
-          </div>
-        </div>
+      .comments-grid
+        .comment-card
+          h3 You control what ships
+          p:
+            Use <code>//</code> for developer notes that are <strong>stripped from output</strong> &mdash; TODOs, debug notes, nothing ships to production. Use <code>//!</code> when you <strong>explicitly want</strong> an HTML comment in the output.
+          .comment-compare
+            .comment-pane
+              .comment-pane-label NMBL
+              Code(code={COMMENT_VISIBILITY} lang="nmbl" frame="none")
+            .comment-pane
+              .comment-pane-label HTML output
+              Code(code={COMMENT_VISIBILITY_HTML} lang="html" frame="none")
 
-        <div class="comment-card">
-          <h3>Comments inside attributes</h3>
-          <p>Something HTML and every other template language lack: comment out individual attributes while debugging. Use <code>//</code> for single-line or <code>/* */</code> for inline &mdash; toggle attributes without deleting them.</p>
-          <div class="comment-compare">
-            <div class="comment-pane">
-              <div class="comment-pane-label">NMBL</div>
-              <Code code={COMMENT_ATTR} lang="nmbl" frame="none" />
-            </div>
-            <div class="comment-pane">
-              <div class="comment-pane-label">HTML output</div>
-              <Code code={COMMENT_ATTR_HTML} lang="html" frame="none" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+        .comment-card
+          h3 Comments inside attributes
+          p:
+            Something HTML and every other template language lack: comment out individual attributes while debugging. Use <code>//</code> for single-line or <code>/* */</code> for inline &mdash; toggle attributes without deleting them.
+          .comment-compare
+            .comment-pane
+              .comment-pane-label NMBL
+              Code(code={COMMENT_ATTR} lang="nmbl" frame="none")
+            .comment-pane
+              .comment-pane-label HTML output
+              Code(code={COMMENT_ATTR_HTML} lang="html" frame="none")
 
-  <section class="features">
-    <div class="container">
-      <h2>Features</h2>
-      <div class="features-grid">
-        <div class="feature">
-          <h3>CSS-like selectors</h3>
-          <p>Use <code>#id</code> and <code>.class</code> shorthand directly on elements. Implicit <code>div</code> when using selectors alone.</p>
-        </div>
-        <div class="feature">
-          <h3>Block expansion</h3>
-          <p>Nest single children inline with <code>&gt;</code> syntax. Perfect for navigation lists: <code>li &gt; a(href="/") Home</code></p>
-        </div>
-        <div class="feature">
-          <h3>Embedded content blocks</h3>
-          <p>A trailing <code>:</code> switches to raw content mode &mdash; <code>script:</code> and <code>style:</code> blocks pass nested content through untouched. Name a mode like <code>article:md</code> and register a filter through the compiler API to transform it at build time.</p>
-          <div class="feature-code">
-            <Code code={FEATURE_EMBEDDED_MD} lang="nmbl" frame="none" />
-          </div>
-        </div>
-        <div class="feature">
-          <h3>Bidirectional</h3>
-          <p>Convert HTML to NMBL and back. The decompiler produces clean, idiomatic NMBL from any HTML input. Drop in existing HTML and start editing in NMBL immediately.</p>
-        </div>
-        <div class="feature">
-          <h3>One grammar, every editor</h3>
-          <p>The parser, TextMate grammar, tree-sitter grammar, and VS Code language configuration are all generated from a single grammar definition (via <a href="https://github.com/johnsoncodehk/monogram" target="_blank">monogram</a>). Syntax highlighting can never drift from what the parser actually accepts.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-</BaseLayout>
+  section.features
+    .container
+      h2 Features
+      .features-grid
+        .feature
+          h3 CSS-like selectors
+          p Use <code>#id</code> and <code>.class</code> shorthand directly on elements. Implicit <code>div</code> when using selectors alone.
+        .feature
+          h3 Block expansion
+          p Nest single children inline with <code>&gt;</code> syntax. Perfect for navigation lists: <code>li &gt; a(href="/") Home</code>
+        .feature
+          h3 Embedded content blocks
+          p A trailing <code>:</code> switches to raw content mode &mdash; <code>script:</code> and <code>style:</code> blocks pass nested content through untouched. Name a mode like <code>article:md</code> and register a filter through the compiler API to transform it at build time.
+          .feature-code
+            Code(code={FEATURE_EMBEDDED_MD} lang="nmbl" frame="none")
+        .feature
+          h3 Bidirectional
+          p Convert HTML to NMBL and back. The decompiler produces clean, idiomatic NMBL from any HTML input. Drop in existing HTML and start editing in NMBL immediately.
+        .feature
+          h3 One grammar, every editor
+          p The parser, TextMate grammar, tree-sitter grammar, and VS Code language configuration are all generated from a single grammar definition (via <a href="https://github.com/johnsoncodehk/monogram" target="_blank">monogram</a>). Syntax highlighting can never drift from what the parser actually accepts.
+</template>
 
 <style>
   .hero {
