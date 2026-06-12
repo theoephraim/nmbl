@@ -88,97 +88,98 @@ div#app
     style="margin: 0 auto 2rem; display: block"
   )
 
-  div.content(v-if="loggedIn")
-    p.welcome Welcome back! You are logged in.
+  @if(loggedIn)
+    div.content
+      p.welcome Welcome back! You are logged in.
 
-    h2 Your Items
-    p.item-count You have {{ items.length ?? 0 }} items in your list.
+      h2 Your Items
+      p.item-count You have {{ items.length ?? 0 }} items in your list.
 
-    //! Display size selector
-    div.size-selector
-      label Size:
-      select(v-model="selectedSize")
-        option(value="small") Small
-        option(value="medium") Medium
-        option(value="large") Large
-
-    //! Use ItemCard component for each item
-    div.items-container
-      ItemCard(
-        v-for="(item, i) in items"
-        :key="item.id"
-        :title="item.name"
-        :description="item.description"
-        :count="i + 1"
-        :highlighted="item.priority === 'high'"
-        :variant="getVariant(item.priority)"
-        :size="selectedSize"
-        @click="handleCardClick(item, $event)"
-        @delete="removeItem(i)"
-      )
-        template(#actions)
-          Badge(
-            :text="item.priority"
-            :color="getPriorityColor(item.priority)"
-            outline
-            style="margin-right: 0.5rem"
-          )
-          VButton(
-            label="Remove"
-            variant="danger"
-            size="sm"
-            icon="×"
-            @click.stop="removeItem(i)"
-          )
-        template(#extra)
-          span.extra-info Item #{{ item.id }}
-
-    //! Add new item form
-    div.add-item-form
-      h3 Add New Item
-
-      div.form-group
-        input.item-input(
-          v-model="newItem"
-          type="text"
-          placeholder="Item name..."
-          @keyup.enter="addItem"
-        )
-
-      div.form-group
-        textarea.item-textarea(
-          v-model="newItemDescription"
-          placeholder="Description (optional)..."
-          rows="2"
-        )
-
-      div.form-group
-        label Priority:
-        select.priority-select(v-model="newItemPriority")
-          option(value="low") Low
+      //! Display size selector
+      div.size-selector
+        label Size:
+        select(v-model="selectedSize")
+          option(value="small") Small
           option(value="medium") Medium
-          option(value="high") High
+          option(value="large") Large
 
-      VButton(
-        variant="success"
-        size="lg"
-        icon="+"
-        :disabled="!newItem.trim()"
-        @click="addItem"
-      )
-        | Add Item
-        Badge(
-          v-if="newItemPriority === 'high'"
-          text="!"
-          color="red"
-          rounded
-          style="margin-left: 0.5rem"
+      //! Use ItemCard component for each item
+      div.items-container
+        ItemCard(
+          v-for="(item, i) in items"
+          :key="item.id"
+          :title="item.name"
+          :description="item.description"
+          :count="i + 1"
+          :highlighted="item.priority === 'high'"
+          :variant="getVariant(item.priority)"
+          :size="selectedSize"
+          @click="handleCardClick(item, $event)"
+          @delete="removeItem(i)"
         )
-        
+          template(#actions)
+            Badge(
+              :text="item.priority"
+              :color="getPriorityColor(item.priority)"
+              outline
+              style="margin-right: 0.5rem"
+            )
+            VButton(
+              label="Remove"
+              variant="danger"
+              size="sm"
+              icon="×"
+              @click.stop="removeItem(i)"
+            )
+          template(#extra)
+            span.extra-info Item #{{ item.id }}
 
-  div.login-prompt(v-else)
-    p.info Please log in to see and manage your items.
-    p.hint Click the button above to get started!
+      //! Add new item form
+      div.add-item-form
+        h3 Add New Item
+
+        div.form-group
+          input.item-input(
+            v-model="newItem"
+            type="text"
+            placeholder="Item name..."
+            @keyup.enter="addItem"
+          )
+
+        div.form-group
+          textarea.item-textarea(
+            v-model="newItemDescription"
+            placeholder="Description (optional)..."
+            rows="2"
+          )
+
+        div.form-group
+          label Priority:
+          select.priority-select(v-model="newItemPriority")
+            option(value="low") Low
+            option(value="medium") Medium
+            option(value="high") High
+
+        VButton(
+          variant="success"
+          size="lg"
+          icon="+"
+          :disabled="!newItem.trim()"
+          @click="addItem"
+        )
+          | Add Item
+          Badge(
+            v-if="newItemPriority === 'high'"
+            text="!"
+            color="red"
+            rounded
+            style="margin-left: 0.5rem"
+          )
+
+  @else
+    div.login-prompt
+      p.info Please log in to see and manage your items.
+      p.hint Click the button above to get started!
 </template>
 
 <style scoped>

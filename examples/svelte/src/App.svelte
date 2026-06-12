@@ -39,7 +39,8 @@ div#app
     h2 Your items:
     p.item-count You have {items.length} items in your list.
     ul
-      @each(items as item, i)
+      // canonical form (portable across frameworks): @each(item of items :key=...)
+      @each(item, i of items :key="item")
         li
           span.item-number {i + 1}.
           span.item-name {item}

@@ -1,5 +1,5 @@
 {
-  "name": "example/vue",
+  "name": "example/react",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,14 +8,14 @@
   },
   "dependencies": {
     "@nmbl/vite-plugin": "workspace:*",
-    "@nmbl/vue-language-plugin": "workspace:*",
-    "vue": "catalog:",
-    "@vitejs/plugin-vue": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@vue/language-core": "^3.3.4",
-    "@vue/language-plugin-pug": "^3.3.4",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "@nmbl/astro": "workspace:*",
-    "astro": "^5.17.1"
+    "astro": "^6.0.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "example/vue",
+  "name": "example/solid",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,14 +8,11 @@
   },
   "dependencies": {
     "@nmbl/vite-plugin": "workspace:*",
-    "@nmbl/vue-language-plugin": "workspace:*",
-    "vue": "catalog:",
-    "@vitejs/plugin-vue": "catalog:",
+    "solid-js": "catalog:",
+    "vite-plugin-solid": "catalog:",
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@vue/language-core": "^3.3.4",
-    "@vue/language-plugin-pug": "^3.3.4",
     "typescript": "catalog:"
   }
 }
