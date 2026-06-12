@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import nmblPlugin from '../src/index.js';
 import type { Plugin } from 'vite';
 
-function getPlugin(name: string): any {
-  const plugins = nmblPlugin() as Plugin[];
+function getPlugin(name: string, options?: Parameters<typeof nmblPlugin>[0]): any {
+  const plugins = nmblPlugin(options) as Plugin[];
   return plugins.find(p => p.name === name)!;
 }
 
@@ -14,16 +14,33 @@ const ctx = {
 };
 
 describe('nmbl:transform (.nmbl files)', () => {
-  it('compiles .nmbl modules to an html string export', () => {
+  it('compiles .nmbl modules to an html string export', async () => {
     const p = getPlugin('nmbl:transform');
-    const out = p.transform.call(ctx, 'div#app\n  p hello', '/x/test.nmbl');
+    const out = await p.transform.call(ctx, 'div#app\n  p hello', '/x/test.nmbl');
     expect(out.code).toContain('export default');
     expect(out.code).toContain('<div id=\\"app\\">');
   });
 
-  it('ignores non-nmbl files', () => {
+  it('ignores non-nmbl files', async () => {
     const p = getPlugin('nmbl:transform');
-    expect(p.transform.call(ctx, 'div', '/x/test.txt')).toBeUndefined();
+    expect(await p.transform.call(ctx, 'div', '/x/test.txt')).toBeUndefined();
+  });
+
+  it('renders :md content blocks through an async filter', async () => {
+    const md = async (body: string) => `<h1>${body.replace('# ', '')}</h1>`;
+    const p = getPlugin('nmbl:transform', { filters: { md } });
+    const out = await p.transform.call(ctx, 'div.prose:md\n  # Hello', '/x/test.nmbl');
+    expect(out.code).toContain('<div class=\\"prose\\"><h1>Hello</h1></div>');
+    expect(out.code).not.toContain('nmbl:filter');
+  });
+
+  it('resolves multiple :md blocks independently', async () => {
+    const md = async (body: string) => `[${body}]`;
+    const p = getPlugin('nmbl:transform', { filters: { md } });
+    const out = await p.transform.call(ctx, 'div:md\n  one\nsection:md\n  two', '/x/test.nmbl');
+    expect(out.code).toContain('[one]');
+    expect(out.code).toContain('[two]');
+    expect(out.code).not.toContain('nmbl:filter');
   });
 });
 
@@ -111,8 +128,38 @@ div\n  p hi
 });
 
 describe('nmbl:astro-sfc', () => {
-  it('skips sub-resource requests', () => {
+  it('skips sub-resource requests', async () => {
     const p = getPlugin('nmbl:astro-sfc');
-    expect(p.load.call(ctx, '/x/page.astro?astro&type=style')).toBeUndefined();
+    expect(await p.load.call(ctx, '/x/page.astro?astro&type=style')).toBeUndefined();
+  });
+
+  it('compiles the body template but leaves frontmatter strings untouched', async () => {
+    // A docs page may hold a literal `<template lang="nmbl">` example inside a
+    // frontmatter string — that's JS, not template markup, and must survive as-is.
+    const page = `---
+const example = \`<template lang="nmbl">
+div#app
+  p hello
+</template>\`;
+---
+
+<template lang="nmbl">
+section.docs
+  pre {example}
+</template>
+`;
+    const { mkdtempSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const file = join(mkdtempSync(join(tmpdir(), 'nmbl-test-')), 'page.astro');
+    writeFileSync(file, page);
+
+    const p = getPlugin('nmbl:astro-sfc');
+    const out = await p.load.call(ctx, file) as string;
+    // body compiled…
+    expect(out).toContain('<section class="docs">');
+    // …frontmatter example intact, NOT compiled into html
+    expect(out).toContain('<template lang="nmbl">\ndiv#app');
+    expect(out).not.toContain('<div id="app">');
   });
 });

@@ -22,10 +22,50 @@ export interface NmblPluginOptions {
    * - `framework: 'solid' | 'qwik' | 'preact'` — no attribute aliases (class preserved)
    */
   jsx?: JsxOptions;
+
+  /**
+   * Content-block filters: `div.prose:md` hands its raw body to `filters.md`
+   * and splices the result into the output. Unlike core's sync `filters`,
+   * these may be async (e.g. a remark-based markdown renderer).
+   */
+  filters?: Record<string, (body: string) => string | Promise<string>>;
 }
 
 function formatErrors(errors: NmblError[]): string {
   return errors.map(e => `${e.message} (${e.span.start.line + 1}:${e.span.start.column + 1})`).join('\n');
+}
+
+type AsyncFilters = NonNullable<NmblPluginOptions['filters']>;
+
+/**
+ * compile() with possibly-async filters. Core's compile is synchronous, so each
+ * filter emits a unique placeholder during the compile pass and the rendered
+ * bodies are awaited and spliced in afterwards. Zero overhead when no filter fires.
+ */
+async function compileAsync(
+  src: string,
+  options: Parameters<typeof compile>[1],
+  filters: AsyncFilters | undefined,
+): Promise<ReturnType<typeof compile>> {
+  const pending: Promise<[placeholder: string, rendered: string]>[] = [];
+  let n = 0;
+  const syncFilters: Record<string, (body: string) => string> = {};
+  for (const [name, fn] of Object.entries(filters ?? {})) {
+    syncFilters[name] = (body) => {
+      const placeholder = `\u0000nmbl:filter:${n++}\u0000`;
+      pending.push(Promise.resolve(fn(body)).then(rendered => [placeholder, rendered]));
+      return placeholder;
+    };
+  }
+  const result = compile(src, { ...options, filters: syncFilters });
+  if (pending.length > 0) {
+    let html = result.html;
+    for (const [placeholder, rendered] of await Promise.all(pending)) {
+      html = html.replace(placeholder, () => rendered);
+    }
+    return { ...result, html };
+  }
+  return result;
 }
 
 /** Strip the common leading indentation from an SFC template body. */
@@ -45,9 +85,9 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
   const nmblTransform: Plugin = {
     name: 'nmbl:transform',
 
-    transform(code, id) {
+    async transform(code, id) {
       if (!id.endsWith('.nmbl')) return;
-      const { html, errors } = compile(code, { framework: options.framework });
+      const { html, errors } = await compileAsync(code, { framework: options.framework }, options.filters);
       if (errors.length > 0) {
         this.warn(`NMBL compilation errors in ${id}:\n${formatErrors(errors)}`);
       }
@@ -74,7 +114,7 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
       const tpl = descriptor.template;
       if (!tpl || tpl.lang !== 'nmbl') return;
 
-      const { html, errors } = compile(dedent(tpl.content), { framework: 'vue' });
+      const { html, errors } = await compileAsync(dedent(tpl.content), { framework: 'vue' }, options.filters);
       if (errors.length > 0) {
         this.error(`NMBL compilation failed in ${id}:\n${formatErrors(errors)}`);
       }
@@ -103,7 +143,7 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
     name: 'nmbl:astro-sfc',
     enforce: 'pre',
 
-    load(id) {
+    async load(id) {
       // Skip sub-resource requests (e.g. ?astro&type=style)
       if (id.includes('?')) return;
       if (!id.endsWith('.astro')) return;
@@ -117,12 +157,19 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
 
       if (!src.includes('lang="nmbl"') && !src.includes("lang='nmbl'")) return;
 
+      // Astro frontmatter is JS — a string literal in it may legitimately contain
+      // `<template lang="nmbl">` (e.g. a docs page showing example code). Only the
+      // component body is template markup, so match against the body alone.
+      const fm = /^---\r?\n[\s\S]*?\r?\n---/.exec(src);
+      const bodyStart = fm ? fm[0].length : 0;
+      const body = src.slice(bodyStart);
+
       const templateRegex = /<template[^>]*\blang=(["'])nmbl\1[^>]*>([\s\S]*?)<\/template>/g;
-      let result = src;
+      let result = body;
       let match;
 
-      while ((match = templateRegex.exec(src)) !== null) {
-        const { html, errors } = compile(dedent(match[2]), { framework: 'astro' });
+      while ((match = templateRegex.exec(body)) !== null) {
+        const { html, errors } = await compileAsync(dedent(match[2]), { framework: 'astro' }, options.filters);
         if (errors.length > 0) {
           this.error(`NMBL compilation failed in ${id}:\n${formatErrors(errors)}`);
         }
@@ -131,7 +178,7 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
         result = result.replace(match[0], html);
       }
 
-      return result;
+      return src.slice(0, bodyStart) + result;
     },
   };
 
