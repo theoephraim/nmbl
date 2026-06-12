@@ -53,8 +53,8 @@ export const HOMEPAGE_EXAMPLE_NMBL = decompile(HOMEPAGE_EXAMPLE_HTML);
 
 export const FEATURE_EMBEDDED_MD = `article:md
   ## My Post
-  This is *markdown* that gets
-  compiled to HTML at build time.`;
+  This is *markdown*, handed to
+  your md filter at build time.`;
 
 export const COMMENT_VISIBILITY = `nav
   // TODO: add auth links
@@ -78,11 +78,29 @@ export const CONTROL_FLOW = `@if(loggedIn)
 @else
   p Please log in
 
-@each(items as item, i)
+@each(item of items :key="item.id")
   li
     span.name {item.name}
     span.price {item.price}`;
-export const CONTROL_FLOW_HTML = nmblToHtml(CONTROL_FLOW);
+export const CONTROL_FLOW_HTML = (() => {
+  const { html } = compile(CONTROL_FLOW, { framework: 'svelte' });
+  return html.trimEnd();
+})();
+
+export const CONTROL_FLOW_VUE = `@if(loggedIn)
+  p Welcome back, {{ user.name }}!
+  a(href="/dashboard") Dashboard
+@else
+  p Please log in
+
+@each(item of items :key="item.id")
+  li
+    span.name {{ item.name }}
+    span.price {{ item.price }}`;
+export const CONTROL_FLOW_VUE_HTML = (() => {
+  const { html } = compile(CONTROL_FLOW_VUE, { framework: 'vue' });
+  return html.trimEnd();
+})();
 
 export const PLAYGROUND_EXAMPLE_NMBL = `
 //! This comment is preserved in HTML output

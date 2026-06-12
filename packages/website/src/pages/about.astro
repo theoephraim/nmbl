@@ -27,7 +27,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
         <h3>Keep the good parts, fix the rough edges, drop the rest</h3>
         <p>NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.</p>
-        <p>Vue has <code>v-for</code> and <code>v-if</code>. Svelte has its own block syntax. Astro has component composition. NMBL provides a unified control flow syntax &mdash; <code>@if</code>, <code>@each</code>, <code>@else</code> &mdash; that compiles to whatever your framework expects. One clean notation everywhere.</p>
+        <p>Your framework keeps its own control flow &mdash; and NMBL templates that use the canonical form are <strong>portable across frameworks</strong>. Write <code>@each(item of items :key="item.id")</code> once: it compiles to <code>{'{'}#each items as item (item.id){'}'}</code> in Svelte and <code>&lt;template v-for="item of items" :key="item.id"&gt;</code> in Vue. The <code>:key</code> attribute sits in the same paren list as the loop expression, whitespace-separated like any other NMBL attribute. Svelte's <code>as</code>-form (<code>@each(items as item, i)</code>) is also accepted for compatibility. <code>@if</code> / <code>@elseif</code> / <code>@else</code> are pure passthrough &mdash; each host renders them natively. Svelte gets the full block set (<code>@await</code>, <code>@key</code>, <code>@snippet</code>); Astro supports only <code>@if</code> and <code>@each</code> (compiling to JSX expressions).</p>
         <p>That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.</p>
       </div>
     </div>
@@ -38,8 +38,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h2>Design principles</h2>
       <div class="principles-grid">
         <div class="principle">
-          <h3>Shorthand notation -- not a language</h3>
-          <p>No mixins, no extends, no built-in loops or conditionals. NMBL is simply a <em>shorthand notation</em> for HTML &mdash; it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.</p>
+          <h3>Shorthand notation &mdash; not a template engine</h3>
+          <p>No mixins, no extends, no expression language of its own. NMBL is simply a <em>shorthand notation</em> for HTML &mdash; it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.</p>
         </div>
         <div class="principle">
           <h3>Nothing to learn</h3>
@@ -51,7 +51,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
         <div class="principle">
           <h3>Fits your stack</h3>
-          <p>Use <code>&lt;template lang="nmbl"&gt;</code> in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. NMBL is a compile step, not a runtime &mdash; it produces standard HTML that any framework already understands.</p>
+          <p>Use <code>&lt;template lang="nmbl"&gt;</code> in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use <code>nmbl`…`</code> tagged templates in React, Solid, and Qwik. NMBL is a compile step, not a runtime &mdash; it produces standard HTML that any framework already understands.</p>
         </div>
       </div>
     </div>

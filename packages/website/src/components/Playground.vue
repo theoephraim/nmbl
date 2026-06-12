@@ -1,5 +1,13 @@
 <template lang="nmbl">
 .playground
+  .playground-toolbar
+    label.framework-label
+      span Framework
+      select.framework-select(v-model="framework")
+        option(value="html") html
+        option(value="vue") vue
+        option(value="svelte") svelte
+        option(value="astro") astro
   .playground-editors
     .editor-pane
       .pane-header
@@ -32,6 +40,7 @@ import { PLAYGROUND_EXAMPLE_NMBL } from '../examples';
 
 const nmblSource = ref(PLAYGROUND_EXAMPLE_NMBL);
 const htmlSource = ref('');
+const framework = ref<'html' | 'vue' | 'svelte' | 'astro'>('html');
 
 function countLines(s: string) {
   return s ? s.split('\n').length : 0;
@@ -60,7 +69,7 @@ compileNmbl(PLAYGROUND_EXAMPLE_NMBL);
 
 function compileNmbl(source: string) {
   try {
-    const { html, errors } = compile(source);
+    const { html, errors } = compile(source, { framework: framework.value });
     if (errors.length > 0) {
       error.value = errors.map(e => e.message).join('\n');
     } else {
@@ -88,6 +97,10 @@ watch(nmblSource, (value) => {
   debounceTimer = setTimeout(() => compileNmbl(value), 150);
 });
 
+watch(framework, () => {
+  compileNmbl(nmblSource.value);
+});
+
 watch(htmlSource, (value) => {
   if (activeEditor.value !== 'html') return;
   clearTimeout(debounceTimer);
@@ -101,6 +114,40 @@ watch(htmlSource, (value) => {
   flex-direction: column;
   height: calc(100vh - 200px);
   min-height: 500px;
+}
+
+.playground-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.framework-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.framework-select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.framework-select:focus {
+  outline: 1px solid var(--color-accent);
 }
 
 .playground-editors {
