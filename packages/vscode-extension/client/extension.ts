@@ -7,6 +7,7 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 import { registerEmbeddedForwarding } from './embedded-forwarding';
+import { registerConversions } from './convert';
 
 let client: LanguageClient;
 
@@ -59,6 +60,9 @@ export function activate(context: ExtensionContext): void {
   // Register provider forwarding for component names inside <template lang="nmbl">
   // regions of .svelte/.astro files.
   registerEmbeddedForwarding(context);
+
+  // Register paste-HTML-as-NMBL provider + conversion commands.
+  registerConversions(context);
 }
 
 export function deactivate(): Thenable<void> | undefined {

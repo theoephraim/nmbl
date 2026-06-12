@@ -5,6 +5,7 @@ exports.deactivate = deactivate;
 const vscode_1 = require("vscode");
 const node_1 = require("vscode-languageclient/node");
 const embedded_forwarding_1 = require("./embedded-forwarding");
+const convert_1 = require("./convert");
 let client;
 function activate(context) {
     // Resolve the language server module from the installed @nmbl/language-server package.
@@ -45,6 +46,8 @@ function activate(context) {
     // Register provider forwarding for component names inside <template lang="nmbl">
     // regions of .svelte/.astro files.
     (0, embedded_forwarding_1.registerEmbeddedForwarding)(context);
+    // Register paste-HTML-as-NMBL provider + conversion commands.
+    (0, convert_1.registerConversions)(context);
 }
 function deactivate() {
     if (!client)

@@ -15,18 +15,19 @@
   },
   "dependencies": {
     "@nmbl/language-server": "workspace:*",
+    "@nmbl/parser": "workspace:*",
     "vscode-languageclient": "^10.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.0",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "^1.96.0",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "vscode-textmate": "^9.3.2",
     "vscode-oniguruma": "^2.0.1"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.96.0"
   },
   "activationEvents": [
     "onLanguage:nmbl",
@@ -37,6 +38,30 @@
     "Programming Languages"
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "nmbl.convertHtmlToNmbl",
+        "title": "NMBL: Convert Selection from HTML"
+      },
+      {
+        "command": "nmbl.convertNmblToHtml",
+        "title": "NMBL: Convert Selection to HTML"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "nmbl.convertHtmlToNmbl",
+          "when": "editorHasSelection && resourceExtname =~ /\\.(nmbl|vue|svelte|astro)$/",
+          "group": "nmbl"
+        },
+        {
+          "command": "nmbl.convertNmblToHtml",
+          "when": "editorHasSelection && resourceExtname =~ /\\.(nmbl|vue|svelte|astro)$/",
+          "group": "nmbl"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "nmbl",

@@ -13,6 +13,6 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["extension.ts", "embedded-forwarding.ts"],
+  "include": ["extension.ts", "embedded-forwarding.ts", "convert.ts"],
   "exclude": ["node_modules"]
 }

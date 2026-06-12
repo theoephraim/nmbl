@@ -172,11 +172,19 @@ Transform rules:
 - `@if(${cond})` → `{cond && …}` ternary; `@if`/`@else` → full ternary
 - `@each(item of ${items} :key="item.id")` → `{items.map((item) => …)}` with `key={item.id}` on the root
 - `${expr}` holes in text position → `{expr}`; in attribute position → `={expr}`
-- `//` comments stripped; `//!` rendered as HTML comments
+- `//` comments stripped; `//!` rendered as `{/* … */}` brace comments (JSX has no HTML comments)
 
 For Solid, pass `framework: 'solid'`; for Qwik/Preact, `framework: 'qwik'` / `framework: 'preact'`.
 
 See [examples/react](examples/react) and [examples/solid](examples/solid).
+
+### Agent skill
+
+Working with AI coding agents? Install the [NMBL skill](skills/nmbl/SKILL.md) so they write the syntax correctly — it covers the grammar, per-framework control flow, the whitespace pitfalls, and how to verify output:
+
+```sh
+npx skills add theoephraim/nmbl
+```
 
 ### Compiler API
 

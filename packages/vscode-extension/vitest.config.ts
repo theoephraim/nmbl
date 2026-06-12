@@ -8,10 +8,12 @@ export default defineConfig({
   },
   resolve: {
     // Prefer .ts over .js so vitest imports TS source directly, not compiled output
-    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    extensions: ['.ts', '.tsx', '.js', '.mjs', '.jsx'],
     alias: {
       // Stub the vscode module so unit tests can run outside VS Code
       vscode: resolve(__dirname, 'test/__mocks__/vscode.ts'),
+      // Resolve @nmbl/parser to the built dist (avoids needing bun install symlink)
+      '@nmbl/parser': resolve(__dirname, '../../packages/parser/dist/index.mjs'),
     },
   },
 });

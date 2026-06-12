@@ -157,11 +157,12 @@
       "version": "0.1.0",
       "dependencies": {
         "@nmbl/language-server": "workspace:*",
+        "@nmbl/parser": "workspace:*",
         "vscode-languageclient": "^10.0.0",
       },
       "devDependencies": {
         "@types/node": "^25.0.0",
-        "@types/vscode": "^1.85.0",
+        "@types/vscode": "^1.96.0",
         "typescript": "catalog:",
         "vitest": "catalog:",
         "vscode-oniguruma": "^2.0.1",

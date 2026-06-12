@@ -88,18 +88,60 @@ export enum CompletionItemKind {
   TypeParameter = 24,
 }
 
+export class DocumentDropOrPasteEditKind {
+  static readonly Empty = new DocumentDropOrPasteEditKind('');
+  static readonly Text = new DocumentDropOrPasteEditKind('text');
+  static readonly TextUpdateImports = new DocumentDropOrPasteEditKind('text.updateImports');
+
+  constructor(public readonly value: string) {}
+
+  append(...parts: string[]): DocumentDropOrPasteEditKind {
+    const joined = [this.value, ...parts].filter(Boolean).join('.');
+    return new DocumentDropOrPasteEditKind(joined);
+  }
+
+  intersects(other: DocumentDropOrPasteEditKind): boolean {
+    return this.value === other.value ||
+      this.value.startsWith(other.value + '.') ||
+      other.value.startsWith(this.value + '.');
+  }
+
+  contains(other: DocumentDropOrPasteEditKind): boolean {
+    return this.value === other.value || other.value.startsWith(this.value + '.');
+  }
+}
+
+export class DocumentPasteEdit {
+  yieldTo?: DocumentDropOrPasteEditKind[];
+  additionalEdit?: unknown;
+
+  constructor(
+    public insertText: string,
+    public title: string,
+    public kind: DocumentDropOrPasteEditKind,
+  ) {}
+}
+
 export const languages = {
   registerCompletionItemProvider: () => ({ dispose: () => {} }),
   registerDefinitionProvider: () => ({ dispose: () => {} }),
   registerHoverProvider: () => ({ dispose: () => {} }),
+  registerDocumentPasteEditProvider: () => ({ dispose: () => {} }),
 };
 
 export const commands = {
   executeCommand: async () => undefined,
+  registerCommand: (_id: string, _handler: () => unknown) => ({ dispose: () => {} }),
 };
 
 export const workspace = {
   createFileSystemWatcher: () => ({ dispose: () => {} }),
+};
+
+export const window = {
+  activeTextEditor: undefined as unknown,
+  showErrorMessage: (_msg: string) => Promise.resolve(undefined),
+  showInformationMessage: (_msg: string) => Promise.resolve(undefined),
 };
 
 // Re-export types needed by type-only usage
@@ -112,7 +154,21 @@ export type TextDocument = {
   offsetAt: (pos: Position) => number;
   positionAt: (offset: number) => Position;
   getWordRangeAtPosition: (pos: Position, pattern?: RegExp) => Range | undefined;
-  lineAt: (line: number) => { text: string };
+  lineAt: (line: number | Position) => { text: string };
   uri: unknown;
   languageId: string;
+};
+export type DataTransfer = {
+  get: (mimeType: string) => { value: string | null } | undefined;
+};
+export type DataTransferItem = { value: string };
+export type DocumentPasteEditContext = {
+  only: DocumentDropOrPasteEditKind | undefined;
+  triggerKind: number;
+};
+export type CancellationToken = { isCancellationRequested: boolean };
+export type DocumentPasteEditProvider = unknown;
+export type DocumentPasteProviderMetadata = {
+  providedPasteEditKinds: DocumentDropOrPasteEditKind[];
+  pasteMimeTypes?: string[];
 };
