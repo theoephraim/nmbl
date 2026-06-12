@@ -6,7 +6,7 @@
 // NMBL inside, and splice the result back without disturbing the host file.
 //
 // This module is intentionally dependency-free (regex + a small hand-written
-// scanner) so it stays inside @nmbl/parser alongside the parser itself.
+// scanner) so it stays inside @nmbl-lang/core alongside the parser itself.
 import { format, type FormatOptions, type FormatResult } from './formatter.js';
 import type { NmblError } from './errors.js';
 

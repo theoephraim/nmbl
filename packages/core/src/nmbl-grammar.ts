@@ -269,7 +269,7 @@ const indent: IndentConfig = {
 /**
  * Opaque handle for the NMBL grammar object. Internally this is monogram's
  * CstGrammar; typed opaquely so monogram's (unpublished, .ts-only) types
- * never leak into @nmbl/parser's public d.ts.
+ * never leak into @nmbl-lang/core's public d.ts.
  */
 export type NmblGrammar = { readonly name: string } & Record<string, unknown>;
 

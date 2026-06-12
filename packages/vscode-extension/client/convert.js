@@ -60,7 +60,7 @@ let _parserPromise;
 function getParser() {
     if (!_parserPromise) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        _parserPromise = import('@nmbl/parser');
+        _parserPromise = import('@nmbl-lang/core');
     }
     return _parserPromise;
 }

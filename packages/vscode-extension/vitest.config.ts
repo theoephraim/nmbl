@@ -12,8 +12,8 @@ export default defineConfig({
     alias: {
       // Stub the vscode module so unit tests can run outside VS Code
       vscode: resolve(__dirname, 'test/__mocks__/vscode.ts'),
-      // Resolve @nmbl/parser to the built dist (avoids needing bun install symlink)
-      '@nmbl/parser': resolve(__dirname, '../../packages/parser/dist/index.mjs'),
+      // Resolve @nmbl-lang/core to the built dist (avoids needing bun install symlink)
+      '@nmbl-lang/core': resolve(__dirname, '../../packages/core/dist/index.mjs'),
     },
   },
 });

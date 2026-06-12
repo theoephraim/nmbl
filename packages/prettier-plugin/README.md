@@ -1,10 +1,10 @@
-# @nmbl/prettier-plugin
+# @nmbl-lang/prettier-plugin
 
 [Prettier](https://prettier.io) plugin for [NMBL](https://nmbl.tools) — formats
 `.nmbl` files to canonical form.
 
 ```sh
-npm install -D prettier @nmbl/prettier-plugin
+npm install -D prettier @nmbl-lang/prettier-plugin
 ```
 
 ## Usage
@@ -14,7 +14,7 @@ Add the plugin to your Prettier config:
 ```jsonc
 // .prettierrc
 {
-  "plugins": ["@nmbl/prettier-plugin"]
+  "plugins": ["@nmbl-lang/prettier-plugin"]
 }
 ```
 
@@ -30,5 +30,5 @@ attribute lists wrap. Unparseable input is passed through unchanged — the plug
 never mangles a file it can't parse.
 
 > This plugin handles standalone `.nmbl` files. To format NMBL embedded in
-> `.vue` / `.svelte` / `.astro` / `.jsx` files, use the [`@nmbl/cli`](../cli)
+> `.vue` / `.svelte` / `.astro` / `.jsx` files, use the [`@nmbl-lang/cli`](../cli)
 > (`nmbl format`), which understands those host files.

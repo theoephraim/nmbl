@@ -1,12 +1,20 @@
 {
-  "name": "@nmbl/vscode-extension",
-  "displayName": "NMBL",
+  "name": "@nmbl-lang/vscode-extension",
   "version": "0.1.0",
   "private": true,
-  "description": "NMBL language support \u2014 syntax highlighting for .nmbl, .astro, .svelte, and .vue files",
-  "publisher": "nmbl",
+  "description": "NMBL language support — syntax highlighting for .nmbl, .astro, .svelte, and .vue files",
   "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/vscode-extension"
+  },
   "main": "./client/extension.js",
+  "exports": {
+    "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json"
+  },
   "scripts": {
     "install-local": "for dir in ~/.vscode/extensions ~/.cursor/extensions ~/.windsurf/extensions; do [ -d \"$dir\" ] && ln -sfn \"$(pwd)\" \"$dir/nmbl.nmbl-0.1.0\" && echo \"Installed to $dir\"; done",
     "verify": "node scripts/verify-grammar.mjs",
@@ -14,8 +22,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nmbl/language-server": "workspace:*",
-    "@nmbl/parser": "workspace:*",
+    "@nmbl-lang/language-server": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
     "vscode-languageclient": "^10.0.0"
   },
   "devDependencies": {
@@ -26,6 +34,8 @@
     "vscode-textmate": "^9.3.2",
     "vscode-oniguruma": "^2.0.1"
   },
+  "displayName": "NMBL",
+  "publisher": "nmbl",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -142,8 +152,5 @@
         }
       }
     ]
-  },
-  "exports": {
-    "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json"
   }
 }

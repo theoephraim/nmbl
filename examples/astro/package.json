@@ -1,5 +1,6 @@
 {
-  "name": "astro",
+  "name": "example/astro",
+  "private": true,
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -9,7 +10,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@nmbl/astro": "workspace:*",
+    "@nmbl-lang/astro": "workspace:*",
     "astro": "^6.0.0"
   }
 }

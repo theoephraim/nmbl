@@ -91,8 +91,8 @@ article:md
 NMBL fails loudly with exact source positions — compile to check, don't eyeball:
 
 ```js
-// in a project depending on @nmbl/parser
-import { compile, decompile } from '@nmbl/parser';
+// in a project depending on @nmbl-lang/core
+import { compile, decompile } from '@nmbl-lang/core';
 const { html, errors } = compile(src, { framework: 'vue' }); // 'svelte' | 'astro' | 'jsx' | 'html'
 // errors: [{ message, span: { start: { line, column } } }]
 ```

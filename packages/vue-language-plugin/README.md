@@ -5,7 +5,7 @@ This package provides Vue language server support for NMBL templates, enabling i
 ## Installation
 
 ```bash
-npm install @nmbl/vue-language-plugin
+npm install @nmbl-lang/vue-language-plugin
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ Configure in your `tsconfig.json`:
 ```json
 {
   "vueCompilerOptions": {
-    "plugins": ["@nmbl/vue-language-plugin"]
+    "plugins": ["@nmbl-lang/vue-language-plugin"]
   }
 }
 ```
@@ -37,7 +37,7 @@ div#app
 The plugin implements the Vue Language Core plugin interface to transform NMBL templates into HTML that Vue's compiler can understand. It consists of three main parts:
 
 1. **Template Compilation** (`compileSFCTemplate`)
-   - Compiles NMBL syntax to HTML using the `@nmbl/parser` compiler
+   - Compiles NMBL syntax to HTML using the `@nmbl-lang/core` compiler
    - Preserves Vue directives, interpolations, and event handlers
    - Returns an AST that Vue's compiler can process
 
@@ -139,7 +139,7 @@ bun run build
 The plugin is tested through the parser's Vue integration tests:
 
 ```bash
-cd ../parser
+cd ../core
 bun test vue-integration
 ```
 

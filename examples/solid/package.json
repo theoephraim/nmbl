@@ -7,7 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@nmbl/vite-plugin": "workspace:*",
+    "@nmbl-lang/vite-plugin": "workspace:*",
     "solid-js": "catalog:",
     "vite-plugin-solid": "catalog:",
     "vite": "catalog:"

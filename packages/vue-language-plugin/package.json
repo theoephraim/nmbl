@@ -1,6 +1,22 @@
 {
-  "name": "@nmbl/vue-language-plugin",
+  "name": "@nmbl-lang/vue-language-plugin",
   "version": "0.1.0",
+  "description": "Volar plugin providing full IntelliSense for NMBL templates in Vue SFCs",
+  "keywords": [
+    "nmbl",
+    "template",
+    "vue",
+    "volar",
+    "vue-language-tools"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/vue-language-plugin"
+  },
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
   "exports": {
@@ -20,16 +36,16 @@
     "dev": "tsdown --watch",
     "test": "vitest run"
   },
-  "peerDependencies": {
-    "@vue/language-core": "^3.0.0"
-  },
   "dependencies": {
     "@volar/source-map": "~2.4.0",
     "muggle-string": "^0.4.1",
     "vscode-languageserver-textdocument": "^1.0.12"
   },
+  "peerDependencies": {
+    "@vue/language-core": "^3.0.0"
+  },
   "devDependencies": {
-    "@nmbl/parser": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
     "@vue/compiler-dom": "catalog:",
     "@vue/language-core": "^3.3.4",
     "tsdown": "catalog:",

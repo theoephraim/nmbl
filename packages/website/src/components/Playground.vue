@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { compile, decompile } from '@nmbl/parser';
+import { compile, decompile } from '@nmbl-lang/core';
 import Editor from './Editor.vue';
 import { PLAYGROUND_EXAMPLE_NMBL } from '../examples';
 

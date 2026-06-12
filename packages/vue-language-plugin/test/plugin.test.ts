@@ -51,7 +51,7 @@ function findByType(root: object, type: number): Array<Record<string, unknown>> 
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('@nmbl/vue-language-plugin', () => {
+describe('@nmbl-lang/vue-language-plugin', () => {
   let plugin: PluginInstance;
 
   beforeAll(() => {
@@ -64,7 +64,7 @@ describe('@nmbl/vue-language-plugin', () => {
     });
 
     test('factory returns a named plugin with version', () => {
-      expect(plugin.name).toBe('@nmbl/vue-language-plugin');
+      expect(plugin.name).toBe('@nmbl-lang/vue-language-plugin');
       expect(plugin.version).toBeGreaterThan(0);
     });
 

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import {
   formatFile, lint, extractNmblRegions, isSupportedFile,
   type FormatOptions, type LintOptions, type LintMessage, type NmblError,
-} from '@nmbl/parser';
+} from '@nmbl-lang/core';
 
 /** Directory names never worth walking into. */
 const IGNORE_DIRS = new Set([

@@ -1,4 +1,4 @@
-import { nmblPreprocess } from '@nmbl/svelte';
+import { nmblPreprocess } from '@nmbl-lang/svelte';
 
 export default {
   preprocess: [

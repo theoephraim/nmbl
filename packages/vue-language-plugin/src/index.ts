@@ -2,7 +2,7 @@ import type { VueLanguagePlugin } from '@vue/language-core';
 import type * as CompilerDOM from '@vue/compiler-dom';
 import { SourceMap } from '@volar/source-map';
 import { toString, type Segment } from 'muggle-string';
-import { compile } from '@nmbl/parser';
+import { compile } from '@nmbl-lang/core';
 
 // Helper to build source mappings
 function buildMappings<T>(chunks: Segment<T>[]) {
@@ -34,7 +34,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
   const CompilerDOM = modules['@vue/compiler-dom'];
 
   return {
-    name: '@nmbl/vue-language-plugin',
+    name: '@nmbl-lang/vue-language-plugin',
     version: 2.1,
 
     getEmbeddedCodes(_fileName, sfc) {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { IScriptSnapshot } from '@volar/language-core';
 import { NmblVirtualCode, convertMappings } from '../src/language-plugin.js';
-import { compile } from '@nmbl/parser';
+import { compile } from '@nmbl-lang/core';
 
 /** Minimal IScriptSnapshot from a plain string. */
 function makeSnapshot(text: string): IScriptSnapshot {

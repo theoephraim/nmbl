@@ -1,4 +1,4 @@
-import { compile, type CompilerOptions, type SourceMapping } from '@nmbl/parser';
+import { compile, type CompilerOptions, type SourceMapping } from '@nmbl-lang/core';
 
 function dedent(text: string): { text: string; indent: number; leadingNewlines: number } {
   // Count and strip leading newlines

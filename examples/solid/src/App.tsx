@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { nmbl } from '@nmbl/vite-plugin/tag';
+import { nmbl } from '@nmbl-lang/vite-plugin/tag';
 
 interface Item {
   id: number;

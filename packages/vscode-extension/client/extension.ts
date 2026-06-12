@@ -13,9 +13,9 @@ import { registerFormatting } from './format';
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext): void {
-  // Resolve the language server module from the installed @nmbl/language-server package.
+  // Resolve the language server module from the installed @nmbl-lang/language-server package.
   // The server is a standalone Node.js module that communicates via IPC.
-  const serverModule = require.resolve('@nmbl/language-server');
+  const serverModule = require.resolve('@nmbl-lang/language-server');
 
   const serverOptions: ServerOptions = {
     run: {
@@ -37,7 +37,7 @@ export function activate(context: ExtensionContext): void {
     //  - .svelte files (may contain <template lang="nmbl">)
     //  - .astro files (may contain <template lang="nmbl">)
     // NOT .vue — full Vue support is provided by the separate
-    // @nmbl/vue-language-plugin-nmbl Volar plugin; duplicating here would
+    // @nmbl-lang/vue-language-plugin Volar plugin; duplicating here would
     // cause double-reported diagnostics.
     documentSelector: [
       { language: 'nmbl' },

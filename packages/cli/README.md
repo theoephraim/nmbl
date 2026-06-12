@@ -1,9 +1,9 @@
-# @nmbl/cli
+# @nmbl-lang/cli
 
 Command-line formatter and linter for [NMBL](https://nmbl.tools).
 
 ```sh
-npm install -D @nmbl/cli
+npm install -D @nmbl-lang/cli
 ```
 
 ## Usage
@@ -68,10 +68,10 @@ nmbl lint src --quiet
 ## Programmatic API
 
 ```ts
-import { formatContent, lintContent, collectFiles } from '@nmbl/cli';
+import { formatContent, lintContent, collectFiles } from '@nmbl-lang/cli';
 
 const { output, changed } = formatContent('App.vue', source);
 const { messages } = lintContent('page.nmbl', source);
 ```
 
-Prefer Prettier? See [`@nmbl/prettier-plugin`](../prettier-plugin).
+Prefer Prettier? See [`@nmbl-lang/prettier-plugin`](../prettier-plugin).

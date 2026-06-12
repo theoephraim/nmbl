@@ -1,7 +1,15 @@
 {
-  "name": "@nmbl/website",
+  "name": "@nmbl-lang/website",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/website"
+  },
   "type": "module",
   "scripts": {
     "dev": "astro dev",
@@ -12,9 +20,9 @@
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/vue": "^6.0.1",
-    "@nmbl/astro": "workspace:*",
-    "@nmbl/parser": "workspace:*",
-    "@nmbl/vscode-extension": "workspace:*",
+    "@nmbl-lang/astro": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
+    "@nmbl-lang/vscode-extension": "workspace:*",
     "astro": "catalog:",
     "astro-expressive-code": "^0.43.1",
     "varlock": "^1.6.1",

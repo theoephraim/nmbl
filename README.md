@@ -57,15 +57,15 @@ NMBL keeps the good part — the shorthand notation — and drops the template-e
 
 | Package | Description |
 |---|---|
-| [`@nmbl/parser`](packages/parser) | Core lexer, parser, compiler (HTML + source mappings), HTML→NMBL decompiler, **formatter**, and **linter** |
-| [`@nmbl/cli`](packages/cli) | `nmbl format` / `nmbl lint` — standalone CLI for CI, pre-commit, and lint-staged |
-| [`@nmbl/prettier-plugin`](packages/prettier-plugin) | Prettier plugin for `.nmbl` files |
-| [`@nmbl/vite-plugin`](packages/vite-plugin) | Vite plugin: `.nmbl` files and `<template lang="nmbl">` in Vue SFCs |
-| [`@nmbl/svelte`](packages/svelte) | Svelte preprocessor with V3 source maps |
-| [`@nmbl/astro`](packages/astro) | Astro integration |
-| [`@nmbl/vue-language-plugin`](packages/vue-language-plugin-nmbl) | Volar plugin: full IntelliSense for NMBL templates in Vue SFCs |
-| [`@nmbl/vscode-extension`](packages/vscode-extension) | Syntax highlighting, format-on-save, and HTML conversion for `.nmbl` and embedded templates (install from repo) |
-| [`@nmbl/website`](packages/website) | [nmbl.tools](https://nmbl.tools) — docs and interactive playground |
+| [`@nmbl-lang/core`](packages/core) | Core lexer, parser, compiler (HTML + source mappings), HTML→NMBL decompiler, **formatter**, and **linter** |
+| [`@nmbl-lang/cli`](packages/cli) | `nmbl format` / `nmbl lint` — standalone CLI for CI, pre-commit, and lint-staged |
+| [`@nmbl-lang/prettier-plugin`](packages/prettier-plugin) | Prettier plugin for `.nmbl` files |
+| [`@nmbl-lang/vite-plugin`](packages/vite-plugin) | Vite plugin: `.nmbl` files and `<template lang="nmbl">` in Vue SFCs |
+| [`@nmbl-lang/svelte`](packages/svelte) | Svelte preprocessor with V3 source maps |
+| [`@nmbl-lang/astro`](packages/astro) | Astro integration |
+| [`@nmbl-lang/vue-language-plugin`](packages/vue-language-plugin) | Volar plugin: full IntelliSense for NMBL templates in Vue SFCs |
+| [`@nmbl-lang/vscode-extension`](packages/vscode-extension) | Syntax highlighting, format-on-save, and HTML conversion for `.nmbl` and embedded templates (install from repo) |
+| [`@nmbl-lang/website`](packages/website) | [nmbl.tools](https://nmbl.tools) — docs and interactive playground |
 
 ## Usage
 
@@ -74,7 +74,7 @@ NMBL keeps the good part — the shorthand notation — and drops the template-e
 ```ts
 // vite.config.ts
 import vue from '@vitejs/plugin-vue';
-import nmbl from '@nmbl/vite-plugin';
+import nmbl from '@nmbl-lang/vite-plugin';
 
 export default defineConfig({
   plugins: [
@@ -88,7 +88,7 @@ export default defineConfig({
 // tsconfig.json — enables IntelliSense via Volar
 {
   "vueCompilerOptions": {
-    "plugins": ["@nmbl/vue-language-plugin"]
+    "plugins": ["@nmbl-lang/vue-language-plugin"]
   }
 }
 ```
@@ -110,7 +110,7 @@ See [examples/vue](examples/vue).
 
 ```js
 // svelte.config.js
-import { nmblPreprocess } from '@nmbl/svelte';
+import { nmblPreprocess } from '@nmbl-lang/svelte';
 
 export default {
   preprocess: [nmblPreprocess()],
@@ -123,7 +123,7 @@ Then use `<template lang="nmbl">` blocks in your components. See [examples/svelt
 
 ```js
 // astro.config.mjs
-import nmbl from '@nmbl/astro';
+import nmbl from '@nmbl-lang/astro';
 
 export default defineConfig({
   integrations: [nmbl()],
@@ -139,7 +139,7 @@ Use the `nmbl\`…\`` tagged template literal tag in any `.tsx`/`.jsx` file. The
 ```ts
 // vite.config.ts
 import react from '@vitejs/plugin-react';
-import nmbl from '@nmbl/vite-plugin';
+import nmbl from '@nmbl-lang/vite-plugin';
 
 export default defineConfig({
   plugins: [
@@ -152,7 +152,7 @@ export default defineConfig({
 ```tsx
 // src/App.tsx
 import { useState } from 'react';
-import { nmbl } from '@nmbl/vite-plugin/tag'; // compile-time-only stub
+import { nmbl } from '@nmbl-lang/vite-plugin/tag'; // compile-time-only stub
 
 function Card({ item }) {
   const [open, setOpen] = useState(false);
@@ -167,7 +167,7 @@ function Card({ item }) {
 }
 ```
 
-The stub import (`@nmbl/vite-plugin/tag`) provides TypeScript types and throws at runtime if the plugin is missing. Compiled away, it leaves no trace in your bundle.
+The stub import (`@nmbl-lang/vite-plugin/tag`) provides TypeScript types and throws at runtime if the plugin is missing. Compiled away, it leaves no trace in your bundle.
 
 Transform rules:
 - `.class` / `#id` → `className` for React/Preact, `class` for Solid/Qwik
@@ -184,7 +184,7 @@ See [examples/react](examples/react) and [examples/solid](examples/solid).
 
 NMBL has one canonical shape, and the tooling keeps your files in it — wherever NMBL lives: standalone `.nmbl`, `<template lang="nmbl">` blocks in Vue/Svelte/Astro SFCs, and `nmbl\`…\`` tagged templates in JSX.
 
-**CLI** ([`@nmbl/cli`](packages/cli)) — for npm scripts, CI, pre-commit, and lint-staged:
+**CLI** ([`@nmbl-lang/cli`](packages/cli)) — for npm scripts, CI, pre-commit, and lint-staged:
 
 ```sh
 nmbl format src --write     # reformat in place
@@ -194,11 +194,11 @@ nmbl lint src               # report best-practice & correctness diagnostics
 
 Paths may be files or directories; directories are searched for `.nmbl`, `.vue`, `.svelte`, `.astro`, `.jsx`, and `.tsx` (skipping `node_modules` and build output). The formatter never touches a file it can't fully parse, so it's safe on format-on-save.
 
-**Prettier** ([`@nmbl/prettier-plugin`](packages/prettier-plugin)) — drop it into an existing Prettier setup:
+**Prettier** ([`@nmbl-lang/prettier-plugin`](packages/prettier-plugin)) — drop it into an existing Prettier setup:
 
 ```jsonc
 // .prettierrc
-{ "plugins": ["@nmbl/prettier-plugin"] }
+{ "plugins": ["@nmbl-lang/prettier-plugin"] }
 ```
 
 ```sh
@@ -220,7 +220,7 @@ npx skills add theoephraim/nmbl
 ### Compiler API
 
 ```ts
-import { compile, decompile } from '@nmbl/parser';
+import { compile, decompile } from '@nmbl-lang/core';
 
 const { html, errors } = compile('p.lead Hello world');
 const nmbl = decompile('<p class="lead">Hello world</p>');
@@ -228,13 +228,13 @@ const nmbl = decompile('<p class="lead">Hello world</p>');
 
 ## Architecture
 
-The NMBL grammar is defined once in `packages/parser/src/nmbl-grammar.ts` using [monogram](https://github.com/johnsoncodehk/monogram) (pulled from a pinned GitHub commit and bundled into `@nmbl/parser`'s dist). The runtime lexer/parser executes that grammar directly (`createLexer`/`createParser`), and `packages/parser/scripts/gen-artifacts.ts` derives the editor artifacts from the same definition:
+The NMBL grammar is defined once in `packages/core/src/nmbl-grammar.ts` using [monogram](https://github.com/johnsoncodehk/monogram) (pulled from a pinned GitHub commit and bundled into `@nmbl-lang/core`'s dist). The runtime lexer/parser executes that grammar directly (`createLexer`/`createParser`), and `packages/core/scripts/gen-artifacts.ts` derives the editor artifacts from the same definition:
 
 - The TextMate grammar + VS Code language configuration (checked into `packages/vscode-extension`)
-- The tree-sitter grammar (`packages/parser/generated/tree-sitter/nmbl`)
-- A Monarch (Monaco) tokenizer and typed CST node definitions (`packages/parser/generated`)
+- The tree-sitter grammar (`packages/core/generated/tree-sitter/nmbl`)
+- A Monarch (Monaco) tokenizer and typed CST node definitions (`packages/core/generated`)
 
-This means syntax highlighting can never drift from what the parser actually accepts. To regenerate the editor artifacts after changing the grammar, run `bun run gen` inside `packages/parser`. Any local monogram patches live in `patches/monogram.patch`.
+This means syntax highlighting can never drift from what the parser actually accepts. To regenerate the editor artifacts after changing the grammar, run `bun run gen` inside `packages/core`. Any local monogram patches live in `patches/monogram.patch`.
 
 ## Development
 

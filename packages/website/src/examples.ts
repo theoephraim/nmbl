@@ -1,4 +1,4 @@
-import { compile, decompile } from "@nmbl/parser";
+import { compile, decompile } from "@nmbl-lang/core";
 
 function nmblToHtml(nmbl: string): string {
   const { html } = compile(nmbl);

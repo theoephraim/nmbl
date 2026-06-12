@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import solid from 'vite-plugin-solid';
-import nmbl from '@nmbl/vite-plugin';
+import nmbl from '@nmbl-lang/vite-plugin';
 
 export default defineConfig({
   plugins: [

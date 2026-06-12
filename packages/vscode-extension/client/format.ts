@@ -1,7 +1,7 @@
 /**
  * format.ts
  *
- * Wires the NMBL core formatter (@nmbl/parser) into VS Code:
+ * Wires the NMBL core formatter (@nmbl-lang/core) into VS Code:
  *
  *   - DocumentFormattingEditProvider for `.nmbl` files → enables "Format
  *     Document" and format-on-save for standalone NMBL. We register this ONLY
@@ -13,7 +13,7 @@
  *     nmbl`…` templates inside an SFC/JSX file) on demand, without claiming to
  *     own formatting for the host language.
  *
- * @nmbl/parser is ESM-only; this CJS module loads it via a cached dynamic
+ * @nmbl-lang/core is ESM-only; this CJS module loads it via a cached dynamic
  * import, mirroring convert.ts.
  */
 
@@ -40,7 +40,7 @@ let _parserPromise: Promise<ParserModule> | undefined;
 function getParser(): Promise<ParserModule> {
   if (!_parserPromise) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _parserPromise = import('@nmbl/parser') as Promise<any>;
+    _parserPromise = import('@nmbl-lang/core') as Promise<any>;
   }
   return _parserPromise;
 }

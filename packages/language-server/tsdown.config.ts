@@ -12,7 +12,7 @@ export default defineConfig({
   // Only leave node builtins external (handled automatically).
   external: [],
   noExternal: [
-    '@nmbl/parser',
+    '@nmbl-lang/core',
     '@volar/language-core',
     '@volar/language-server',
     '@volar/language-service',

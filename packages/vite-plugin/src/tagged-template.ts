@@ -5,8 +5,8 @@
  * be unit-tested directly without spinning up Vite.
  */
 
-import { compile } from '@nmbl/parser';
-import type { CompilerOptions } from '@nmbl/parser';
+import { compile } from '@nmbl-lang/core';
+import type { CompilerOptions } from '@nmbl-lang/core';
 import MagicString from 'magic-string';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

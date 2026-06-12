@@ -7,8 +7,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@nmbl/vite-plugin": "workspace:*",
-    "@nmbl/vue-language-plugin": "workspace:*",
+    "@nmbl-lang/vite-plugin": "workspace:*",
+    "@nmbl-lang/vue-language-plugin": "workspace:*",
     "vue": "catalog:",
     "@vitejs/plugin-vue": "catalog:",
     "vite": "catalog:"

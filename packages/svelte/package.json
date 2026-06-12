@@ -1,6 +1,21 @@
 {
-  "name": "@nmbl/svelte",
+  "name": "@nmbl-lang/svelte",
   "version": "0.1.0",
+  "description": "Svelte preprocessor for NMBL templates, with V3 source maps",
+  "keywords": [
+    "nmbl",
+    "template",
+    "svelte",
+    "svelte-preprocessor"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/svelte"
+  },
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -17,7 +32,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nmbl/parser": "workspace:*"
+    "@nmbl-lang/core": "workspace:*"
   },
   "peerDependencies": {
     "svelte": ">=5.0.0"

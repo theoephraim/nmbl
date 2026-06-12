@@ -1,9 +1,9 @@
 /**
  * Unit tests for the pure helpers in client/convert.ts and a real-parser
- * round-trip integration test using @nmbl/parser directly.
+ * round-trip integration test using @nmbl-lang/core directly.
  *
  * The `vscode` module is aliased to a minimal stub via vitest.config.ts.
- * @nmbl/parser is resolved to packages/parser/dist/index.mjs via the alias.
+ * @nmbl-lang/core is resolved to packages/core/dist/index.mjs via the alias.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -13,7 +13,7 @@ import {
   dedentSelection,
   chooseFramework,
 } from '../client/convert';
-import { compile, decompile } from '@nmbl/parser';
+import { compile, decompile } from '@nmbl-lang/core';
 
 // ---------------------------------------------------------------------------
 // looksLikeHtml
@@ -173,7 +173,7 @@ describe('chooseFramework', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Round-trip integration tests using the real @nmbl/parser
+// Round-trip integration tests using the real @nmbl-lang/core
 // ---------------------------------------------------------------------------
 
 describe('decompile → compile round-trip (real parser)', () => {

@@ -1,6 +1,24 @@
 {
-  "name": "@nmbl/parser",
+  "name": "@nmbl-lang/core",
   "version": "0.1.0",
+  "description": "Lexer, parser, compiler, formatter, linter, and HTML→NMBL decompiler for the NMBL templating language",
+  "keywords": [
+    "nmbl",
+    "template",
+    "templating",
+    "compiler",
+    "parser",
+    "formatter",
+    "linter"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/core"
+  },
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",

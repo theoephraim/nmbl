@@ -1,8 +1,8 @@
 import { defineConfig } from 'astro/config';
 import vue from '@astrojs/vue';
-import nmbl from '@nmbl/astro';
+import nmbl from '@nmbl-lang/astro';
 import expressiveCode from 'astro-expressive-code';
-import nmblGrammar from '@nmbl/vscode-extension/syntaxes/nmbl.tmLanguage.json' with { type: 'json' };
+import nmblGrammar from '@nmbl-lang/vscode-extension/syntaxes/nmbl.tmLanguage.json' with { type: 'json' };
 
 export default defineConfig({
   site: 'https://nmbl.tools',

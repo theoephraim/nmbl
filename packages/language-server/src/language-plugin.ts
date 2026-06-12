@@ -1,6 +1,6 @@
 import type { CodeMapping, IScriptSnapshot, LanguagePlugin, VirtualCode } from '@volar/language-core';
-import { compile } from '@nmbl/parser';
-import type { SourceMapping } from '@nmbl/parser';
+import { compile } from '@nmbl-lang/core';
+import type { SourceMapping } from '@nmbl-lang/core';
 import { URI } from 'vscode-uri';
 
 // ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ export function dedentedOffsetToOriginal(
 // ---------------------------------------------------------------------------
 
 /**
- * Convert a SourceMapping[] from @nmbl/parser into Volar CodeMapping[].
+ * Convert a SourceMapping[] from @nmbl-lang/core into Volar CodeMapping[].
  *
  * Volar mappings require source and generated segment lengths to be equal
  * (it maps one character range to another of the same length). When the source
@@ -185,7 +185,7 @@ export class NmblVirtualCode implements VirtualCode {
   id = 'root';
   languageId = 'nmbl';
 
-  /** Compile errors from @nmbl/parser — surfaced as diagnostics by the server. */
+  /** Compile errors from @nmbl-lang/core — surfaced as diagnostics by the server. */
   compileErrors: ReturnType<typeof compile>['errors'];
 
   mappings: CodeMapping[];

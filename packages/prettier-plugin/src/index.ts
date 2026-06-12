@@ -1,4 +1,4 @@
-import { format } from '@nmbl/parser';
+import { format } from '@nmbl-lang/core';
 import type { Plugin, Parser, Printer, SupportLanguage } from 'prettier';
 
 // ─── How this plugin wires into Prettier ──────────────────────────────
@@ -7,7 +7,7 @@ import type { Plugin, Parser, Printer, SupportLanguage } from 'prettier';
 //
 //   source text ──parse──▶ AST ──print──▶ Doc ──▶ formatted text
 //
-// NMBL already has a full formatter in @nmbl/parser, so we don't build a
+// NMBL already has a full formatter in @nmbl-lang/core, so we don't build a
 // real AST or use Prettier's Doc-builder algebra. Instead we:
 //
 //   1. parse(): run the NMBL formatter once, stash the result string in a

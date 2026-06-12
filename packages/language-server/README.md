@@ -1,4 +1,4 @@
-# @nmbl/language-server
+# @nmbl-lang/language-server
 
 A [Volar 2.4](https://github.com/volarjs/volar.js) language server that provides IDE intelligence for the NMBL template language.
 
@@ -11,7 +11,7 @@ The server handles two document kinds:
 
 For each recognized document the server:
 
-1. Compiles the NMBL source via `@nmbl/parser`'s `compile()`, choosing the right framework target (`svelte` / `astro` / `html`).
+1. Compiles the NMBL source via `@nmbl-lang/core`'s `compile()`, choosing the right framework target (`svelte` / `astro` / `html`).
 2. Produces a Volar `VirtualCode` tree: a root `nmbl` code plus an embedded `html` virtual code that carries the compiled output.
 3. Exposes **source mappings** that link every token in the generated HTML back to the original position in the host document (accounting for the leading indentation that was stripped before compilation).
 4. Feeds the virtual HTML code to [`volar-service-html`](https://github.com/volarjs/services) to provide HTML completions, hover documentation, and HTML diagnostics for free.
@@ -26,7 +26,7 @@ For each recognized document the server:
 ## What it deliberately does NOT do
 
 - **Framework-type-aware expression checking** — NMBL control-flow expressions (`@if(cond)`, `@each(items as item)`) are compiled to Svelte or Astro syntax in the virtual code, but the server does not run a full TypeScript/JavaScript type-checker over them. See [sveltejs/language-tools#339](https://github.com/sveltejs/language-tools/issues/339) for context on why deep expression checking in embedded languages is non-trivial. The Astro Language Server has no plugin hook that would allow injecting a second virtual language service either.
-- **Vue single-file components** — `.vue` files with `<template lang="nmbl">` are handled by the separate [`@nmbl/vue-language-plugin-nmbl`](../vue-language-plugin-nmbl) Volar plugin, which integrates directly into the Vue language toolchain. This server intentionally ignores `languageId: 'vue'` to avoid double-reporting diagnostics.
+- **Vue single-file components** — `.vue` files with `<template lang="nmbl">` are handled by the separate [`@nmbl-lang/vue-language-plugin`](../vue-language-plugin) Volar plugin, which integrates directly into the Vue language toolchain. This server intentionally ignores `languageId: 'vue'` to avoid double-reporting diagnostics.
 
 ## How the VSCode extension wires it
 

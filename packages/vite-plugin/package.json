@@ -1,6 +1,21 @@
 {
-  "name": "@nmbl/vite-plugin",
+  "name": "@nmbl-lang/vite-plugin",
   "version": "0.1.0",
+  "description": "Vite plugin for .nmbl files and <template lang=\"nmbl\"> in Vue SFCs",
+  "keywords": [
+    "nmbl",
+    "template",
+    "vite",
+    "vite-plugin"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/vite-plugin"
+  },
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -22,17 +37,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nmbl/parser": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
     "magic-string": "^0.30.21"
   },
   "peerDependencies": {
     "vite": ">=5.0.0",
     "vue": ">=3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vue": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "tsdown": "catalog:",
@@ -40,5 +50,10 @@
     "vite": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   }
 }

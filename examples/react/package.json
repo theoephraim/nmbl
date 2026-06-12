@@ -7,7 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@nmbl/vite-plugin": "workspace:*",
+    "@nmbl-lang/vite-plugin": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",

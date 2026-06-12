@@ -18,7 +18,7 @@
 import * as vscode from 'vscode';
 import { nmblRegionAt } from './embedded-forwarding';
 
-// @nmbl/parser is ESM-only; use a dynamic import so this CJS module can load it.
+// @nmbl-lang/core is ESM-only; use a dynamic import so this CJS module can load it.
 // The loaded functions are cached after the first call.
 interface ParserModule {
   compile: (source: string, options?: { framework?: string; filename?: string }) => {
@@ -31,7 +31,7 @@ let _parserPromise: Promise<ParserModule> | undefined;
 function getParser(): Promise<ParserModule> {
   if (!_parserPromise) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _parserPromise = import('@nmbl/parser') as Promise<any>;
+    _parserPromise = import('@nmbl-lang/core') as Promise<any>;
   }
   return _parserPromise;
 }

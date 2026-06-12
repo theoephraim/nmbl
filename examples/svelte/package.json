@@ -7,7 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@nmbl/svelte": "workspace:*",
+    "@nmbl-lang/svelte": "workspace:*",
     "svelte": "catalog:",
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "vite": "catalog:"

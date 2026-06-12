@@ -1,6 +1,22 @@
 {
-  "name": "@nmbl/cli",
+  "name": "@nmbl-lang/cli",
   "version": "0.1.0",
+  "description": "Format and lint NMBL templates from the command line",
+  "keywords": [
+    "nmbl",
+    "template",
+    "cli",
+    "formatter",
+    "linter"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "bin": {
     "nmbl": "./dist/cli.mjs"
@@ -24,7 +40,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@nmbl/parser": "workspace:*"
+    "@nmbl-lang/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.0.0",

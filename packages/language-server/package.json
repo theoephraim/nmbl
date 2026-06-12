@@ -1,6 +1,21 @@
 {
-  "name": "@nmbl/language-server",
+  "name": "@nmbl-lang/language-server",
   "version": "0.1.0",
+  "description": "Language Server Protocol implementation for NMBL templates",
+  "keywords": [
+    "nmbl",
+    "template",
+    "lsp",
+    "language-server"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/language-server"
+  },
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
@@ -21,7 +36,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@nmbl/parser": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
     "@volar/language-core": "~2.4.0",
     "@volar/language-server": "~2.4.0",
     "@volar/language-service": "~2.4.0",

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { compile } from '@nmbl/parser';
-import type { NmblError } from '@nmbl/parser';
+import { compile } from '@nmbl-lang/core';
+import type { NmblError } from '@nmbl-lang/core';
 import type { Plugin } from 'vite';
 import MagicString from 'magic-string';
 import { taggedTemplatePlugin } from './tagged-template.js';
