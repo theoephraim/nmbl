@@ -3,15 +3,36 @@
   "displayName": "NMBL",
   "version": "0.1.0",
   "private": true,
-  "description": "NMBL language support — syntax highlighting for .nmbl, .astro, .svelte, and .vue files",
+  "description": "NMBL language support \u2014 syntax highlighting for .nmbl, .astro, .svelte, and .vue files",
   "publisher": "nmbl",
   "license": "MIT",
+  "main": "./client/extension.js",
   "scripts": {
-    "install-local": "for dir in ~/.vscode/extensions ~/.cursor/extensions ~/.windsurf/extensions; do [ -d \"$dir\" ] && ln -sfn \"$(pwd)\" \"$dir/nmbl.nmbl-0.1.0\" && echo \"Installed to $dir\"; done"
+    "install-local": "for dir in ~/.vscode/extensions ~/.cursor/extensions ~/.windsurf/extensions; do [ -d \"$dir\" ] && ln -sfn \"$(pwd)\" \"$dir/nmbl.nmbl-0.1.0\" && echo \"Installed to $dir\"; done",
+    "verify": "node scripts/verify-grammar.mjs",
+    "build": "tsc -p client/tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nmbl/language-server": "workspace:*",
+    "vscode-languageclient": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vscode-textmate": "^9.3.2",
+    "vscode-oniguruma": "^2.0.1"
   },
   "engines": {
     "vscode": "^1.85.0"
   },
+  "activationEvents": [
+    "onLanguage:nmbl",
+    "onLanguage:svelte",
+    "onLanguage:astro"
+  ],
   "categories": [
     "Programming Languages"
   ],
@@ -19,15 +40,20 @@
     "languages": [
       {
         "id": "nmbl",
-        "aliases": ["NMBL", "nmbl"],
-        "extensions": [".nmbl"],
+        "aliases": [
+          "NMBL",
+          "nmbl"
+        ],
+        "extensions": [
+          ".nmbl"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
         "language": "nmbl",
-        "scopeName": "text.nmbl",
+        "scopeName": "source.nmbl",
         "path": "./syntaxes/nmbl.tmLanguage.json",
         "embeddedLanguages": {
           "source.js": "javascript",
@@ -39,25 +65,46 @@
       {
         "scopeName": "svelte.nmbl",
         "path": "./syntaxes/svelte-nmbl.tmLanguage.json",
-        "injectTo": ["source.svelte"],
+        "injectTo": [
+          "source.svelte"
+        ],
         "embeddedLanguages": {
-          "text.nmbl": "nmbl"
+          "source.nmbl": "nmbl"
         }
       },
       {
         "scopeName": "vue.nmbl",
         "path": "./syntaxes/vue-nmbl.tmLanguage.json",
-        "injectTo": ["source.vue", "text.html.vue"],
+        "injectTo": [
+          "source.vue",
+          "text.html.vue"
+        ],
         "embeddedLanguages": {
-          "text.nmbl": "nmbl"
+          "source.nmbl": "nmbl"
         }
       },
       {
         "scopeName": "astro.nmbl",
         "path": "./syntaxes/astro-nmbl.tmLanguage.json",
-        "injectTo": ["source.astro"],
+        "injectTo": [
+          "source.astro"
+        ],
         "embeddedLanguages": {
-          "text.nmbl": "nmbl"
+          "source.nmbl": "nmbl"
+        }
+      },
+      {
+        "scopeName": "jsx.nmbl",
+        "injectTo": [
+          "source.ts",
+          "source.tsx",
+          "source.js",
+          "source.js.jsx"
+        ],
+        "path": "./syntaxes/jsx-nmbl.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.nmbl": "nmbl",
+          "meta.embedded.expression.nmbl": "typescript"
         }
       }
     ]

@@ -10,9 +10,9 @@
       "begin": "(?<=>)(?!</)",
       "end": "(?=</)",
       "name": "meta.embedded.block.svelte",
-      "contentName": "text.nmbl",
+      "contentName": "source.nmbl",
       "patterns": [
-        { "include": "text.nmbl" }
+        { "include": "source.nmbl" }
       ]
     }
   }

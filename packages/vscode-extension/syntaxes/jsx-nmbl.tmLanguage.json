@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "jsx.nmbl",
+  "injectionSelector": "L:source.ts -comment -string, L:source.tsx -comment -string, L:source.js -comment -string, L:source.js.jsx -comment -string",
+  "patterns": [
+    { "include": "#nmbl-tagged-template" }
+  ],
+  "repository": {
+    "nmbl-tagged-template": {
+      "comment": "nmbl`…` tagged template literal — body highlights as NMBL; ${…} holes re-enter TS",
+      "begin": "(?<![\\w$.])(nmbl)\\s*(`)",
+      "beginCaptures": {
+        "1": { "name": "entity.name.function.tagged-template.nmbl" },
+        "2": { "name": "punctuation.definition.string.template.begin.nmbl" }
+      },
+      "end": "`",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.template.end.nmbl" }
+      },
+      "contentName": "meta.embedded.block.nmbl source.nmbl",
+      "patterns": [
+        {
+          "comment": "${…} interpolation hole — TypeScript expression",
+          "begin": "\\$\\{",
+          "beginCaptures": { "0": { "name": "punctuation.definition.template-expression.begin.nmbl" } },
+          "end": "\\}",
+          "endCaptures": { "0": { "name": "punctuation.definition.template-expression.end.nmbl" } },
+          "contentName": "meta.embedded.expression.nmbl source.ts",
+          "patterns": [ { "include": "source.ts" } ]
+        },
+        { "include": "source.nmbl" }
+      ]
+    }
+  }
+}

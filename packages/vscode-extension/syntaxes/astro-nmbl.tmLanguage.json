@@ -7,9 +7,9 @@
       "begin": "(?<=<template\\s+lang=\"nmbl\"\\s*>)",
       "end": "(?=</template>)",
       "name": "meta.embedded.block.nmbl",
-      "contentName": "text.nmbl",
+      "contentName": "source.nmbl",
       "patterns": [
-        { "include": "text.nmbl" }
+        { "include": "source.nmbl" }
       ]
     }
   ]
