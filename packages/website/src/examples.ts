@@ -128,21 +128,22 @@ article.prose:md
   - [links](/docs), *emphasis*, \`code\`
   - no closing tags to forget`,
 
-  vue: `//! Vue — {{ }} interpolation; @if / @each compile to <template v-if/v-for>
+  vue: `//! Vue — write native v-if / v-for; they pass straight through.
 section.todos
   h1 {{ title }}
 
-  @if(todos.length)
-    ul
-      @each(todo of todos :key="todo.id")
-        li(:class="{ done: todo.done }")
-          input(type="checkbox" v-model="todo.done")
-          span.label {{ todo.text }}
-  @else
-    p.empty Nothing to do 🎉
+  ul
+    li(v-for="todo in todos" :key="todo.id" :class="{ done: todo.done }")
+      input(type="checkbox" v-model="todo.done")
+      span.label {{ todo.text }}
 
-  button(@click="addTodo") Add todo
-  TodoStats(:count="todos.length")`,
+  p.empty(v-if="!todos.length") Nothing to do 🎉
+
+  // @if is optional sugar — it compiles to <template v-if>. Use it if you like.
+  @if(showStats)
+    TodoStats(:count="todos.length")
+
+  button(@click="addTodo") Add todo`,
 
   svelte: `//! Svelte — {expr} interpolation; @if / @each compile to {#if} / {#each}
 section.todos
