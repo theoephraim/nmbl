@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.0",
-    "monogram": "github:dmno-dev/monogram#8797bef5a138c8c23d253fd95a163ab999b4b868",
+    "monogram": "github:dmno-dev/monogram#ea817084a5e66324680ae860a99e207a30b116d6",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",

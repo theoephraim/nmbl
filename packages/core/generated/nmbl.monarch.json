@@ -45,6 +45,13 @@
           "token": "string",
           "switchTo": "@value"
         }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
       ]
     ],
     "string_dquoteN": [
@@ -82,6 +89,13 @@
         {
           "token": "string",
           "switchTo": "@value"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
         }
       ]
     ],
@@ -124,6 +138,13 @@
       [
         ".",
         "string"
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
       ]
     ],
     "templateN": [
@@ -269,18 +290,12 @@
         }
       ],
       [
-        "\"",
-        {
-          "token": "string",
-          "switchTo": "@string_dquote"
-        }
+        "\"(?:\\\\.|[^\"\\\\])*\"",
+        "string"
       ],
       [
-        "'",
-        {
-          "token": "string",
-          "switchTo": "@string_squote"
-        }
+        "'(?:\\\\.|[^'\\\\])*'",
+        "string"
       ],
       [
         "`",
@@ -390,6 +405,13 @@
           "token": "delimiter",
           "switchTo": "@root"
         }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
       ]
     ],
     "root": [
@@ -446,7 +468,14 @@
     "value": [
       {
         "include": "@exprBody"
-      }
+      },
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
     ],
     "interpExprBody": [
       [

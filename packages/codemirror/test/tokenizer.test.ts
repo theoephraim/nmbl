@@ -69,6 +69,27 @@ describe('generated monarch tokenizer via the runtime', () => {
     expect(tokenAt(['a(href=`/u/${id}`) x'], 0, '`/u/')).toBe('string');
   });
 
+  it("an unterminated quote in prose (apostrophe in \"project's\") doesn't poison following lines", () => {
+    const lines = [
+      '  ### Markdown sections',
+      "  rendered at compile time through your project's markdown pipeline.",
+      '  - [links](/docs), *emphasis*, `code`',
+      'form(action="/subscribe" method="post")',
+    ];
+    const stack = tok.initialStack();
+    for (const l of lines.slice(0, 3)) tok.tokenizeLine(l, stack);
+    // within-line flow states (value/string/template) must reset at EOL
+    expect(stack).toEqual(['root']);
+    // and the apostrophe itself doesn't paint the rest of ITS line as a string
+    // (a quote in line flow is a string only when terminated on the line)
+    const apStack = tok.initialStack();
+    const apToks = tok.tokenizeLine(lines[1], apStack);
+    expect(apToks.filter(t => t.token === 'string')).toEqual([]);
+    expect(tokenAt(lines, 3, 'form')).toBe('tag');
+    expect(tokenAt(lines, 3, 'action')).toBe('attribute.name');
+    expect(tokenAt(lines, 3, '"/subscribe"')).toBe('string');
+  });
+
   it('never stalls: tokenizeLine always terminates and covers the whole line', () => {
     for (const line of ['', '   ', '((((', '@#$%^&*', 'div.card(href="x" :bound @click={() => f({a:1})}) text `t${x}`']) {
       const stack = tok.initialStack();
