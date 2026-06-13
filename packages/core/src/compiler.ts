@@ -273,7 +273,7 @@ export class Compiler {
     // JSX — its braces would parse as expressions and unclosed tags as elements.
     // The only faithful encoding is dangerouslySetInnerHTML on the host element.
     if (node.contentMode && this.framework === 'jsx') {
-      const body = this.compileContentModeBody(node);
+      const { body } = this.compileContentModeBody(node);
       this.write(` dangerouslySetInnerHTML={{ __html: ${JSON.stringify(body)} }} />`);
       return;
     }
@@ -283,8 +283,15 @@ export class Compiler {
 
     // Content mode: raw text body
     if (node.contentMode) {
-      const body = this.compileContentModeBody(node);
-      if (body) {
+      const { body, filtered } = this.compileContentModeBody(node);
+      if (body && filtered) {
+        // Generated markup (e.g. :md → HTML): indent into the parent and put
+        // the body + closing tag on their own lines.
+        this.write('\n');
+        this.write(this.indentContentBlock(body, this.getIndent(depth + 1)), node.span, { nodeType: 'Element' });
+        this.write('\n');
+        if (indent) this.write(indent);
+      } else if (body) {
         this.write(body, node.span, { nodeType: 'Element' });
       }
       // Write closing tag - structural syntax unmapped
@@ -366,7 +373,7 @@ export class Compiler {
 
     // Content mode: raw text body
     if (node.contentMode) {
-      const body = this.compileContentModeBody(node);
+      const { body, filtered } = this.compileContentModeBody(node);
       // JSX: raw bodies aren't JSX (braces parse as expressions, unclosed tags as
       // elements) — encode via dangerouslySetInnerHTML on the host element.
       if (this.framework === 'jsx') {
@@ -374,6 +381,11 @@ export class Compiler {
       }
       if (!body) {
         return `${indent}<${tag}${attrStr}></${tag}>`;
+      }
+      if (filtered) {
+        // Generated markup: indent into the parent, body + close on own lines.
+        const inner = this.indentContentBlock(body, this.getIndent(depth + 1));
+        return `${indent}<${tag}${attrStr}>\n${inner}\n${indent}</${tag}>`;
       }
       return `${indent}<${tag}${attrStr}>${body}</${tag}>`;
     }
@@ -866,14 +878,33 @@ export class Compiler {
     return `${indent}${body}`;
   }
 
-  private compileContentModeBody(node: ElementNode): string {
+  private compileContentModeBody(node: ElementNode): { body: string; filtered: boolean } {
     // Gather text content from children
     const textChildren = node.children.filter((c): c is TextNode => c.type === 'Text');
-    if (textChildren.length === 0) return '';
+    if (textChildren.length === 0) return { body: '', filtered: false };
 
-    const body = textChildren.map(t => t.value).join('\n');
+    const raw = textChildren.map(t => t.value).join('\n');
     const filter = node.contentMode ? this.filters[node.contentMode] : null;
-    return filter ? filter(body) : body;
+    // Raw bodies (script:/style:) are emitted verbatim — their whitespace is the
+    // source text. Filtered bodies (:md → HTML) are generated markup, free to
+    // indent to match the surrounding structure.
+    return filter ? { body: filter(raw), filtered: true } : { body: raw, filtered: false };
+  }
+
+  // Indent each line of a filtered content block to `indent`, so the generated
+  // markup sits inside its parent instead of flush at column 0. Content inside
+  // a whitespace-significant region (<pre>/<textarea>) is left untouched.
+  private indentContentBlock(html: string, indent: string): string {
+    if (!indent) return html.replace(/\n+$/, '');
+    const lines = html.replace(/\n+$/, '').split('\n');
+    let preDepth = 0;
+    return lines.map(line => {
+      const inPre = preDepth > 0;
+      preDepth += (line.match(/<(pre|textarea)\b/gi) ?? []).length;
+      preDepth -= (line.match(/<\/(pre|textarea)>/gi) ?? []).length;
+      if (inPre) return line;                       // inside <pre> — preserve exactly
+      return line.trim() ? indent + line : line;
+    }).join('\n');
   }
 
   private getIndent(depth: number): string {

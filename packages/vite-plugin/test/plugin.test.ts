@@ -46,7 +46,8 @@ describe('nmbl:transform (.nmbl files)', () => {
     const md = async (body: string) => `<h1>${body.replace('# ', '')}</h1>`;
     const p = getPlugin('nmbl:transform', { filters: { md } });
     const out = await p.transform.call(ctx, 'div.prose:md\n  # Hello', '/x/test.nmbl');
-    expect(out.code).toContain('<div class=\\"prose\\"><h1>Hello</h1></div>');
+    // generated markup is indented into its parent (on its own lines)
+    expect(out.code).toContain('<div class=\\"prose\\">\\n  <h1>Hello</h1>\\n</div>');
     expect(out.code).not.toContain('nmbl:filter');
   });
 

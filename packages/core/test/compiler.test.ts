@@ -396,7 +396,19 @@ describe('Compiler', () => {
     test('works as a compile() filter end to end', () => {
       const { html, errors } = compile('div.prose:md\n  Some `{x}` code.', { filters: { md: mdFilter } });
       expect(errors).toHaveLength(0);
-      expect(html).toContain('<div class="prose"><p>Some <code>&#123;x&#125;</code> code.</p>');
+      // generated markup is indented into its parent, on its own lines
+      expect(html).toBe('<div class="prose">\n  <p>Some <code>&#123;x&#125;</code> code.</p>\n</div>');
+    });
+
+    test('the generated markdown block is indented to the parent depth', () => {
+      const { html } = compile('section\n  article:md\n    # Title\n\n    A para.', { filters: { md: mdFilter } });
+      expect(html).toContain('\n  <article>\n    <h1>Title</h1>\n    <p>A para.</p>\n  </article>');
+    });
+
+    test('content inside a fenced code block (<pre>) is not re-indented', () => {
+      const { html } = compile('div\n  article:md\n    ```\n    a\n      b\n    ```', { filters: { md: mdFilter } });
+      // the inner lines keep their own indentation, no parent indent prefix
+      expect(html).toContain('<pre><code>a\n  b\n</code></pre>');
     });
 
     test('escapeCodeBraces leaves braces outside code elements alone', () => {
