@@ -334,4 +334,22 @@ describe('findScriptAnchorOffset', () => {
     const text = '<template lang="nmbl">Hello</template>';
     expect(findScriptAnchorOffset(text, 'astro')).toBeUndefined();
   });
+
+  it('finds anchor inside a vue <script setup> block', () => {
+    const text = [
+      '<script setup lang="ts">',
+      "import VButton from './components/VButton.vue';",
+      '',
+      '</script>',
+      '<template lang="nmbl">',
+      'div',
+      '  VButton(:label="x")',
+      '</template>',
+    ].join('\n');
+    // .vue is handled by the generic <script> branch (languageId !== 'astro').
+    const offset = findScriptAnchorOffset(text, 'vue');
+    expect(offset).toBeDefined();
+    const snippet = text.substring(offset!);
+    expect(snippet).toMatch(/import VButton/);
+  });
 });

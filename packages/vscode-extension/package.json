@@ -16,7 +16,7 @@
     "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json"
   },
   "scripts": {
-    "install-local": "for dir in ~/.vscode/extensions ~/.cursor/extensions ~/.windsurf/extensions; do [ -d \"$dir\" ] && ln -sfn \"$(pwd)\" \"$dir/nmbl.nmbl-0.1.0\" && echo \"Installed to $dir\"; done",
+    "install-local": "node scripts/install-local.mjs",
     "verify": "node scripts/verify-grammar.mjs",
     "build": "tsc -p client/tsconfig.json",
     "test": "vitest run"
@@ -42,7 +42,8 @@
   "activationEvents": [
     "onLanguage:nmbl",
     "onLanguage:svelte",
-    "onLanguage:astro"
+    "onLanguage:astro",
+    "onLanguage:vue"
   ],
   "categories": [
     "Programming Languages"

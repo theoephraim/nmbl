@@ -2,13 +2,14 @@
  * embedded-forwarding.ts
  *
  * Provides completion, definition, and hover forwarding for component names
- * inside `<template lang="nmbl">` regions of .svelte and .astro files.
+ * inside `<template lang="nmbl">` regions of .svelte, .astro, and .vue files.
  *
  * Strategy: detect the nmbl template region, then proxy the VS Code provider
  * commands at an equivalent position inside the document's script/frontmatter
- * block so the host framework's language server (Svelte/Astro TS service)
+ * block so the host framework's language server (Svelte/Astro/Vue TS service)
  * answers on its own turf. Component completions (PascalCase) are plucked from
- * that response and re-targeted at the template region word range.
+ * that response and re-targeted at the template region word range — including
+ * the auto-import edits, which land in the script block of the same document.
  */
 
 import * as vscode from 'vscode';
@@ -215,6 +216,11 @@ export function findLastNonBlankLineOffset(
 const SELECTOR: vscode.DocumentSelector = [
   { language: 'svelte', scheme: 'file' },
   { language: 'astro', scheme: 'file' },
+  // .vue uses `<script setup>`, which the generic `<script>` branch in the
+  // anchor/script helpers below already handles. The Vue extension runs no
+  // language service on our `lang:'nmbl'` template region, so without this
+  // forwarding there's no component completion / auto-import when typing a tag.
+  { language: 'vue', scheme: 'file' },
 ];
 
 /**
