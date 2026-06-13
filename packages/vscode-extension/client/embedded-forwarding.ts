@@ -210,6 +210,47 @@ export function findLastNonBlankLineOffset(
 }
 
 // ---------------------------------------------------------------------------
+// HTML tag completions
+// ---------------------------------------------------------------------------
+
+/**
+ * Standard HTML element names, offered as tag-name completions inside nmbl
+ * template regions. These aren't TS symbols, so they don't come from the
+ * script-anchor proxy — we provide them directly.
+ */
+export const HTML_TAGS: readonly string[] = [
+  'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base',
+  'bdi', 'bdo', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption',
+  'cite', 'code', 'col', 'colgroup', 'data', 'datalist', 'dd', 'del', 'details',
+  'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figcaption',
+  'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head',
+  'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd',
+  'label', 'legend', 'li', 'link', 'main', 'map', 'mark', 'menu', 'meta',
+  'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option', 'output',
+  'p', 'param', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's',
+  'samp', 'script', 'section', 'select', 'slot', 'small', 'source', 'span',
+  'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template',
+  'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track', 'u', 'ul',
+  'var', 'video', 'wbr',
+];
+
+/** Build CompletionItems for the standard HTML tags, targeted at `wordRange`. */
+export function buildHtmlTagItems(
+  wordRange: vscode.Range,
+): vscode.CompletionItem[] {
+  return HTML_TAGS.map(tag => {
+    const item = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Property);
+    item.detail = '(html element)';
+    item.insertText = tag;
+    item.range = wordRange;
+    item.filterText = tag;
+    // Sort after components (components use 0_/1_ prefixes).
+    item.sortText = `2_${tag}`;
+    return item;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // VS Code provider helpers
 // ---------------------------------------------------------------------------
 
@@ -333,73 +374,54 @@ export function registerEmbeddedForwarding(
           return undefined;
         }
 
-        // 3. Find the anchor position in script/frontmatter
-        const anchor = scriptAnchorPosition(doc);
-        if (!anchor) {
-          log('  bail: no <script> anchor found (need a script/setup block)');
-          return undefined;
-        }
-        log(`  anchor @ ${anchor.line}:${anchor.character}`);
-
-        // 4. Query the host framework's completion provider
-        let list: vscode.CompletionList | undefined;
-        try {
-          const result = await vscode.commands.executeCommand<
-            vscode.CompletionList | vscode.CompletionItem[]
-          >(
-            'vscode.executeCompletionItemProvider',
-            doc.uri,
-            anchor,
-            undefined,
-            60, // resolve top 60 to populate additionalTextEdits
-          );
-          if (!result) {
-            log('  bail: host completion returned nothing');
-            return undefined;
-          }
-          if (Array.isArray(result)) {
-            list = new vscode.CompletionList(result, false);
-          } else {
-            list = result;
-          }
-        } catch (e) {
-          log(`  bail: host completion threw ${e}`);
-          return undefined;
-        }
-        log(`  host returned ${list.items.length} items`);
-
-        // 5. Determine which components are already imported (for sort priority)
         const text = doc.getText();
         const effectiveWordRange =
           wordRange ?? new vscode.Range(position, position);
 
-        const mapped: vscode.CompletionItem[] = [];
-        for (const item of list.items) {
-          if (!isComponentCandidate(item)) continue;
-          const label = getItemLabel(item.label);
-          // Heuristic: already imported if the identifier appears in the script
-          const scriptRegion = findScriptBlockText(text, doc.languageId);
-          const alreadyImported = scriptRegion
-            ? new RegExp(`\\b${escapeRegExp(label)}\\b`).test(scriptRegion)
-            : false;
-          mapped.push(mapToTemplateItem(item, effectiveWordRange, alreadyImported));
+        // 3. Standard HTML tags — always available at a tag position, no proxy.
+        const htmlItems = buildHtmlTagItems(effectiveWordRange);
+
+        // 4. Component candidates — proxy completion to the script/frontmatter
+        //    anchor so the host TS service answers (auto-import edits included).
+        //    Best-effort: a missing anchor or empty result still yields HTML tags.
+        const componentItems: vscode.CompletionItem[] = [];
+        const anchor = scriptAnchorPosition(doc);
+        if (!anchor) {
+          log('  no <script> anchor — html tags only');
+        } else {
+          try {
+            const result = await vscode.commands.executeCommand<
+              vscode.CompletionList | vscode.CompletionItem[]
+            >(
+              'vscode.executeCompletionItemProvider',
+              doc.uri,
+              anchor,
+              undefined,
+              60, // resolve top 60 to populate additionalTextEdits
+            );
+            const items = !result
+              ? []
+              : Array.isArray(result)
+                ? result
+                : result.items;
+            log(`  host returned ${items.length} items`);
+            const scriptRegion = findScriptBlockText(text, doc.languageId);
+            for (const item of items) {
+              if (!isComponentCandidate(item)) continue;
+              const label = getItemLabel(item.label);
+              // Heuristic: already imported if the identifier appears in the script
+              const alreadyImported = scriptRegion
+                ? new RegExp(`\\b${escapeRegExp(label)}\\b`).test(scriptRegion)
+                : false;
+              componentItems.push(mapToTemplateItem(item, effectiveWordRange, alreadyImported));
+            }
+          } catch (e) {
+            log(`  host completion threw ${e} — html tags only`);
+          }
         }
 
-        log(`  kept ${mapped.length} component candidate(s)`);
-        if (mapped.length === 0) {
-          // Show a few PascalCase items the filter rejected, so the candidate
-          // heuristic can be tuned to Vue's completion-item shape.
-          const samples = list.items
-            .filter(i => isPascalCase(getItemLabel(i.label)))
-            .slice(0, 8)
-            .map(i => {
-              const lbl = typeof i.label === 'object' ? i.label as vscode.CompletionItemLabel : null;
-              return `${getItemLabel(i.label)}[kind=${i.kind} detail=${JSON.stringify(i.detail)} desc=${JSON.stringify(lbl?.description)}]`;
-            });
-          log(`  rejected PascalCase samples: ${samples.join(', ') || '(none)'}`);
-          return undefined;
-        }
-        return new vscode.CompletionList(mapped, true);
+        log(`  kept ${componentItems.length} component(s) + ${htmlItems.length} html tag(s)`);
+        return new vscode.CompletionList([...componentItems, ...htmlItems], true);
       },
     },
     // No trigger characters — VS Code fires completions on typing automatically

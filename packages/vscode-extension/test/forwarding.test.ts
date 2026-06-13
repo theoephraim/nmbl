@@ -16,6 +16,8 @@ import {
   findLastNonBlankLineOffset,
   findScriptAnchorOffset,
   getItemLabel,
+  HTML_TAGS,
+  buildHtmlTagItems,
 } from '../client/embedded-forwarding';
 import {
   CompletionItem,
@@ -351,5 +353,33 @@ describe('findScriptAnchorOffset', () => {
     expect(offset).toBeDefined();
     const snippet = text.substring(offset!);
     expect(snippet).toMatch(/import VButton/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HTML tag completions
+// ---------------------------------------------------------------------------
+
+describe('buildHtmlTagItems', () => {
+  it('includes common HTML tags', () => {
+    for (const tag of ['div', 'span', 'button', 'input', 'a', 'ul', 'li']) {
+      expect(HTML_TAGS).toContain(tag);
+    }
+  });
+
+  it('produces one item per tag, targeted at the word range', () => {
+    const range = new Range(new Position(1, 2), new Position(1, 5));
+    const items = buildHtmlTagItems(range);
+    expect(items).toHaveLength(HTML_TAGS.length);
+    const div = items.find(i => getItemLabel(i.label) === 'div')!;
+    expect(div).toBeDefined();
+    expect(div.insertText).toBe('div');
+    expect(div.range).toBe(range);
+    // Sorts after components (which use 0_/1_ prefixes).
+    expect(div.sortText).toBe('2_div');
+  });
+
+  it('contains no PascalCase entries (those are components, not html tags)', () => {
+    expect(HTML_TAGS.every(t => t === t.toLowerCase())).toBe(true);
   });
 });
