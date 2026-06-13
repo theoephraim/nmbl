@@ -104,7 +104,7 @@
         "embeddedLanguages": {
           "source.js": "javascript",
           "source.ts": "typescript",
-          "source.md": "markdown",
+          "text.html.markdown": "markdown",
           "source.css": "css"
         }
       },
@@ -115,7 +115,11 @@
           "source.svelte"
         ],
         "embeddedLanguages": {
-          "source.nmbl": "nmbl"
+          "source.nmbl": "nmbl",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css"
         }
       },
       {
@@ -126,7 +130,11 @@
           "text.html.vue"
         ],
         "embeddedLanguages": {
-          "source.nmbl": "nmbl"
+          "source.nmbl": "nmbl",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css"
         }
       },
       {
@@ -136,7 +144,11 @@
           "source.astro"
         ],
         "embeddedLanguages": {
-          "source.nmbl": "nmbl"
+          "source.nmbl": "nmbl",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css"
         }
       },
       {
