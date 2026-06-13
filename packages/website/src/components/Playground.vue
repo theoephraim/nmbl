@@ -9,12 +9,15 @@
         option(value="svelte") svelte
         option(value="astro") astro
     button.direction-toggle(@click="toggleDirection" :title="directionTitle")
-      span.direction-side(:class="{ active: direction === 'nmbl-to-html' }") NMBL
-      span.direction-arrow {{ direction === 'nmbl-to-html' ? '→' : '←' }}
-      span.direction-side(:class="{ active: direction === 'html-to-nmbl' }") HTML
-    span.direction-hint(v-if="direction === 'html-to-nmbl'") converting HTML → NMBL
+      span.direction-side {{ direction === 'nmbl-to-html' ? 'NMBL' : 'HTML' }}
+      span.direction-arrow →
+      span.direction-side {{ direction === 'nmbl-to-html' ? 'HTML' : 'NMBL' }}
+      span.swap-icon ⇄
+  .playground-warning(v-if="lossWarning.length")
+    span ⚠️ Editing the HTML will regenerate the NMBL — {{ lossWarning.join(' and ') }} can't be recovered and will be dropped. Switch back now to keep them.
+    button.warning-dismiss(@click="lossWarning = []" title="Dismiss") ×
   .playground-editors
-    .editor-pane(:class="{ 'pane-output': direction === 'html-to-nmbl' }")
+    .editor-pane(:class="{ 'pane-output': direction === 'html-to-nmbl' }" :style="{ order: direction === 'html-to-nmbl' ? 2 : 1 }")
       .pane-header
         span NMBL
           span.pane-tag(v-if="direction === 'html-to-nmbl'") generated
@@ -25,7 +28,7 @@
         placeholder="Write NMBL here..."
         :readonly="direction === 'html-to-nmbl'"
       )
-    .editor-pane(:class="{ 'pane-output': direction === 'nmbl-to-html' }")
+    .editor-pane(:class="{ 'pane-output': direction === 'nmbl-to-html' }" :style="{ order: direction === 'html-to-nmbl' ? 1 : 2 }")
       .pane-header
         span HTML
           span.pane-tag(v-if="direction === 'nmbl-to-html'") generated
@@ -36,11 +39,6 @@
         placeholder="Paste HTML here..."
         :readonly="direction === 'nmbl-to-html'"
       )
-  .playground-warning(v-if="pendingSwitch")
-    p ⚠️ Converting HTML → NMBL is lossy: {{ pendingLossy.join(' and ') }} can't be recovered from the HTML, so they'll be dropped when the NMBL is regenerated.
-    .warning-actions
-      button.warning-confirm(@click="confirmSwitch") Convert anyway
-      button.warning-cancel(@click="pendingSwitch = false") Keep my NMBL
   .playground-error(v-if="error") {{ error }}
 </template>
 
@@ -94,29 +92,21 @@ function lossyConstructs(nmbl: string): string[] {
   return found;
 }
 
-const pendingSwitch = ref(false);
-const pendingLossy = ref<string[]>([]);
+const lossWarning = ref<string[]>([]);
 
+// Toggling is NON-destructive: the panes swap sides and the HTML becomes the
+// source, but the handwritten NMBL stays untouched until the HTML is actually
+// edited (the htmlSource watch runs the first decompile). Switching back
+// before editing loses nothing — the warning is informational, not a gate.
 function toggleDirection() {
   if (direction.value === 'nmbl-to-html') {
-    const lossy = lossyConstructs(nmblSource.value);
-    if (lossy.length > 0) {
-      pendingLossy.value = lossy;
-      pendingSwitch.value = true;
-      return;
-    }
-    confirmSwitch();
+    direction.value = 'html-to-nmbl';
+    lossWarning.value = lossyConstructs(nmblSource.value);
   } else {
-    pendingSwitch.value = false;
     direction.value = 'nmbl-to-html';
+    lossWarning.value = [];
     compileNmbl(nmblSource.value);
   }
-}
-
-function confirmSwitch() {
-  pendingSwitch.value = false;
-  direction.value = 'html-to-nmbl';
-  decompileHtml(htmlSource.value);
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -143,6 +133,7 @@ function decompileHtml(source: string) {
     const nmbl = decompile(source);
     error.value = '';
     nmblSource.value = nmbl.trimEnd();
+    lossWarning.value = []; // the regenerate happened; the warning is moot
   } catch (e) {
     error.value = String(e);
   }
@@ -226,21 +217,19 @@ watch(htmlSource, (value) => {
   border-color: var(--color-accent);
 }
 
-.direction-side.active {
-  color: var(--color-text);
-  font-weight: 600;
-}
-
 .direction-arrow {
   color: var(--color-accent);
   font-weight: 700;
 }
 
-.direction-hint {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+.swap-icon {
+  margin-left: 0.25rem;
   color: var(--color-text-muted);
-  font-style: italic;
+}
+
+.direction-side {
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 .pane-tag {
@@ -305,11 +294,9 @@ watch(htmlSource, (value) => {
 .playground-warning {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 1rem;
   background: rgba(234, 179, 8, 0.08);
   border: 1px solid rgba(234, 179, 8, 0.35);
   border-radius: 6px;
@@ -317,34 +304,22 @@ watch(htmlSource, (value) => {
   font-size: 0.875rem;
 }
 
-.playground-warning p {
-  margin: 0;
+.playground-warning span {
   flex: 1;
-  min-width: 16rem;
 }
 
-.warning-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.warning-actions button {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 4px;
+.warning-dismiss {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
   cursor: pointer;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  padding: 0.1rem 0.3rem;
+}
+
+.warning-dismiss:hover {
   color: var(--color-text);
-}
-
-.warning-confirm {
-  border-color: rgba(234, 179, 8, 0.5) !important;
-}
-
-.warning-actions button:hover {
-  border-color: var(--color-accent);
 }
 
 .playground-error {

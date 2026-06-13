@@ -25,7 +25,13 @@ BaseLayout(title="About")
 
         NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.
 
-        Your framework keeps its own control flow — and NMBL templates that use the canonical form are **portable across frameworks**. Write `@each(item of items :key="item.id")` once: it compiles to `{#each items as item (item.id)}` in Svelte and `<template v-for="item of items" :key="item.id">` in Vue. The `:key` attribute sits in the same paren list as the loop expression, whitespace-separated like any other NMBL attribute. Svelte's `as`-form (`@each(items as item, i)`) is also accepted for compatibility. `@if` / `@elseif` / `@else` are pure passthrough — each host renders them natively. Svelte gets the full block set (`@await`, `@key`, `@snippet`); Astro supports only `@if` and `@each` (compiling to JSX expressions).
+        Your framework keeps its own control flow — write `v-if` and `v-for` (or `{#each}`, or `.map()`) exactly the way you always have. They pass straight through. NMBL doesn't ask you to learn a new way to loop or branch; it just cleans up the markup around them. There's an optional canonical form (`@if`, `@each`) that compiles to each host's native syntax if you ever want a template to be portable across frameworks — but that's a nice-to-have, not the point. Most of the time you'll just do things the way your framework already does.
+
+        ### Prose and markup in the same file
+
+        Anywhere you want prose, append `:md` and write plain markdown. Need a component, a loop, or fine-grained markup? Drop back out and write NMBL. You toggle between the two line by line, in a single template.
+
+        This is the gap MDX never quite closed. MDX gives you lovely authoring for prose but less control over the surrounding markup; hand-written templates give you total control but make prose sections miserable to write. NMBL lets you have both — full structural control where you need it, frictionless markdown where you don't — which makes it a genuine alternative to MDX for content-heavy pages. And because the rendered markdown is spliced back into the host template, your components and interpolation still work right inside the prose.
 
         That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.
 
