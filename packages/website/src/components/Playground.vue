@@ -36,6 +36,11 @@
         placeholder="Paste HTML here..."
         :readonly="direction === 'nmbl-to-html'"
       )
+  .playground-warning(v-if="pendingSwitch")
+    p ⚠️ Converting HTML → NMBL is lossy: {{ pendingLossy.join(' and ') }} can't be recovered from the HTML, so they'll be dropped when the NMBL is regenerated.
+    .warning-actions
+      button.warning-confirm(@click="confirmSwitch") Convert anyway
+      button.warning-cancel(@click="pendingSwitch = false") Keep my NMBL
   .playground-error(v-if="error") {{ error }}
 </template>
 
@@ -89,21 +94,29 @@ function lossyConstructs(nmbl: string): string[] {
   return found;
 }
 
+const pendingSwitch = ref(false);
+const pendingLossy = ref<string[]>([]);
+
 function toggleDirection() {
   if (direction.value === 'nmbl-to-html') {
     const lossy = lossyConstructs(nmblSource.value);
     if (lossy.length > 0) {
-      const ok = window.confirm(
-        `Converting HTML → NMBL is lossy: ${lossy.join(' and ')} can't be recovered from the HTML, so they'll be dropped when the NMBL is regenerated.\n\nContinue?`,
-      );
-      if (!ok) return;
+      pendingLossy.value = lossy;
+      pendingSwitch.value = true;
+      return;
     }
-    direction.value = 'html-to-nmbl';
-    decompileHtml(htmlSource.value);
+    confirmSwitch();
   } else {
+    pendingSwitch.value = false;
     direction.value = 'nmbl-to-html';
     compileNmbl(nmblSource.value);
   }
+}
+
+function confirmSwitch() {
+  pendingSwitch.value = false;
+  direction.value = 'html-to-nmbl';
+  decompileHtml(htmlSource.value);
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -262,6 +275,9 @@ watch(htmlSource, (value) => {
   flex-direction: column;
   background: var(--color-surface);
   min-height: 0;
+  /* a grid item's min-width defaults to its content — a long unwrapped editor
+     line would widen the column past 1fr and push the other pane off-screen */
+  min-width: 0;
 }
 
 .pane-header {
@@ -284,6 +300,51 @@ watch(htmlSource, (value) => {
   text-transform: none;
   letter-spacing: 0;
   opacity: 0.7;
+}
+
+.playground-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.playground-warning p {
+  margin: 0;
+  flex: 1;
+  min-width: 16rem;
+}
+
+.warning-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.warning-actions button {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.warning-confirm {
+  border-color: rgba(234, 179, 8, 0.5) !important;
+}
+
+.warning-actions button:hover {
+  border-color: var(--color-accent);
 }
 
 .playground-error {
