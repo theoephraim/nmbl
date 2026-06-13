@@ -299,6 +299,12 @@ export function mapToTemplateItem(
 export function registerEmbeddedForwarding(
   context: vscode.ExtensionContext,
 ): void {
+  // Debug channel: open "Output → NMBL Forwarding" to trace why a completion
+  // did or didn't fire. Quiet unless you look at it.
+  const out = vscode.window.createOutputChannel('NMBL Forwarding');
+  context.subscriptions.push(out);
+  const log = (msg: string) => out.appendLine(msg);
+
   // ── Completion ────────────────────────────────────────────────────────────
   const completionProvider = vscode.languages.registerCompletionItemProvider(
     SELECTOR,
@@ -307,9 +313,14 @@ export function registerEmbeddedForwarding(
         doc: vscode.TextDocument,
         position: vscode.Position,
       ): Promise<vscode.CompletionList | undefined> {
+        log(`completion @ ${doc.languageId} ${position.line}:${position.character}`);
+
         // 1. Must be inside an nmbl region
         const region = nmblRegionAt(doc, position);
-        if (!region) return undefined;
+        if (!region) {
+          log('  bail: not inside an <template lang="nmbl"> region');
+          return undefined;
+        }
 
         // 2. The word prefix must look like a tag-name position
         const wordRange = doc.getWordRangeAtPosition(position, /[A-Za-z][A-Za-z0-9_]*/);
@@ -317,11 +328,18 @@ export function registerEmbeddedForwarding(
         // linePrefix = text from line start up to but not including the word
         const lineText = doc.lineAt(position.line).text;
         const linePrefix = lineText.substring(0, wordStart.character);
-        if (!isTagNamePosition(linePrefix)) return undefined;
+        if (!isTagNamePosition(linePrefix)) {
+          log(`  bail: not a tag-name position (linePrefix=${JSON.stringify(linePrefix)})`);
+          return undefined;
+        }
 
         // 3. Find the anchor position in script/frontmatter
         const anchor = scriptAnchorPosition(doc);
-        if (!anchor) return undefined;
+        if (!anchor) {
+          log('  bail: no <script> anchor found (need a script/setup block)');
+          return undefined;
+        }
+        log(`  anchor @ ${anchor.line}:${anchor.character}`);
 
         // 4. Query the host framework's completion provider
         let list: vscode.CompletionList | undefined;
@@ -335,15 +353,20 @@ export function registerEmbeddedForwarding(
             undefined,
             60, // resolve top 60 to populate additionalTextEdits
           );
-          if (!result) return undefined;
+          if (!result) {
+            log('  bail: host completion returned nothing');
+            return undefined;
+          }
           if (Array.isArray(result)) {
             list = new vscode.CompletionList(result, false);
           } else {
             list = result;
           }
-        } catch {
+        } catch (e) {
+          log(`  bail: host completion threw ${e}`);
           return undefined;
         }
+        log(`  host returned ${list.items.length} items`);
 
         // 5. Determine which components are already imported (for sort priority)
         const text = doc.getText();
@@ -362,7 +385,20 @@ export function registerEmbeddedForwarding(
           mapped.push(mapToTemplateItem(item, effectiveWordRange, alreadyImported));
         }
 
-        if (mapped.length === 0) return undefined;
+        log(`  kept ${mapped.length} component candidate(s)`);
+        if (mapped.length === 0) {
+          // Show a few PascalCase items the filter rejected, so the candidate
+          // heuristic can be tuned to Vue's completion-item shape.
+          const samples = list.items
+            .filter(i => isPascalCase(getItemLabel(i.label)))
+            .slice(0, 8)
+            .map(i => {
+              const lbl = typeof i.label === 'object' ? i.label as vscode.CompletionItemLabel : null;
+              return `${getItemLabel(i.label)}[kind=${i.kind} detail=${JSON.stringify(i.detail)} desc=${JSON.stringify(lbl?.description)}]`;
+            });
+          log(`  rejected PascalCase samples: ${samples.join(', ') || '(none)'}`);
+          return undefined;
+        }
         return new vscode.CompletionList(mapped, true);
       },
     },
