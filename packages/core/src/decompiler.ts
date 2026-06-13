@@ -22,14 +22,23 @@ export function decompile(html: string, options: DecompileOptions = {}): string 
 
 function decompileChildren(nodes: HNode[], depth: number, indentSize: number): string[] {
   const lines: string[] = [];
-  const significant = stripWhitespaceOnlyTextNodes(nodes);
 
-  for (const node of significant) {
+  for (const node of nodes) {
+    // A whitespace-only gap containing a blank line separates siblings in the
+    // source HTML — keep one blank line so the NMBL mirrors that rhythm
+    // (matching the compiler, which preserves blank lines the other way).
+    if (node.type === 'text' && !(node.data ?? '').trim()) {
+      const newlines = ((node.data ?? '').match(/\n/g) ?? []).length;
+      if (newlines >= 2 && lines.length > 0 && lines[lines.length - 1] !== '') lines.push('');
+      continue;
+    }
     const result = decompileNode(node, depth, indentSize);
     if (result !== null) {
       lines.push(...result);
     }
   }
+  // a gap before a closing tag is noise, not separation
+  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
   return lines;
 }
 

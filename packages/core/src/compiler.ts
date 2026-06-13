@@ -92,6 +92,7 @@ export class Compiler {
     this.mappings = [];
     this.errors = [];
     this.source = source || '';
+    this.sourceLines = null;
 
     // Compile children with position tracking
     this.compileChildrenTracked(doc.children, 0);
@@ -149,23 +150,64 @@ export class Compiler {
     this.output += text;
   }
 
+  // A blank line between siblings in SOURCE is kept in the OUTPUT (collapsed
+  // to one) — the generated markup mirrors the source rhythm. `prevLine` is
+  // the SUBTREE end line of the previous sibling (an element's own span stops
+  // at its head; the gap is measured from its last descendant). A line-count
+  // gap alone isn't enough: a stripped `//` comment occupies lines without
+  // being blank, so when the source is available require an actual blank line.
+  private sourceLines: string[] | null = null;
+
+  private gapBefore(prevLine: number | null, node: AstNode): boolean {
+    if (prevLine === null || !node.span || node.span.start.line - prevLine < 2) return false;
+    if (!this.source) return true;
+    this.sourceLines ??= this.source.split('\n');
+    for (let l = prevLine + 1; l < node.span.start.line; l++) {
+      if ((this.sourceLines[l] ?? '').trim() === '') return true;
+    }
+    return false;
+  }
+
+  private subtreeEndLine(node: AstNode): number {
+    let end = node.span ? node.span.end.line : 0;
+    if ('children' in node && Array.isArray(node.children)) {
+      for (const child of node.children) end = Math.max(end, this.subtreeEndLine(child));
+    }
+    if ('clauses' in node && Array.isArray(node.clauses)) {
+      for (const clause of node.clauses) {
+        for (const child of clause.children) end = Math.max(end, this.subtreeEndLine(child));
+      }
+    }
+    return end;
+  }
+
   private compileChildren(nodes: AstNode[], depth: number): string {
     const parts: string[] = [];
+    let prevLine: number | null = null;
     for (const node of nodes) {
       const result = this.compileNode(node, depth);
-      if (result !== null) parts.push(result);
+      if (result !== null) {
+        if (this.gapBefore(prevLine, node)) parts.push('');
+        parts.push(result);
+      }
+      prevLine = this.subtreeEndLine(node);
     }
     return parts.join('\n');
   }
 
   private compileChildrenTracked(nodes: AstNode[], depth: number): void {
     let first = true;
+    let prevLine: number | null = null;
     for (const node of nodes) {
       if (!first && this.output && !this.output.endsWith('\n')) {
         this.write('\n'); // Add newline between nodes
       }
+      if (!first && this.gapBefore(prevLine, node)) {
+        this.write('\n');
+      }
       this.compileNodeTracked(node, depth);
       first = false;
+      prevLine = this.subtreeEndLine(node);
     }
   }
 
@@ -362,9 +404,10 @@ export class Compiler {
 
   private compileChildNodesTracked(children: AstNode[], depth: number): void {
     let first = true;
+    let prevLine: number | null = null;
     for (const child of children) {
       if (!first) {
-        this.write('\n');
+        this.write(this.gapBefore(prevLine, child) ? '\n\n' : '\n');
       }
 
       if (child.type === 'Text') {
@@ -376,20 +419,27 @@ export class Compiler {
         this.compileNodeTracked(child, depth);
       }
       first = false;
+      prevLine = this.subtreeEndLine(child);
     }
   }
 
   private compileChildNodes(children: AstNode[], depth: number): string {
     const parts: string[] = [];
+    let prevLine: number | null = null;
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child.type === 'Text') {
+        if (this.gapBefore(prevLine, child)) parts.push('');
         const text = this.getTextValue(child);
         parts.push(`${this.getIndent(depth)}${text}`);
       } else {
         const result = this.compileNode(child, depth);
-        if (result !== null) parts.push(result);
+        if (result !== null) {
+          if (this.gapBefore(prevLine, child)) parts.push('');
+          parts.push(result);
+        }
       }
+      prevLine = this.subtreeEndLine(child);
     }
     return parts.join('\n');
   }

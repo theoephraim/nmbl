@@ -116,6 +116,15 @@ section#hero.dark
   h1 Welcome to NMBL
   p A concise template language for HTML
 
+article.prose:md
+  ### Markdown sections
+
+  Give any element a \`:md\` content block and write **markdown** —
+  rendered at compile time through your project's markdown pipeline.
+
+  - [links](/docs), *emphasis*, \`code\`
+  - blank lines separate paragraphs
+
 form(action="/subscribe" method="post")
   input(type="email" name="email" required)
   button(type="submit") Subscribe

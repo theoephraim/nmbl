@@ -25,6 +25,20 @@ function roundTrip(nmbl: string) {
 }
 
 describe('Decompiler', () => {
+  describe('blank-line preservation', () => {
+    test('a blank line between sibling elements survives the round trip', () => {
+      const html = '<div>\n  <p>a</p>\n</div>\n\n<section>\n  <p>b</p>\n</section>';
+      const nmbl = decompile(html);
+      expect(nmbl).toBe('div\n  p a\n\nsection\n  p b\n');
+      expect(compile(nmbl).html).toBe(html);
+    });
+
+    test('a gap before a closing tag does not produce a trailing blank', () => {
+      const nmbl = decompile('<div>\n  <p>a</p>\n\n</div>');
+      expect(nmbl).toBe('div\n  p a\n');
+    });
+  });
+
   describe('basic elements', () => {
     test('single element', () => {
       const nmbl = decompile('<div></div>');

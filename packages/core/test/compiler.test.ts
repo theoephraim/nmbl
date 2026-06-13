@@ -287,6 +287,30 @@ describe('Compiler', () => {
     });
   });
 
+  describe('blank-line preservation', () => {
+    test('a blank line between siblings is kept (collapsed to one)', () => {
+      const input = 'div.a\n  p one\n\n\nsection.b\n  p two';
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('</div>\n\n<section');
+      expect(html).not.toContain('</div>\n\n\n<section');
+    });
+
+    test('no blank line in source → none in output (gap measured from the subtree end)', () => {
+      const input = 'html\n  head\n    title T\n  body\n    p x';
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('</head>\n  <body>');
+    });
+
+    test('a stripped // comment between siblings leaves no gap', () => {
+      const input = 'p one\n// note\np two';
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('<p>one</p>\n<p>two</p>');
+    });
+  });
+
   describe('content mode', () => {
     test('text content mode', () => {
       const input = dedent`

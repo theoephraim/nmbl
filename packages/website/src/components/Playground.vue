@@ -8,26 +8,33 @@
         option(value="vue") vue
         option(value="svelte") svelte
         option(value="astro") astro
+    button.direction-toggle(@click="toggleDirection" :title="directionTitle")
+      span.direction-side(:class="{ active: direction === 'nmbl-to-html' }") NMBL
+      span.direction-arrow {{ direction === 'nmbl-to-html' ? '→' : '←' }}
+      span.direction-side(:class="{ active: direction === 'html-to-nmbl' }") HTML
+    span.direction-hint(v-if="direction === 'html-to-nmbl'") converting HTML → NMBL
   .playground-editors
-    .editor-pane
+    .editor-pane(:class="{ 'pane-output': direction === 'html-to-nmbl' }")
       .pane-header
         span NMBL
+          span.pane-tag(v-if="direction === 'html-to-nmbl'") generated
         span.pane-stats {{ nmblStats }}
       Editor(
         v-model="nmblSource"
         language="nmbl"
         placeholder="Write NMBL here..."
-        @focus="activeEditor = 'nmbl'"
+        :readonly="direction === 'html-to-nmbl'"
       )
-    .editor-pane
+    .editor-pane(:class="{ 'pane-output': direction === 'nmbl-to-html' }")
       .pane-header
         span HTML
+          span.pane-tag(v-if="direction === 'nmbl-to-html'") generated
         span.pane-stats {{ htmlStats }}
       Editor(
         v-model="htmlSource"
         language="html"
-        placeholder="Or paste HTML here..."
-        @focus="activeEditor = 'html'"
+        placeholder="Paste HTML here..."
+        :readonly="direction === 'nmbl-to-html'"
       )
   .playground-error(v-if="error") {{ error }}
 </template>
@@ -60,8 +67,44 @@ const htmlStats = computed(() => {
   const chars = htmlSource.value.length;
   return `${lines} lines, ${chars} chars`;
 });
-const activeEditor = ref<'nmbl' | 'html'>('nmbl');
+// Which pane is the SOURCE. The other pane is generated (read-only) — an
+// explicit direction instead of focus-driven sync, because HTML → NMBL is
+// LOSSY (dev comments and :md blocks don't survive a round trip) and should
+// never silently overwrite handwritten NMBL.
+const direction = ref<'nmbl-to-html' | 'html-to-nmbl'>('nmbl-to-html');
 const error = ref('');
+
+const directionTitle = computed(() =>
+  direction.value === 'nmbl-to-html'
+    ? 'Switch to converting HTML into NMBL'
+    : 'Switch back to authoring NMBL');
+
+/** Constructs the decompiler cannot reproduce from HTML. */
+function lossyConstructs(nmbl: string): string[] {
+  const found: string[] = [];
+  // dev comments are stripped at compile (`//!` / `/*!` survive as HTML comments)
+  if (/^\s*\/\/(?!!)/m.test(nmbl) || /\/\*(?!!)/.test(nmbl)) found.push('dev comments (//)');
+  // a content-block introducer: a line ending in a glued `:` or `:mode`
+  if (/^\s*\S+:(?:[a-z][a-zA-Z0-9]*)?\s*$/m.test(nmbl)) found.push('content blocks (:md, script:, …)');
+  return found;
+}
+
+function toggleDirection() {
+  if (direction.value === 'nmbl-to-html') {
+    const lossy = lossyConstructs(nmblSource.value);
+    if (lossy.length > 0) {
+      const ok = window.confirm(
+        `Converting HTML → NMBL is lossy: ${lossy.join(' and ')} can't be recovered from the HTML, so they'll be dropped when the NMBL is regenerated.\n\nContinue?`,
+      );
+      if (!ok) return;
+    }
+    direction.value = 'html-to-nmbl';
+    decompileHtml(htmlSource.value);
+  } else {
+    direction.value = 'nmbl-to-html';
+    compileNmbl(nmblSource.value);
+  }
+}
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -93,17 +136,17 @@ function decompileHtml(source: string) {
 }
 
 watch(nmblSource, (value) => {
-  if (activeEditor.value !== 'nmbl') return;
+  if (direction.value !== 'nmbl-to-html') return;
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => compileNmbl(value), 150);
 });
 
 watch(framework, () => {
-  compileNmbl(nmblSource.value);
+  if (direction.value === 'nmbl-to-html') compileNmbl(nmblSource.value);
 });
 
 watch(htmlSource, (value) => {
-  if (activeEditor.value !== 'html') return;
+  if (direction.value !== 'html-to-nmbl') return;
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => decompileHtml(value), 150);
 });
@@ -149,6 +192,58 @@ watch(htmlSource, (value) => {
 
 .framework-select:focus {
   outline: 1px solid var(--color-accent);
+}
+
+.direction-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.direction-toggle:hover {
+  border-color: var(--color-accent);
+}
+
+.direction-side.active {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.direction-arrow {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.direction-hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.pane-tag {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 3px;
+  background: var(--color-bg-subtle, rgba(124, 110, 246, 0.12));
+  font-size: 0.65rem;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: 0;
+  color: var(--color-text-muted);
+}
+
+.pane-output :deep(.cm-content) {
+  opacity: 0.85;
 }
 
 .playground-editors {

@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
-import { EditorState, Annotation } from '@codemirror/state';
+import { EditorState, Annotation, Compartment } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import { nmblLanguage } from '@nmbl-lang/codemirror';
@@ -14,6 +14,7 @@ const props = defineProps<{
   modelValue: string;
   language: 'html' | 'nmbl';
   placeholder?: string;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +27,10 @@ let view: EditorView | undefined;
 
 // Annotation to distinguish programmatic updates from user edits
 const externalUpdate = Annotation.define<boolean>();
+
+// Reconfigurable read-only state (the pane that is the conversion TARGET)
+const readonlyCompartment = new Compartment();
+const readonlyExt = (ro: boolean) => [EditorState.readOnly.of(ro), EditorView.editable.of(!ro)];
 
 const theme = EditorView.theme({
   '&': {
@@ -64,6 +69,7 @@ onMounted(() => {
   const extensions = [
     basicSetup,
     theme,
+    readonlyCompartment.of(readonlyExt(props.readonly ?? false)),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         // Only emit if this was a user edit, not a programmatic update
@@ -101,6 +107,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   view?.destroy();
+});
+
+watch(() => props.readonly, (ro) => {
+  view?.dispatch({ effects: readonlyCompartment.reconfigure(readonlyExt(ro ?? false)) });
 });
 
 watch(() => props.modelValue, (newVal) => {
