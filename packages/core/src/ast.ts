@@ -72,6 +72,14 @@ export interface BlockNode {
   type: 'Block';
   blockType: string;
   expression: string;
+  /**
+   * Source span of `expression` alone (the text inside `@if(…)` / `@elseif(…)`),
+   * excluding the `@if(` prefix. Used so compiled `v-if="…"` conditions map back
+   * to the real expression position instead of the block keyword. Undefined when
+   * there's no expression. (For `@each`, the expression is reordered on output, so
+   * consumers map iteration bindings separately.)
+   */
+  expressionSpan?: SourceSpan;
   /** Parsed iteration structure (each blocks; undefined when unparseable). */
   each?: EachExpr;
   /**
@@ -89,6 +97,8 @@ export interface BlockClauseNode {
   type: 'BlockClause';
   clauseType: string | null;
   expression: string;
+  /** Source span of `expression` alone — see {@link BlockNode.expressionSpan}. */
+  expressionSpan?: SourceSpan;
   children: AstNode[];
   span: SourceSpan;
 }

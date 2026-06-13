@@ -140,6 +140,7 @@ class AdaptContext {
             type: 'BlockClause',
             clauseType: CONTINUATION_CLAUSES[node.blockType],
             expression: node.expression,
+            expressionSpan: node.expressionSpan,
             children: node.clauses[0]?.children ?? [],
             span: node.span,
           };
@@ -376,12 +377,20 @@ class AdaptContext {
     let expression = expr ? this.text(expr) : '';
     let attributes: AttributeNode[] | undefined;
     let boundary = expr ? expr.children.length : 0;
+    // Span of the expression text inside the parens. When attributes follow the
+    // expression they're sliced off below; for `@if`/`@elseif` there are none, so
+    // this is the exact condition span.
+    let expressionSpan = expr ? this.spanOf(expr) : undefined;
     if (expr) {
       const split = this.splitBlockAttrs(expr);
       if (split) {
         expression = split.expression;
         attributes = split.attributes;
         boundary = split.boundary;
+        // Narrow the span to the expression tokens that precede the attributes.
+        if (boundary > 0) {
+          expressionSpan = this.span(expr.children[0].offset, expr.children[boundary - 1].end);
+        }
       }
     }
 
@@ -418,10 +427,11 @@ class AdaptContext {
       type: 'Block',
       blockType,
       expression,
+      expressionSpan,
       each,
       attributes,
       clauses: [{
-        type: 'BlockClause', clauseType: null, expression, children, span: this.spanOf(block),
+        type: 'BlockClause', clauseType: null, expression, expressionSpan, children, span: this.spanOf(block),
       }],
       span: this.spanOf(kw),
     };

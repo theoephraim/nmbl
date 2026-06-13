@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll } from 'vitest';
 import * as CompilerDOM from '@vue/compiler-dom';
+import * as LanguageCore from '@vue/language-core';
 
 // The plugin is a CJS module (module.exports = plugin factory).
 // Use createRequire to load it from the built dist.
@@ -12,7 +13,14 @@ const pluginFactory = require('../dist/index.cjs') as (ctx: { modules: Record<st
 type PluginInstance = ReturnType<typeof pluginFactory>;
 
 function makePlugin(): PluginInstance {
-  return pluginFactory({ modules: { '@vue/compiler-dom': CompilerDOM } });
+  // Mirror the `modules` object Volar passes in production (see
+  // @vue/language-core's createVueLanguagePlugin) so `compileTemplate` is used.
+  return pluginFactory({
+    modules: {
+      '@vue/compiler-dom': CompilerDOM,
+      '@vue/language-core': LanguageCore,
+    },
+  });
 }
 
 /**
@@ -201,6 +209,57 @@ describe('@nmbl-lang/vue-language-plugin', () => {
       expect(result!.ast).toBeDefined();
       const elements = findByType(result!.ast, 1) as Array<{ tag: string }>;
       expect(elements.some(e => e.tag === 'span')).toBe(true);
+    });
+
+    // These two assert that language-core's transforms actually run. Without
+    // compileTemplate (i.e. a bare CompilerDOM.parse+transform), no transform
+    // preset is applied and @if/@each never become IF/FOR nodes — which is what
+    // the TS type-narrowing for branches and iterated items depends on.
+    // Vue NodeTypes: 9 = IF, 11 = FOR.
+    test('@if produces an IF node (transformIf ran)', () => {
+      const result = plugin.compileSFCTemplate?.('nmbl', '@if(ok)\n  p yes', {});
+      const ifNodes = findByType(result!.ast, 9);
+      expect(ifNodes.length).toBe(1);
+    });
+
+    test('@each produces a FOR node with a bound value alias (transformFor ran)', () => {
+      const result = plugin.compileSFCTemplate?.('nmbl', '@each(items as item)\n  li {{ item }}', {});
+      const forNodes = findByType(result!.ast, 11) as Array<{ valueAlias?: { content: string } }>;
+      expect(forNodes.length).toBe(1);
+      expect(forNodes[0].valueAlias?.content).toBe('item');
+    });
+
+    // Regression for the `for (const [v-fo] of …)` bug. language-core's codegen
+    // recovers the loop binding by slicing `node.loc.source` with the binding
+    // offsets. NMBL reorders `@each(items as item)` → `item of items`, so without
+    // the v-for fixup that slice grabs `v-fo` (from `v-for`) and emits invalid TS.
+    // Replicate that exact slice and assert it yields a valid binding identifier.
+    type ForNode = {
+      loc: { source: string; start: { offset: number } };
+      parseResult: {
+        value?: { loc: { start: { offset: number }; end: { offset: number } } };
+        key?: { loc: { end: { offset: number } } };
+        index?: { loc: { end: { offset: number } } };
+      };
+    };
+    function leftExpressionTextOf(forNode: ForNode): string {
+      const { value, key, index } = forNode.parseResult;
+      const last = index ?? key ?? value!;
+      const start = value!.loc.start.offset - forNode.loc.start.offset;
+      const end = last.loc.end.offset - forNode.loc.start.offset;
+      return forNode.loc.source.slice(start, end);
+    }
+
+    test('@each single binding slices to a valid loop variable (not "v-fo")', () => {
+      const result = plugin.compileSFCTemplate?.('nmbl', '@each(items as item)\n  li {{ item }}', {});
+      const forNode = findByType(result!.ast, 11)[0] as unknown as ForNode;
+      expect(leftExpressionTextOf(forNode)).toBe('item');
+    });
+
+    test('@each with an index binding slices to "obj, idx"', () => {
+      const result = plugin.compileSFCTemplate?.('nmbl', '@each(items as obj, idx)\n  li {{ obj }}', {});
+      const forNode = findByType(result!.ast, 11)[0] as unknown as ForNode;
+      expect(leftExpressionTextOf(forNode)).toBe('obj, idx');
     });
   });
 });

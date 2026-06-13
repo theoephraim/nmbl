@@ -979,13 +979,18 @@ export class Compiler {
         expression = this.vueEachExpression(node);
         if (expression === null) return;
       }
+      // `@if`/`@elseif` conditions pass through verbatim, so map them to the real
+      // expression span (not the `@if(` keyword). `@each` is reordered into a
+      // `v-for` expression whose positions don't line up — keep it on the block
+      // span and let consumers remap the iteration bindings.
+      const exprSpan = node.blockType === 'each' ? span : (clause.expressionSpan ?? span);
       if (i > 0) this.write('\n');
       if (indent) this.write(indent);
       this.write('<template ');
       this.write(directive, span, { nodeType: 'Block' });
       if (expression) {
         this.write('="');
-        this.write(this.vueAttrValue(expression), span, { nodeType: 'Block' });
+        this.write(this.vueAttrValue(expression), exprSpan, { nodeType: 'Block' });
         this.write('"');
       }
       if (node.blockType === 'each' && node.each?.key) {

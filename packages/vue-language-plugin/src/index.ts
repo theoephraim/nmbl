@@ -32,6 +32,14 @@ function buildMappings<T>(chunks: Segment<T>[]) {
 
 const plugin: VueLanguagePlugin = ({ modules }) => {
   const CompilerDOM = modules['@vue/compiler-dom'];
+  // `compileTemplate` is `@vue/language-core`'s own template-compile entrypoint.
+  // Unlike calling `CompilerDOM.parse`/`transform` directly, it injects
+  // language-core's `transformIf`/`transformFor`/`transformElement`/`transformText`,
+  // which is what produces correct type-narrowing inside `@if`/`@each` and
+  // binding types for iterated items. This mirrors `@vue/language-plugin-pug`.
+  const languageCore = modules['@vue/language-core'] as
+    | typeof import('@vue/language-core')
+    | undefined;
 
   return {
     name: '@nmbl-lang/vue-language-plugin',
@@ -41,7 +49,15 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
       if (sfc.template?.lang === 'nmbl') {
         return [{
           id: 'template',
-          lang: 'pug',  // Tell Volar to treat this like Pug for pattern detection
+          // Report the embedded template's real language, NOT 'pug'. Labelling it
+          // 'pug' makes Volar treat the region as `languageId: 'jade'`, which lets a
+          // Pug diagnostic provider parse the raw NMBL text as Pug — it then chokes on
+          // `@if`/`@each` ("unexpected text @"), since Pug control flow has no `@`.
+          // Type-checking does NOT depend on this lang: codegen runs off the SFC's
+          // own `template.lang === 'nmbl'` → compileSFCTemplate → AST (see
+          // @vue/language-core's virtualCode/ir.js). This field only governs which
+          // non-TS embedded services touch the raw template text.
+          lang: 'nmbl',
         }];
       }
       return [];
@@ -75,8 +91,7 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
       const parsed = compileWithMappings(template);
       const map = new SourceMap(parsed.mappings);
 
-      // Parse HTML to Vue AST
-      let ast = CompilerDOM.parse(parsed.htmlString, {
+      const compileOptions: CompilerDOM.CompilerOptions = {
         ...options,
         comments: true,
         onWarn(warning) {
@@ -93,14 +108,25 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
           }
           options?.onError?.(error);
         },
-      });
+      };
 
-      // Transform the AST
-      CompilerDOM.transform(ast, options);
+      // Prefer language-core's `compileTemplate` so the vIf/vFor/element/text
+      // transforms run — these give type-narrowing inside `@if`/`@each`.
+      // Fall back to a bare parse+transform if language-core isn't in `modules`.
+      let ast: CompilerDOM.RootNode;
+      if (languageCore?.compileTemplate) {
+        ast = languageCore.compileTemplate(parsed.htmlString, compileOptions);
+      } else {
+        ast = CompilerDOM.parse(parsed.htmlString, compileOptions);
+        CompilerDOM.transform(ast, compileOptions);
+      }
 
       // Walk the AST and remap all offsets from HTML to NMBL
       const visited = new Set<object>();
       visit(ast);
+
+      // Repair v-for nodes (see fixupVForNode for the why).
+      fixupVForNodes(ast);
 
       return {
         ast,
@@ -152,6 +178,59 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
         }
 
         return -1;
+      }
+
+      // Repair every v-for node so `@vue/language-core`'s codegen can recover the
+      // loop bindings.
+      //
+      // language-core's `parseVForNode` reconstructs the left-hand side of the loop
+      // (`item`, or `(item, i)`) by *slicing* `node.loc.source` using the binding
+      // offsets: `node.loc.source.slice(value.offset - node.offset, ...)`. That
+      // assumes the offsets and `loc.source` share one coordinate space.
+      //
+      // For NMBL that assumption breaks twice over: (1) we've just remapped every
+      // offset into NMBL source space while `loc.source` is still the generated
+      // `v-for="item of items"` HTML, and (2) NMBL *reorders* the expression
+      // (`@each(items as item)` → `item of items`), so even a perfect 1:1 mapping
+      // couldn't line the two up. The slice ends up grabbing `v-fo` (from `v-for`)
+      // instead of `item`, producing `for (const [v-fo] of …)` — invalid TS that
+      // aborts type-checking for the whole template.
+      //
+      // The binding *text* is always correct on the parsed expression nodes
+      // (`value`/`key`/`index`/`source` `.content`), so we rebuild a self-consistent
+      // `loc.source` from those and pin the offsets so the slice returns it verbatim.
+      // The binding offset is left as the (coarse) remapped NMBL position, which is
+      // the right anchor for go-to-def. Applied uniformly — native `v-for="…"` already
+      // round-trips, so this is a no-op for it beyond normalizing the source string.
+      function fixupVForNodes(root: object) {
+        const seen = new Set<object>();
+        (function walk(obj: any) {
+          if (!obj || typeof obj !== 'object' || seen.has(obj)) return;
+          seen.add(obj);
+          if (obj.type === CompilerDOM.NodeTypes.FOR && obj.parseResult) {
+            fixupVForNode(obj);
+          }
+          for (const key in obj) {
+            if (key !== 'parent') walk(obj[key]);
+          }
+        })(root);
+      }
+
+      function fixupVForNode(node: any) {
+        const { value, key, index } = node.parseResult ?? {};
+        // The bindings, in v-for destructuring order: `(value, key, index)`.
+        const bindings = [value, key, index].filter(Boolean);
+        if (!bindings.length || !node.loc) return;
+
+        const leftText = bindings.map((b: any) => b.content).join(', ');
+        const base = value.loc.start.offset;
+        const lastBinding = index ?? key ?? value;
+
+        // Make `node.loc.source.slice(value.offset - node.offset, last.offset - node.offset)`
+        // resolve to exactly `leftText`.
+        node.loc.source = leftText;
+        node.loc.start.offset = base;
+        lastBinding.loc.end.offset = base + leftText.length;
       }
     },
   };

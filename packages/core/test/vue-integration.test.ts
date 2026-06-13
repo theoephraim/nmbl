@@ -320,4 +320,30 @@ describe('Vue Integration - Source Mappings', () => {
       }
     });
   });
+
+  describe('@if / @elseif condition mappings', () => {
+    // The compiled `v-if="cond"` must map back to the condition itself, not the
+    // `@if(` keyword — otherwise editor diagnostics/go-to-def land off by `@if(`.
+    test('@if condition maps to the expression, not the @if keyword', () => {
+      const input = '@if(loggedIn)\n  p hi';
+      const result = compile(input, { framework: 'vue' });
+      const m = result.mappings.find(x =>
+        result.html.slice(x.generatedSpan.start.offset, x.generatedSpan.end.offset) === 'loggedIn',
+      );
+      expect(m).toBeDefined();
+      expect(input.slice(m!.sourceSpan.start.offset, m!.sourceSpan.end.offset)).toBe('loggedIn');
+      // The '@' is at offset 0; the condition starts after '@if(' at offset 4.
+      expect(m!.sourceSpan.start.offset).toBe(4);
+    });
+
+    test('@elseif condition maps to its own expression', () => {
+      const input = '@if(a)\n  p x\n@elseif(b > 2)\n  p y';
+      const result = compile(input, { framework: 'vue' });
+      const m = result.mappings.find(x =>
+        result.html.slice(x.generatedSpan.start.offset, x.generatedSpan.end.offset) === 'b > 2',
+      );
+      expect(m).toBeDefined();
+      expect(input.slice(m!.sourceSpan.start.offset, m!.sourceSpan.end.offset)).toBe('b > 2');
+    });
+  });
 });
