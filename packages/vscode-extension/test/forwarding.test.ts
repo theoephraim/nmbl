@@ -16,7 +16,7 @@ import {
   findLastNonBlankLineOffset,
   findScriptAnchorOffset,
   getItemLabel,
-  HTML_TAGS,
+  htmlTagNames,
   buildHtmlTagItems,
 } from '../client/embedded-forwarding';
 import {
@@ -361,25 +361,29 @@ describe('findScriptAnchorOffset', () => {
 // ---------------------------------------------------------------------------
 
 describe('buildHtmlTagItems', () => {
-  it('includes common HTML tags', () => {
+  it('includes common HTML tags (sourced from vscode-html-languageservice)', () => {
+    const names = htmlTagNames();
     for (const tag of ['div', 'span', 'button', 'input', 'a', 'ul', 'li']) {
-      expect(HTML_TAGS).toContain(tag);
+      expect(names).toContain(tag);
     }
   });
 
-  it('produces one item per tag, targeted at the word range', () => {
+  it('produces one item per tag, targeted at the word range, with docs', () => {
     const range = new Range(new Position(1, 2), new Position(1, 5));
     const items = buildHtmlTagItems(range);
-    expect(items).toHaveLength(HTML_TAGS.length);
+    expect(items).toHaveLength(htmlTagNames().length);
     const div = items.find(i => getItemLabel(i.label) === 'div')!;
     expect(div).toBeDefined();
     expect(div.insertText).toBe('div');
     expect(div.range).toBe(range);
     // Sorts after components (which use 0_/1_ prefixes).
     expect(div.sortText).toBe('2_div');
+    // Description comes from the HTML dataset.
+    expect(typeof div.documentation).toBe('string');
+    expect((div.documentation as string).length).toBeGreaterThan(0);
   });
 
   it('contains no PascalCase entries (those are components, not html tags)', () => {
-    expect(HTML_TAGS.every(t => t === t.toLowerCase())).toBe(true);
+    expect(htmlTagNames().every(t => t === t.toLowerCase())).toBe(true);
   });
 });

@@ -13,6 +13,7 @@
  */
 
 import * as vscode from 'vscode';
+import { getDefaultHTMLDataProvider, type ITagData } from 'vscode-html-languageservice';
 
 // ---------------------------------------------------------------------------
 // Pure logic helpers (exported for unit tests — no vscode imports needed)
@@ -213,39 +214,34 @@ export function findLastNonBlankLineOffset(
 // HTML tag completions
 // ---------------------------------------------------------------------------
 
-/**
- * Standard HTML element names, offered as tag-name completions inside nmbl
- * template regions. These aren't TS symbols, so they don't come from the
- * script-anchor proxy — we provide them directly.
- */
-export const HTML_TAGS: readonly string[] = [
-  'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base',
-  'bdi', 'bdo', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption',
-  'cite', 'code', 'col', 'colgroup', 'data', 'datalist', 'dd', 'del', 'details',
-  'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figcaption',
-  'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head',
-  'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd',
-  'label', 'legend', 'li', 'link', 'main', 'map', 'mark', 'menu', 'meta',
-  'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option', 'output',
-  'p', 'param', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's',
-  'samp', 'script', 'section', 'select', 'slot', 'small', 'source', 'span',
-  'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template',
-  'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track', 'u', 'ul',
-  'var', 'video', 'wbr',
-];
+// HTML element data sourced from `vscode-html-languageservice` — the same
+// upstream-maintained dataset VS Code's own HTML support uses, so we don't hand-
+// maintain a tag list. These aren't TS symbols, so they don't come from the
+// script-anchor proxy; we provide them directly. Computed once and cached.
+let cachedHtmlTags: ITagData[] | undefined;
+function htmlTagData(): ITagData[] {
+  return (cachedHtmlTags ??= getDefaultHTMLDataProvider().provideTags());
+}
+
+/** The standard HTML element names (exported for tests). */
+export function htmlTagNames(): string[] {
+  return htmlTagData().map(t => t.name);
+}
 
 /** Build CompletionItems for the standard HTML tags, targeted at `wordRange`. */
 export function buildHtmlTagItems(
   wordRange: vscode.Range,
 ): vscode.CompletionItem[] {
-  return HTML_TAGS.map(tag => {
-    const item = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Property);
+  return htmlTagData().map(tag => {
+    const item = new vscode.CompletionItem(tag.name, vscode.CompletionItemKind.Property);
     item.detail = '(html element)';
-    item.insertText = tag;
+    const desc = typeof tag.description === 'string' ? tag.description : tag.description?.value;
+    if (desc) item.documentation = desc;
+    item.insertText = tag.name;
     item.range = wordRange;
-    item.filterText = tag;
+    item.filterText = tag.name;
     // Sort after components (components use 0_/1_ prefixes).
-    item.sortText = `2_${tag}`;
+    item.sortText = `2_${tag.name}`;
     return item;
   });
 }

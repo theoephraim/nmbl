@@ -216,6 +216,7 @@
       "dependencies": {
         "@nmbl-lang/core": "workspace:*",
         "@nmbl-lang/language-server": "workspace:*",
+        "vscode-html-languageservice": "^5.6.2",
         "vscode-languageclient": "^10.0.0",
       },
       "devDependencies": {

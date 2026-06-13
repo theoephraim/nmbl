@@ -3,13 +3,14 @@
  * embedded-forwarding.ts
  *
  * Provides completion, definition, and hover forwarding for component names
- * inside `<template lang="nmbl">` regions of .svelte and .astro files.
+ * inside `<template lang="nmbl">` regions of .svelte, .astro, and .vue files.
  *
  * Strategy: detect the nmbl template region, then proxy the VS Code provider
  * commands at an equivalent position inside the document's script/frontmatter
- * block so the host framework's language server (Svelte/Astro TS service)
+ * block so the host framework's language server (Svelte/Astro/Vue TS service)
  * answers on its own turf. Component completions (PascalCase) are plucked from
- * that response and re-targeted at the template region word range.
+ * that response and re-targeted at the template region word range — including
+ * the auto-import edits, which land in the script block of the same document.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -53,11 +54,14 @@ exports.getItemLabel = getItemLabel;
 exports.isComponentCandidate = isComponentCandidate;
 exports.findScriptAnchorOffset = findScriptAnchorOffset;
 exports.findLastNonBlankLineOffset = findLastNonBlankLineOffset;
+exports.htmlTagNames = htmlTagNames;
+exports.buildHtmlTagItems = buildHtmlTagItems;
 exports.nmblRegionAt = nmblRegionAt;
 exports.scriptAnchorPosition = scriptAnchorPosition;
 exports.mapToTemplateItem = mapToTemplateItem;
 exports.registerEmbeddedForwarding = registerEmbeddedForwarding;
 const vscode = __importStar(require("vscode"));
+const vscode_html_languageservice_1 = require("vscode-html-languageservice");
 const TEMPLATE_RE = /<template[^>]*\blang=(["'])nmbl\1[^>]*>([\s\S]*?)<\/template>/;
 /**
  * Find the `<template lang="nmbl">` body region in a raw document string.
@@ -221,11 +225,47 @@ function findLastNonBlankLineOffset(text, fromOffset) {
     return lastNonBlankOffset;
 }
 // ---------------------------------------------------------------------------
+// HTML tag completions
+// ---------------------------------------------------------------------------
+// HTML element data sourced from `vscode-html-languageservice` — the same
+// upstream-maintained dataset VS Code's own HTML support uses, so we don't hand-
+// maintain a tag list. These aren't TS symbols, so they don't come from the
+// script-anchor proxy; we provide them directly. Computed once and cached.
+let cachedHtmlTags;
+function htmlTagData() {
+    return (cachedHtmlTags ?? (cachedHtmlTags = (0, vscode_html_languageservice_1.getDefaultHTMLDataProvider)().provideTags()));
+}
+/** The standard HTML element names (exported for tests). */
+function htmlTagNames() {
+    return htmlTagData().map(t => t.name);
+}
+/** Build CompletionItems for the standard HTML tags, targeted at `wordRange`. */
+function buildHtmlTagItems(wordRange) {
+    return htmlTagData().map(tag => {
+        const item = new vscode.CompletionItem(tag.name, vscode.CompletionItemKind.Property);
+        item.detail = '(html element)';
+        const desc = typeof tag.description === 'string' ? tag.description : tag.description?.value;
+        if (desc)
+            item.documentation = desc;
+        item.insertText = tag.name;
+        item.range = wordRange;
+        item.filterText = tag.name;
+        // Sort after components (components use 0_/1_ prefixes).
+        item.sortText = `2_${tag.name}`;
+        return item;
+    });
+}
+// ---------------------------------------------------------------------------
 // VS Code provider helpers
 // ---------------------------------------------------------------------------
 const SELECTOR = [
     { language: 'svelte', scheme: 'file' },
     { language: 'astro', scheme: 'file' },
+    // .vue uses `<script setup>`, which the generic `<script>` branch in the
+    // anchor/script helpers below already handles. The Vue extension runs no
+    // language service on our `lang:'nmbl'` template region, so without this
+    // forwarding there's no component completion / auto-import when typing a tag.
+    { language: 'vue', scheme: 'file' },
 ];
 /**
  * Convert a character offset in `doc` to a vscode.Position.
@@ -284,59 +324,70 @@ function mapToTemplateItem(source, templateWordRange, alreadyImported) {
 // Registration
 // ---------------------------------------------------------------------------
 function registerEmbeddedForwarding(context) {
+    // Debug channel: open "Output → NMBL Forwarding" to trace why a completion
+    // did or didn't fire. Quiet unless you look at it.
+    const out = vscode.window.createOutputChannel('NMBL Forwarding');
+    context.subscriptions.push(out);
+    const log = (msg) => out.appendLine(msg);
     // ── Completion ────────────────────────────────────────────────────────────
     const completionProvider = vscode.languages.registerCompletionItemProvider(SELECTOR, {
         async provideCompletionItems(doc, position) {
+            log(`completion @ ${doc.languageId} ${position.line}:${position.character}`);
             // 1. Must be inside an nmbl region
             const region = nmblRegionAt(doc, position);
-            if (!region)
+            if (!region) {
+                log('  bail: not inside an <template lang="nmbl"> region');
                 return undefined;
+            }
             // 2. The word prefix must look like a tag-name position
             const wordRange = doc.getWordRangeAtPosition(position, /[A-Za-z][A-Za-z0-9_]*/);
             const wordStart = wordRange ? wordRange.start : position;
             // linePrefix = text from line start up to but not including the word
             const lineText = doc.lineAt(position.line).text;
             const linePrefix = lineText.substring(0, wordStart.character);
-            if (!isTagNamePosition(linePrefix))
-                return undefined;
-            // 3. Find the anchor position in script/frontmatter
-            const anchor = scriptAnchorPosition(doc);
-            if (!anchor)
-                return undefined;
-            // 4. Query the host framework's completion provider
-            let list;
-            try {
-                const result = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', doc.uri, anchor, undefined, 60);
-                if (!result)
-                    return undefined;
-                if (Array.isArray(result)) {
-                    list = new vscode.CompletionList(result, false);
-                }
-                else {
-                    list = result;
-                }
-            }
-            catch {
+            if (!isTagNamePosition(linePrefix)) {
+                log(`  bail: not a tag-name position (linePrefix=${JSON.stringify(linePrefix)})`);
                 return undefined;
             }
-            // 5. Determine which components are already imported (for sort priority)
             const text = doc.getText();
             const effectiveWordRange = wordRange ?? new vscode.Range(position, position);
-            const mapped = [];
-            for (const item of list.items) {
-                if (!isComponentCandidate(item))
-                    continue;
-                const label = getItemLabel(item.label);
-                // Heuristic: already imported if the identifier appears in the script
-                const scriptRegion = findScriptBlockText(text, doc.languageId);
-                const alreadyImported = scriptRegion
-                    ? new RegExp(`\\b${escapeRegExp(label)}\\b`).test(scriptRegion)
-                    : false;
-                mapped.push(mapToTemplateItem(item, effectiveWordRange, alreadyImported));
+            // 3. Standard HTML tags — always available at a tag position, no proxy.
+            const htmlItems = buildHtmlTagItems(effectiveWordRange);
+            // 4. Component candidates — proxy completion to the script/frontmatter
+            //    anchor so the host TS service answers (auto-import edits included).
+            //    Best-effort: a missing anchor or empty result still yields HTML tags.
+            const componentItems = [];
+            const anchor = scriptAnchorPosition(doc);
+            if (!anchor) {
+                log('  no <script> anchor — html tags only');
             }
-            if (mapped.length === 0)
-                return undefined;
-            return new vscode.CompletionList(mapped, true);
+            else {
+                try {
+                    const result = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', doc.uri, anchor, undefined, 60);
+                    const items = !result
+                        ? []
+                        : Array.isArray(result)
+                            ? result
+                            : result.items;
+                    log(`  host returned ${items.length} items`);
+                    const scriptRegion = findScriptBlockText(text, doc.languageId);
+                    for (const item of items) {
+                        if (!isComponentCandidate(item))
+                            continue;
+                        const label = getItemLabel(item.label);
+                        // Heuristic: already imported if the identifier appears in the script
+                        const alreadyImported = scriptRegion
+                            ? new RegExp(`\\b${escapeRegExp(label)}\\b`).test(scriptRegion)
+                            : false;
+                        componentItems.push(mapToTemplateItem(item, effectiveWordRange, alreadyImported));
+                    }
+                }
+                catch (e) {
+                    log(`  host completion threw ${e} — html tags only`);
+                }
+            }
+            log(`  kept ${componentItems.length} component(s) + ${htmlItems.length} html tag(s)`);
+            return new vscode.CompletionList([...componentItems, ...htmlItems], true);
         },
     });
     // ── Definition ────────────────────────────────────────────────────────────
