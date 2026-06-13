@@ -102,10 +102,13 @@ export const CONTROL_FLOW_VUE_HTML = (() => {
   return html.trimEnd();
 })();
 
-export const PLAYGROUND_EXAMPLE_NMBL = `
-//! This comment is preserved in HTML output
-// this comment is not :)
+export type PlaygroundFramework = 'html' | 'vue' | 'svelte' | 'astro';
 
+// One idiomatic example per framework — each shows that host's interpolation
+// and how NMBL's control flow compiles to its native syntax. Swapped in the
+// playground when you change the framework selector (unless you've edited).
+export const PLAYGROUND_EXAMPLES: Record<PlaygroundFramework, string> = {
+  html: `//! A plain HTML page — structure, selectors, markdown. No control flow.
 nav.main-nav
   ul
     li > a(href="/") Home
@@ -114,24 +117,57 @@ nav.main-nav
 
 section#hero.dark
   h1 Welcome to NMBL
-  p A concise template language for HTML
+  p.lead A concise notation for HTML
 
 article.prose:md
-  ### Markdown sections
+  ### Markdown, inline
 
-  Give any element a \`:md\` content block and write **markdown** —
-  rendered at compile time through your project's markdown pipeline.
+  Append \`:md\` to any element and write **markdown** —
+  rendered at build time.
 
   - [links](/docs), *emphasis*, \`code\`
-  - blank lines separate paragraphs
+  - no closing tags to forget`,
 
-form(action="/subscribe" method="post")
-  input(type="email" name="email" required)
-  button(type="submit") Subscribe
+  vue: `//! Vue — {{ }} interpolation; @if / @each compile to <template v-if/v-for>
+section.todos
+  h1 {{ title }}
 
-SomeComponent(
-  :prop // note about this prop
-  // anotherProp="temporarily disabled via commenting!"
-  another="foo"
-)
-`;
+  @if(todos.length)
+    ul
+      @each(todo of todos :key="todo.id")
+        li(:class="{ done: todo.done }")
+          input(type="checkbox" v-model="todo.done")
+          span.label {{ todo.text }}
+  @else
+    p.empty Nothing to do 🎉
+
+  button(@click="addTodo") Add todo
+  TodoStats(:count="todos.length")`,
+
+  svelte: `//! Svelte — {expr} interpolation; @if / @each compile to {#if} / {#each}
+section.todos
+  h1 {title}
+
+  @if(todos.length)
+    ul
+      @each(todo of todos :key="todo.id")
+        li(class:done={todo.done})
+          input(type="checkbox" bind:checked={todo.done})
+          span.label {todo.text}
+  @else
+    p.empty Nothing to do 🎉
+
+  button(on:click={addTodo}) Add todo`,
+
+  astro: `//! Astro — {expr}; @each compiles to .map(); client: directives hydrate islands
+section.posts
+  h1 {title}
+
+  @each(post of posts :key="post.slug")
+    article.card
+      h2 {post.title}
+      p {post.excerpt}
+      a(href={\`/blog/\${post.slug}\`}) Read more →
+
+  Counter(client:visible initialCount={0})`,
+};

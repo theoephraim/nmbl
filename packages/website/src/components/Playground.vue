@@ -51,11 +51,16 @@ import { ref, computed, watch } from 'vue';
 import { compile, decompile, type SourceMapping } from '@nmbl-lang/core';
 import { mdFilter } from '@nmbl-lang/core/markdown';
 import Editor from './Editor.vue';
-import { PLAYGROUND_EXAMPLE_NMBL } from '../examples';
+import { PLAYGROUND_EXAMPLES, type PlaygroundFramework } from '../examples';
 
-const nmblSource = ref(PLAYGROUND_EXAMPLE_NMBL);
+const framework = ref<PlaygroundFramework>('html');
+const nmblSource = ref(PLAYGROUND_EXAMPLES[framework.value]);
 const htmlSource = ref('');
-const framework = ref<'html' | 'vue' | 'svelte' | 'astro'>('html');
+
+// The last example we loaded — lets us swap to another framework's example on
+// selector change WITHOUT clobbering edits (only swap if the source is still
+// the pristine example we put there).
+let loadedExample = nmblSource.value;
 
 function countLines(s: string) {
   return s ? s.split('\n').length : 0;
@@ -151,7 +156,7 @@ function onHtmlCursor(offset: number) {
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
 // Initialize HTML from default NMBL
-compileNmbl(PLAYGROUND_EXAMPLE_NMBL);
+compileNmbl(nmblSource.value);
 
 function compileNmbl(source: string) {
   try {
@@ -185,8 +190,15 @@ watch(nmblSource, (value) => {
   debounceTimer = setTimeout(() => compileNmbl(value), 150);
 });
 
-watch(framework, () => {
-  if (direction.value === 'nmbl-to-html') compileNmbl(nmblSource.value);
+watch(framework, (next) => {
+  if (direction.value !== 'nmbl-to-html') return;
+  // Swap in the new framework's idiomatic example, but only if the editor still
+  // holds the example we loaded (never overwrite the user's own NMBL).
+  if (nmblSource.value === loadedExample) {
+    loadedExample = PLAYGROUND_EXAMPLES[next];
+    nmblSource.value = loadedExample;
+  }
+  compileNmbl(nmblSource.value);
 });
 
 watch(htmlSource, (value) => {
