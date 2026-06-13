@@ -18,6 +18,9 @@ import {
   getItemLabel,
   htmlTagNames,
   buildHtmlTagItems,
+  attributeContext,
+  buildAttributeItems,
+  VUE_DIRECTIVES,
 } from '../client/embedded-forwarding';
 import {
   CompletionItem,
@@ -385,5 +388,85 @@ describe('buildHtmlTagItems', () => {
 
   it('contains no PascalCase entries (those are components, not html tags)', () => {
     expect(htmlTagNames().every(t => t === t.toLowerCase())).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// attributeContext (cursor classification)
+// ---------------------------------------------------------------------------
+
+describe('attributeContext', () => {
+  const attr = (s: string) => attributeContext(s);
+
+  it('detects an attribute position inside a tag paren', () => {
+    expect(attr('button(@cli')).toEqual({ inAttr: true, tag: 'button' });
+    expect(attr('div(class="x" @cl')).toEqual({ inAttr: true, tag: 'div' });
+    expect(attr('input(:val')).toEqual({ inAttr: true, tag: 'input' });
+  });
+
+  it('detects attribute position across multiple lines', () => {
+    expect(attr('VButton(\n  :label="x"\n  @cl')).toEqual({ inAttr: true, tag: 'VButton' });
+  });
+
+  it('treats .class/#id shorthands as implicit div with their real tag', () => {
+    expect(attr('span.foo(@cl')).toEqual({ inAttr: true, tag: 'span' });
+  });
+
+  it('is NOT an attribute position inside @if/@each control flow', () => {
+    expect(attr('@if(loggedIn').inAttr).toBe(false);
+    expect(attr('@each(items as item').inAttr).toBe(false);
+  });
+
+  it('is NOT an attribute position inside an interpolation', () => {
+    expect(attr('p {{ item.').inAttr).toBe(false);
+  });
+
+  it('is NOT an attribute position inside an attribute value string', () => {
+    expect(attr('div(:label="item.').inAttr).toBe(false);
+  });
+
+  it('is NOT an attribute position inside a brace value', () => {
+    expect(attr('div(class={fo').inAttr).toBe(false);
+  });
+
+  it('is NOT an attribute position after the parens close', () => {
+    expect(attr('div(class="x") ').inAttr).toBe(false);
+  });
+
+  it('is NOT an attribute position at plain tag/text', () => {
+    expect(attr('  div').inAttr).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildAttributeItems
+// ---------------------------------------------------------------------------
+
+describe('buildAttributeItems', () => {
+  const range = new Range(new Position(2, 4), new Position(2, 8));
+
+  it('includes Vue directives', () => {
+    const labels = buildAttributeItems(range, 'div').map(i => getItemLabel(i.label));
+    for (const d of VUE_DIRECTIVES) expect(labels).toContain(d);
+    expect(labels).toContain('v-if');
+  });
+
+  it('derives @events from the element on* attributes', () => {
+    const labels = buildAttributeItems(range, 'button').map(i => getItemLabel(i.label));
+    expect(labels).toContain('@click');
+    expect(labels).toContain('@input');
+    // never the raw on* form
+    expect(labels).not.toContain('onclick');
+  });
+
+  it('offers plain and bound forms of regular attributes', () => {
+    const labels = buildAttributeItems(range, 'button').map(i => getItemLabel(i.label));
+    expect(labels).toContain('disabled');
+    expect(labels).toContain(':disabled');
+  });
+
+  it('targets items at the given word range', () => {
+    const item = buildAttributeItems(range, 'div')[0];
+    expect(item.range).toBe(range);
   });
 });

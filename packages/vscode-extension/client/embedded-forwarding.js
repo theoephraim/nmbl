@@ -46,6 +46,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VUE_DIRECTIVES = void 0;
 exports.findNmblRegion = findNmblRegion;
 exports.isOffsetInNmblRegion = isOffsetInNmblRegion;
 exports.isTagNamePosition = isTagNamePosition;
@@ -56,6 +57,8 @@ exports.findScriptAnchorOffset = findScriptAnchorOffset;
 exports.findLastNonBlankLineOffset = findLastNonBlankLineOffset;
 exports.htmlTagNames = htmlTagNames;
 exports.buildHtmlTagItems = buildHtmlTagItems;
+exports.attributeContext = attributeContext;
+exports.buildAttributeItems = buildAttributeItems;
 exports.nmblRegionAt = nmblRegionAt;
 exports.scriptAnchorPosition = scriptAnchorPosition;
 exports.mapToTemplateItem = mapToTemplateItem;
@@ -256,6 +259,128 @@ function buildHtmlTagItems(wordRange) {
     });
 }
 // ---------------------------------------------------------------------------
+// Attribute / directive / event completions
+// ---------------------------------------------------------------------------
+/** Vue's built-in directives — not in the HTML dataset, so listed here. */
+exports.VUE_DIRECTIVES = [
+    'v-if', 'v-else-if', 'v-else', 'v-for', 'v-bind', 'v-on', 'v-model', 'v-show',
+    'v-html', 'v-text', 'v-slot', 'v-pre', 'v-once', 'v-memo', 'v-cloak',
+];
+function htmlAttributeData(tag) {
+    try {
+        return (0, vscode_html_languageservice_1.getDefaultHTMLDataProvider)().provideAttributes(tag);
+    }
+    catch {
+        return [];
+    }
+}
+/**
+ * Classify the cursor's context by scanning template text up to it, so we can
+ * tell an attribute-name position (inside a tag's `(...)`) apart from
+ * expressions — `@if(...)` control flow, `{{ }}` interpolations, `{…}` brace
+ * values, and quoted attribute values — which already get TS completion.
+ * Returns the enclosing tag name when in an attribute position.
+ */
+function attributeContext(before) {
+    let inStr = null;
+    let interp = 0;
+    const stack = [];
+    for (let i = 0; i < before.length; i++) {
+        const c = before[i];
+        const next = before[i + 1];
+        if (inStr) {
+            if (c === inStr && before[i - 1] !== '\\')
+                inStr = null;
+            continue;
+        }
+        if (interp > 0) {
+            if (c === '}' && next === '}') {
+                interp--;
+                i++;
+            }
+            continue;
+        }
+        if (c === '{' && next === '{') {
+            interp++;
+            i++;
+            continue;
+        }
+        if (c === '"' || c === "'" || c === '`') {
+            inStr = c;
+            continue;
+        }
+        if (c === '{') {
+            stack.push({ kind: 'brace', tag: null });
+            continue;
+        }
+        if (c === '}') {
+            if (stack[stack.length - 1]?.kind === 'brace')
+                stack.pop();
+            continue;
+        }
+        if (c === '(') {
+            // The token immediately before '(' (no whitespace between) — a tag name,
+            // `.class`/`#id` shorthand (implicit div), or an `@if`/`@each` keyword.
+            let j = i - 1;
+            while (j >= 0 && /[\w@.\-#]/.test(before[j]))
+                j--;
+            const token = before.slice(j + 1, i);
+            if (/^@(if|elseif|else|each)$/.test(token)) {
+                stack.push({ kind: 'control', tag: null });
+            }
+            else if (token && /[A-Za-z.#]/.test(token[0])) {
+                const m = token.match(/^[A-Za-z][\w-]*/);
+                stack.push({ kind: 'attr', tag: m ? m[0] : 'div' });
+            }
+            else {
+                stack.push({ kind: 'group', tag: null });
+            }
+            continue;
+        }
+        if (c === ')') {
+            if (stack.length)
+                stack.pop();
+            continue;
+        }
+    }
+    if (inStr || interp > 0)
+        return { inAttr: false, tag: null };
+    const top = stack[stack.length - 1];
+    return top?.kind === 'attr' ? { inAttr: true, tag: top.tag } : { inAttr: false, tag: null };
+}
+/**
+ * Completions for an attribute-name position: Vue directives, plus the element's
+ * HTML attributes and events (an `on*` attribute becomes a Vue `@event`). Both
+ * plain (`disabled`) and bound (`:disabled`) forms are offered. Component-
+ * specific props/emits are NOT included — those are type-derived and would need
+ * deeper Vue integration.
+ */
+function buildAttributeItems(wordRange, tag) {
+    const items = [];
+    const add = (label, kind, detail, sort) => {
+        const item = new vscode.CompletionItem(label, kind);
+        item.insertText = label;
+        item.range = wordRange;
+        item.filterText = label;
+        item.detail = detail;
+        item.sortText = sort;
+        items.push(item);
+    };
+    for (const d of exports.VUE_DIRECTIVES)
+        add(d, vscode.CompletionItemKind.Keyword, '(vue directive)', `0_${d}`);
+    for (const a of tag ? htmlAttributeData(tag) : []) {
+        if (a.name.startsWith('on')) {
+            const ev = '@' + a.name.slice(2);
+            add(ev, vscode.CompletionItemKind.Event, '(event)', `1_${ev}`);
+        }
+        else {
+            add(a.name, vscode.CompletionItemKind.Property, '(attribute)', `2_${a.name}`);
+            add(':' + a.name, vscode.CompletionItemKind.Property, '(bound attribute)', `3_${a.name}`);
+        }
+    }
+    return items;
+}
+// ---------------------------------------------------------------------------
 // VS Code provider helpers
 // ---------------------------------------------------------------------------
 const SELECTOR = [
@@ -267,6 +392,18 @@ const SELECTOR = [
     // forwarding there's no component completion / auto-import when typing a tag.
     { language: 'vue', scheme: 'file' },
 ];
+/**
+ * When the user has typed only a bare attribute prefix (`@`, `:`, or `#`),
+ * `getWordRangeAtPosition` finds no word — return a range covering that single
+ * prefix char so an inserted `@click` replaces the `@` instead of doubling it.
+ */
+function attrPrefixRange(doc, position) {
+    const ch = doc.lineAt(position.line).text[position.character - 1];
+    if (ch === '@' || ch === ':' || ch === '#') {
+        return new vscode.Range(position.translate(0, -1), position);
+    }
+    return new vscode.Range(position, position);
+}
 /**
  * Convert a character offset in `doc` to a vscode.Position.
  */
@@ -339,7 +476,22 @@ function registerEmbeddedForwarding(context) {
                 log('  bail: not inside an <template lang="nmbl"> region');
                 return undefined;
             }
-            // 2. The word prefix must look like a tag-name position
+            const text = doc.getText();
+            // 2. Attribute-name position (inside a tag's `(...)`) — offer directives,
+            //    HTML attributes, and events. Checked BEFORE the tag-name flow because
+            //    a multi-line attribute line has a whitespace prefix that also looks
+            //    like a tag position.
+            const before = text.slice(region.start, doc.offsetAt(position));
+            const attrCtx = attributeContext(before);
+            if (attrCtx.inAttr) {
+                // Attribute names can carry `@`/`:`/`#` prefixes (events, binds, slots).
+                const attrWordRange = doc.getWordRangeAtPosition(position, /[@:#]?[A-Za-z][\w-]*/) ??
+                    attrPrefixRange(doc, position);
+                const attrItems = buildAttributeItems(attrWordRange, attrCtx.tag);
+                log(`  attr position (tag=${attrCtx.tag}) — ${attrItems.length} item(s)`);
+                return new vscode.CompletionList(attrItems, true);
+            }
+            // 3. The word prefix must look like a tag-name position
             const wordRange = doc.getWordRangeAtPosition(position, /[A-Za-z][A-Za-z0-9_]*/);
             const wordStart = wordRange ? wordRange.start : position;
             // linePrefix = text from line start up to but not including the word
@@ -349,9 +501,8 @@ function registerEmbeddedForwarding(context) {
                 log(`  bail: not a tag-name position (linePrefix=${JSON.stringify(linePrefix)})`);
                 return undefined;
             }
-            const text = doc.getText();
             const effectiveWordRange = wordRange ?? new vscode.Range(position, position);
-            // 3. Standard HTML tags — always available at a tag position, no proxy.
+            // 4. Standard HTML tags — always available at a tag position, no proxy.
             const htmlItems = buildHtmlTagItems(effectiveWordRange);
             // 4. Component candidates — proxy completion to the script/frontmatter
             //    anchor so the host TS service answers (auto-import edits included).
