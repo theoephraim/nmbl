@@ -128,7 +128,7 @@
       },
       "devDependencies": {
         "@types/node": "^25.0.0",
-        "monogram": "github:dmno-dev/monogram#5bb3a529547a2919466422e390ab7ca6149c6d7e",
+        "monogram": "github:dmno-dev/monogram#8797bef5a138c8c23d253fd95a163ab999b4b868",
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
@@ -1267,7 +1267,7 @@
 
     "minimatch": ["minimatch@10.2.5", "", { "dependencies": { "brace-expansion": "^5.0.5" } }, "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg=="],
 
-    "monogram": ["monogram@github:dmno-dev/monogram#5bb3a52", {}, "dmno-dev-monogram-5bb3a52", "sha512-TBdlXIUpLRK8IGf8MrPEZbllAjDt9rJ6OaImPQ5Y3gnw6ygzY0gdSqVAzLTSvHIyVKFwpBOdBr7isvSyjYI1oA=="],
+    "monogram": ["monogram@github:dmno-dev/monogram#8797bef", {}, "dmno-dev-monogram-8797bef", "sha512-K9GmLIRrNKYE0bahLc3eOCMZCvUNRI6Mzp1yCqTZ6Q2luVVpAVYcujJBe1jg1eOYDkjGcGvpYS0UFHOpYrSl7w=="],
 
     "mrmime": ["mrmime@2.0.1", "", {}, "sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ=="],
 
