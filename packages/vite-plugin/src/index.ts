@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { parse as parseYaml } from 'yaml';
 import { compile } from '@nmbl-lang/core';
 import { mdFilter } from '@nmbl-lang/core/markdown';
 import type { NmblError } from '@nmbl-lang/core';
@@ -72,6 +73,20 @@ async function compileAsync(
   return result;
 }
 
+/**
+ * Split leading YAML frontmatter (`---\n…\n---`) off a `.nmbl` source, mirroring
+ * markdown/MDX so `.nmbl` files can carry page metadata. Returns the raw YAML
+ * text (or null when absent) and the template body. The frontmatter region is
+ * replaced with blank lines rather than removed, so compile diagnostics keep
+ * reporting the body's original line numbers.
+ */
+function splitFrontmatter(src: string): { yaml: string | null; body: string } {
+  const m = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(src);
+  if (!m) return { yaml: null, body: src };
+  const blanks = m[0].replace(/[^\n]/g, '');
+  return { yaml: m[1], body: blanks + src.slice(m[0].length) };
+}
+
 /** Strip the common leading indentation from an SFC template body. */
 function dedent(src: string): string {
   const lines = src.split('\n');
@@ -93,12 +108,23 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
 
     async transform(code, id) {
       if (!id.endsWith('.nmbl')) return;
-      const { html, errors } = await compileAsync(code, { framework: options.framework }, filters);
+      const { yaml, body } = splitFrontmatter(code);
+      let frontmatter: Record<string, unknown> = {};
+      if (yaml !== null) {
+        try {
+          frontmatter = (parseYaml(yaml) as Record<string, unknown>) ?? {};
+        } catch (e) {
+          this.error(`NMBL frontmatter is not valid YAML in ${id}: ${(e as Error).message}`);
+        }
+      }
+      const { html, errors } = await compileAsync(body, { framework: options.framework }, filters);
       if (errors.length > 0) {
         this.warn(`NMBL compilation errors in ${id}:\n${formatErrors(errors)}`);
       }
       return {
-        code: `export default ${JSON.stringify(html)};`,
+        code:
+          `export default ${JSON.stringify(html)};\n` +
+          `export const frontmatter = ${JSON.stringify(frontmatter)};`,
         map: null,
       };
     },

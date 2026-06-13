@@ -1,3 +1,10 @@
+---
+title: Highlighting example
+draft: false
+tags:
+  - demo
+  - syntax
+---
 // silent comment — not rendered to output
 //! rendered comment — becomes an HTML comment
 

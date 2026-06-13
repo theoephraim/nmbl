@@ -4,6 +4,9 @@
   "scopeName": "source.nmbl",
   "patterns": [
     {
+      "include": "#nmbl-frontmatter"
+    },
+    {
       "include": "#nmbl-script-block"
     },
     {
@@ -59,6 +62,27 @@
     }
   ],
   "repository": {
+    "nmbl-frontmatter": {
+      "comment": "YAML frontmatter delimited by --- at the very top of a .nmbl file",
+      "begin": "\\A(---)[ \\t]*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.nmbl"
+        }
+      },
+      "end": "^(---)[ \\t]*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.nmbl"
+        }
+      },
+      "contentName": "meta.embedded.block.frontmatter.yaml source.yaml",
+      "patterns": [
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
     "indent": {
       "name": "variable.other.nmbl",
       "match": "(?!)"

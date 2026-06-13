@@ -44,6 +44,7 @@ const grammarJson = JSON.parse(readFileSync(grammarPath, 'utf8'));
 const stubGrammars = {
   'source.js': { scopeName: 'source.js', patterns: [], repository: {} },
   'source.css': { scopeName: 'source.css', patterns: [], repository: {} },
+  'source.yaml': { scopeName: 'source.yaml', patterns: [], repository: {} },
   'text.html.markdown': { scopeName: 'text.html.markdown', patterns: [], repository: {} },
 };
 
@@ -164,6 +165,13 @@ function findLine(pattern) {
   if (idx < 0) throw new Error(`Could not find line matching ${pattern}`);
   return idx;
 }
+
+// ── frontmatter block ────────────────────────────────────────────────────────
+// The `title:` line lives inside the leading --- … --- frontmatter and must be
+// scoped as embedded YAML, not re-tokenised as NMBL.
+const fmBodyLine = findLine(/^title:/);
+assertScopePresent(fmBodyLine, 'source.yaml', 'frontmatter body embeds YAML');
+assertScopeAbsent(fmBodyLine, 'entity.name.tag.nmbl', 'frontmatter body is not NMBL');
 
 // ── script: block ────────────────────────────────────────────────────────────
 const scriptIntroLine = findLine(/^script:\s*$/);

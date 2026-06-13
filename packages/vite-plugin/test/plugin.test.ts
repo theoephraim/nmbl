@@ -59,6 +59,45 @@ describe('nmbl:transform (.nmbl files)', () => {
     expect(out.code).toContain('[two]');
     expect(out.code).not.toContain('nmbl:filter');
   });
+
+  it('always exports a frontmatter object (empty when absent)', async () => {
+    const p = getPlugin('nmbl:transform');
+    const out = await p.transform.call(ctx, 'div hi', '/x/test.nmbl');
+    expect(out.code).toContain('export const frontmatter = {};');
+  });
+
+  it('parses leading YAML frontmatter into the frontmatter export', async () => {
+    const p = getPlugin('nmbl:transform');
+    const src = '---\ntitle: My Page\ndraft: false\ntags:\n  - a\n  - b\n---\nh1 Hello';
+    const out = await p.transform.call(ctx, src, '/x/test.nmbl');
+    expect(out.code).toContain('export const frontmatter = {"title":"My Page","draft":false,"tags":["a","b"]};');
+    // frontmatter is stripped before compile — only the body becomes HTML
+    expect(out.code).toContain('<h1>Hello</h1>');
+    expect(out.code).not.toContain('title: My Page');
+  });
+
+  it('preserves body line numbers in diagnostics after frontmatter', async () => {
+    const p = getPlugin('nmbl:transform');
+    const warnings: string[] = [];
+    const warnCtx = { warn(m: string) { warnings.push(m); }, error(m: string) { throw new Error(m); } };
+    // 3-line frontmatter, then a bare-text line that can't parse as a tag.
+    // It sits on body line 4 — the blank-padded body must keep that line number.
+    const src = '---\ntitle: x\n---\n* bare text line';
+    await p.transform.call(warnCtx, src, '/x/test.nmbl');
+    expect(warnings.join('\n')).toContain('(4:1)');
+  });
+
+  it('errors on invalid YAML frontmatter', async () => {
+    const p = getPlugin('nmbl:transform');
+    const src = '---\n: : : not yaml\n  bad: [\n---\np hi';
+    await expect(p.transform.call(ctx, src, '/x/test.nmbl')).rejects.toThrow(/frontmatter is not valid YAML/);
+  });
+
+  it('does not treat a non-leading `---` as frontmatter', async () => {
+    const p = getPlugin('nmbl:transform');
+    const out = await p.transform.call(ctx, 'p intro\n---\np after', '/x/test.nmbl');
+    expect(out.code).toContain('export const frontmatter = {};');
+  });
 });
 
 describe('nmbl:vue-sfc', () => {
