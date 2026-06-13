@@ -16,7 +16,8 @@
     "test": "turbo run test",
     "dev": "turbo run dev",
     "bump": "bumpy add",
-    "bump:status": "bumpy status"
+    "bump:status": "bumpy status",
+    "bootstrap:publishing": "bun scripts/bootstrap-publishing.ts"
   },
   "devDependencies": {
     "@socketsecurity/bun-security-scanner": "^1.1.2",
