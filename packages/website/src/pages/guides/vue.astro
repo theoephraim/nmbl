@@ -73,41 +73,48 @@ BaseLayout(title="Vue Integration Guide")
             a(href="#installation") Installation
             a(href="#configuration") Configuration
             a(href="#basic-usage") Basic Usage
-            a(href="#differences") Differences from HTML/Pug
-            a(href="#intellisense") Intellisense Features
+            a(href="#intellisense-features") Intellisense Features
             a(href="#troubleshooting") Troubleshooting
 
         .prose
-          h2(id="installation") Installation
+          div:md
+            ## Installation
 
-          p To use NMBL in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
+            To use NMBL in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
 
           Code(code={installExample} lang="bash")
 
-          h2(id="configuration") Configuration
+          div:md
+            ## Configuration
 
-          h3 Vite Config
-          p Add the NMBL plugin to your <code>vite.config.ts</code>. It must be listed <strong>before</strong> the Vue plugin:
+            ### Vite Config
+
+            Add the NMBL plugin to your `vite.config.ts`. It must be listed **before** the Vue plugin:
 
           Code(code={viteConfigExample} lang="ts" meta={'title="vite.config.ts"'})
 
-          h3 TypeScript Config
-          p Add the NMBL plugin to your <code>tsconfig.json</code> to enable intellisense:
+          div:md
+            ### TypeScript Config
+
+            Add the NMBL plugin to your `tsconfig.json` to enable intellisense:
 
           Code(code={tsconfigExample} lang="json" meta={'title="tsconfig.json"'})
 
-          h3 VS Code Setup
-          p The NMBL VS Code extension provides syntax highlighting (not yet on the marketplace &mdash; install it from the repo). Vue intellisense works through the Vue - Official extension (Volar).
+          div:md
+            ### VS Code Setup
 
-          h2(id="basic-usage") Basic Usage
+            The NMBL VS Code extension provides syntax highlighting (not yet on the marketplace — install it from the repo). Vue intellisense works through the Vue - Official extension (Volar).
 
-          p Simply add <code>lang="nmbl"</code> to your template blocks:
+            ## Basic Usage
+
+            Add `lang="nmbl"` to your Vue template block, then write the markup as NMBL:
 
           Code(code={vueExample} lang="vue" meta={'title="App.vue"'})
 
-          h2(id="intellisense") Intellisense Features
+          div:md
+            ## Intellisense Features
 
-          p With the Vue language plugin installed, you get full intellisense support:
+            With the Vue language plugin installed, you get full intellisense support:
 
           .features-grid
             .feature
@@ -129,23 +136,29 @@ BaseLayout(title="Vue Integration Guide")
               h4 ♻️ Refactoring
               p Rename variables and have them update across template and script
 
-          h2(id="troubleshooting") Troubleshooting
+          div:md
+            ## Troubleshooting
 
-          .troubleshooting
-            h3 Variables marked as unused
-            p Make sure the Vue language plugin is properly configured in your <code>tsconfig.json</code> and restart your IDE.
+          .troubleshooting:md
+            ### Variables marked as unused
 
-            h3 No component auto-import suggestions
-            p Currently, you need to type the full component name first. Auto-import will then suggest adding the import statement. This experience is being improved.
+            Make sure the Vue language plugin is properly configured in your `tsconfig.json` and restart your IDE.
 
-            h3 CSS classes not linking to styles
-            p This only works with <code>&lt;style scoped&gt;</code> blocks. This is a Vue/Volar limitation that applies to all template languages, not just NMBL.
+            ### No component auto-import suggestions
 
-            h3 Syntax errors with indentation
-            p Ensure your template starts at column 0 with no leading whitespace. NMBL uses indentation for structure, so the root element must not be indented.
+            Currently, you need to type the full component name first. Auto-import will then suggest adding the import statement. This experience is being improved.
 
-            h3 Template not compiling
-            p Check that you have <code>@nmbl-lang/vite-plugin</code> installed and listed <strong>before</strong> <code>@vitejs/plugin-vue</code> in your Vite config.
+            ### CSS classes not linking to styles
+
+            This only works with `<style scoped>` blocks. This is a Vue/Volar limitation that applies to all template languages, not just NMBL.
+
+            ### Syntax errors with indentation
+
+            Ensure your template starts at column 0 with no leading whitespace. NMBL uses indentation for structure, so the root element must not be indented.
+
+            ### Template not compiling
+
+            Check that you have `@nmbl-lang/vite-plugin` installed and listed **before** `@vitejs/plugin-vue` in your Vite config.
 
           .next-steps
             h2 Next Steps
