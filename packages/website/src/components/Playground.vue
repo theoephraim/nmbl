@@ -13,6 +13,7 @@
       span.direction-arrow →
       span.direction-side {{ direction === 'nmbl-to-html' ? 'HTML' : 'NMBL' }}
       span.swap-icon ⇄
+    a.guide-link(:href="guide.href") {{ guide.label }} →
   .playground-warning(v-if="lossWarning.length")
     span ⚠️ Editing the HTML will regenerate the NMBL — {{ lossWarning.join(' and ') }} can't be recovered and will be dropped. Switch back now to keep them.
     button.warning-dismiss(@click="lossWarning = []" title="Dismiss") ×
@@ -85,6 +86,16 @@ const htmlStats = computed(() => {
 // never silently overwrite handwritten NMBL.
 const direction = ref<'nmbl-to-html' | 'html-to-nmbl'>('nmbl-to-html');
 const error = ref('');
+
+// Contextual link to the setup guide for the selected framework. Only the Vue
+// guide is published yet; the rest point at the guides index until they ship.
+const GUIDES: Record<PlaygroundFramework, { href: string; label: string }> = {
+  html: { href: '/guides', label: 'Integration guides' },
+  vue: { href: '/guides/vue', label: 'Using NMBL with Vue' },
+  svelte: { href: '/guides', label: 'Svelte guide (coming soon)' },
+  astro: { href: '/guides', label: 'Astro guide (coming soon)' },
+};
+const guide = computed(() => GUIDES[framework.value]);
 
 const directionTitle = computed(() =>
   direction.value === 'nmbl-to-html'
@@ -248,6 +259,19 @@ watch(htmlSource, (value) => {
 
 .framework-select:focus {
   outline: 1px solid var(--color-accent);
+}
+
+.guide-link {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.guide-link:hover {
+  text-decoration: underline;
 }
 
 .direction-toggle {
