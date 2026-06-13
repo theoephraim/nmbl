@@ -87,6 +87,38 @@ function splitFrontmatter(src: string): { yaml: string | null; body: string } {
   return { yaml: m[1], body: blanks + src.slice(m[0].length) };
 }
 
+/**
+ * Find the byte offset where Astro's frontmatter (`---\n … \n---`) ends, or 0 if
+ * the file has none. Unlike a plain regex, this skips `---` lines that live
+ * inside a JS string literal in the frontmatter — e.g. a docs page whose
+ * frontmatter holds a markdown/YAML example, or an nmbl `<template>` sample.
+ * Only a string (a backtick template literal in practice) can carry a stray
+ * `---` line, so tracking quote state is enough to find the *real* closing fence.
+ */
+function frontmatterEnd(src: string): number {
+  const open = /^---\r?\n/.exec(src);
+  if (!open) return 0;
+  let i = open[0].length;
+  let quote = ''; // '', "'", '"', or '`'
+  while (i < src.length) {
+    const ch = src[i];
+    if (quote) {
+      if (ch === '\\') { i += 2; continue; }
+      if (ch === quote) quote = '';
+      i += 1;
+      continue;
+    }
+    if (ch === '`' || ch === '"' || ch === "'") { quote = ch; i += 1; continue; }
+    // A bare `---` line outside any string closes the frontmatter.
+    if (src[i - 1] === '\n') {
+      const m = /^---[ \t]*(?:\r?\n|$)/.exec(src.slice(i));
+      if (m) return i + m[0].length;
+    }
+    i += 1;
+  }
+  return 0; // no closing fence — treat as no frontmatter (matches the old behaviour)
+}
+
 /** Strip the common leading indentation from an SFC template body. */
 function dedent(src: string): string {
   const lines = src.split('\n');
@@ -192,8 +224,7 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
       // Astro frontmatter is JS — a string literal in it may legitimately contain
       // `<template lang="nmbl">` (e.g. a docs page showing example code). Only the
       // component body is template markup, so match against the body alone.
-      const fm = /^---\r?\n[\s\S]*?\r?\n---/.exec(src);
-      const bodyStart = fm ? fm[0].length : 0;
+      const bodyStart = frontmatterEnd(src);
       const body = src.slice(bodyStart);
 
       // Match the body's nmbl template block with a GREEDY content capture: the

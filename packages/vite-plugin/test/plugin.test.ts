@@ -272,4 +272,74 @@ section.docs
     // The example's markup stays as escaped text, not compiled as real markup.
     expect(out).not.toContain('<div id="app">');
   });
+
+  it('a <template lang="nmbl"> example in a frontmatter const is left untouched', async () => {
+    // The canonical case: a code-sample constant (like the Vue guide's vueExample)
+    // holds a full template BEFORE the real block. Frontmatter is excluded, so it
+    // survives verbatim while the body still compiles.
+    const page = `---
+const vueExample = \`<template lang="nmbl">
+div#app
+  p hi
+</template>\`;
+---
+
+<template lang="nmbl">
+section.real
+  pre {vueExample}
+  p.tail end
+</template>
+`;
+    const out = await loadAstro(page);
+    expect(out).toContain('<section class="real">');     // body compiled…
+    expect(out).toContain('end');                         // …past the const reference
+    expect(out).toContain('<template lang="nmbl">\ndiv#app'); // const example intact
+    expect(out).not.toContain('<div id="app">');          // …and NOT compiled
+  });
+
+  it('a --- line inside a frontmatter string does not cut the frontmatter short', async () => {
+    // A const holding a markdown/YAML example with its own `---` fences must not
+    // fool frontmatter-boundary detection into ending early.
+    const page = `---
+const md = \`---
+title: x
+---
+body\`;
+---
+
+<template lang="nmbl">
+section.real
+  p hi
+</template>
+`;
+    const out = await loadAstro(page);
+    expect(out).toContain('<section class="real">');
+    expect(out).toContain('title: x');   // the example's --- block survives in frontmatter
+    expect(out).toContain('const md =');
+  });
+
+  it('handles a frontmatter const with BOTH a --- line and an nmbl template', async () => {
+    // The nastiest combo: a const string carrying a `---` line followed by a
+    // <template lang="nmbl"> sample. The const must stay in frontmatter (not
+    // exposed to the matcher), and the real body block must still compile.
+    const page = `---
+const ex = \`
+---
+<template lang="nmbl">
+div#frontmatterEx
+  p nope
+</template>
+\`;
+---
+
+<template lang="nmbl">
+section.real
+  p yes
+</template>
+`;
+    const out = await loadAstro(page);
+    expect(out).toContain('<section class="real">');       // real body compiled
+    expect(out).not.toContain('<div id="frontmatterEx">');  // const sample NOT compiled
+    expect(out).toContain('div#frontmatterEx');             // …it survives as text
+  });
 });
