@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Code } from 'astro-expressive-code/components';
 
 const vueExample = `<script setup lang="ts">...</script>
 
@@ -81,19 +82,19 @@ BaseLayout(title="Vue Integration Guide")
 
           p To use NMBL in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
 
-          pre > code(class="language-bash") {installExample}
+          Code(code={installExample} lang="bash")
 
           h2(id="configuration") Configuration
 
           h3 Vite Config
           p Add the NMBL plugin to your <code>vite.config.ts</code>. It must be listed <strong>before</strong> the Vue plugin:
 
-          pre > code(class="language-ts") {viteConfigExample}
+          Code(code={viteConfigExample} lang="ts" meta={'title="vite.config.ts"'})
 
           h3 TypeScript Config
           p Add the NMBL plugin to your <code>tsconfig.json</code> to enable intellisense:
 
-          pre > code(class="language-json") {tsconfigExample}
+          Code(code={tsconfigExample} lang="json" meta={'title="tsconfig.json"'})
 
           h3 VS Code Setup
           p The NMBL VS Code extension provides syntax highlighting (not yet on the marketplace &mdash; install it from the repo). Vue intellisense works through the Vue - Official extension (Volar).
@@ -102,7 +103,7 @@ BaseLayout(title="Vue Integration Guide")
 
           p Simply add <code>lang="nmbl"</code> to your template blocks:
 
-          pre > code(class="language-vue") {vueExample}
+          Code(code={vueExample} lang="vue" meta={'title="App.vue"'})
 
           h2(id="intellisense") Intellisense Features
 
