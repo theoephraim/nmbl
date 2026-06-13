@@ -411,6 +411,11 @@ describe('Compiler', () => {
       expect(html).toContain('<pre><code>a\n  b\n</code></pre>');
     });
 
+    test('block markup nests: <li> sits one level under <ul>', () => {
+      const { html } = compile('article:md\n  - one\n    - nested\n  - two', { filters: { md: mdFilter } });
+      expect(html).toContain('<article>\n  <ul>\n    <li>\n      one\n      <ul>\n        <li>nested</li>\n      </ul>\n    </li>\n    <li>two</li>\n  </ul>\n</article>');
+    });
+
     test('escapeCodeBraces leaves braces outside code elements alone', () => {
       expect(escapeCodeBraces('<p>{expr}</p><code>{x}</code>')).toBe('<p>{expr}</p><code>&#123;x&#125;</code>');
     });

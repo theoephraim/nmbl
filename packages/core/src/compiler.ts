@@ -6,6 +6,7 @@ import type {
 import type { SourceSpan, SourcePosition } from './source-location.js';
 import { span } from './source-location.js';
 import { ErrorCode, createError, type NmblError } from './errors.js';
+import { formatHtml } from './html-format.js';
 
 export interface CompilerOptions {
   indent?: number;
@@ -891,20 +892,15 @@ export class Compiler {
     return filter ? { body: filter(raw), filtered: true } : { body: raw, filtered: false };
   }
 
-  // Indent each line of a filtered content block to `indent`, so the generated
-  // markup sits inside its parent instead of flush at column 0. Content inside
-  // a whitespace-significant region (<pre>/<textarea>) is left untouched.
+  // Pretty-print a filtered content block (e.g. :md → HTML) so it nests inside
+  // its parent — block elements indent their children, preformatted regions stay
+  // verbatim — instead of sitting flat at column 0.
   private indentContentBlock(html: string, indent: string): string {
-    if (!indent) return html.replace(/\n+$/, '');
-    const lines = html.replace(/\n+$/, '').split('\n');
-    let preDepth = 0;
-    return lines.map(line => {
-      const inPre = preDepth > 0;
-      preDepth += (line.match(/<(pre|textarea)\b/gi) ?? []).length;
-      preDepth -= (line.match(/<\/(pre|textarea)>/gi) ?? []).length;
-      if (inPre) return line;                       // inside <pre> — preserve exactly
-      return line.trim() ? indent + line : line;
-    }).join('\n');
+    return formatHtml(html, {
+      baseIndent: indent,
+      unit: this.getIndent(1),
+      xhtml: this.xhtml,
+    });
   }
 
   private getIndent(depth: number): string {
