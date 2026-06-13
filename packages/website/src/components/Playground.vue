@@ -8,7 +8,7 @@
         option(value="vue") vue
         option(value="svelte") svelte
         option(value="astro") astro
-    button.direction-toggle(@click="toggleDirection" :title="directionTitle")
+    button.direction-toggle(@click="toggleDirection" :disabled="!canReverse" :title="directionTitle")
       span.direction-side {{ direction === 'nmbl-to-html' ? 'NMBL' : 'HTML' }}
       span.direction-arrow →
       span.direction-side {{ direction === 'nmbl-to-html' ? 'HTML' : 'NMBL' }}
@@ -97,10 +97,17 @@ const GUIDES: Record<PlaygroundFramework, { href: string; label: string }> = {
 };
 const guide = computed(() => GUIDES[framework.value]);
 
+// HTML → NMBL only makes sense for the html target — the decompiler turns plain
+// HTML back into NMBL, and framework output ({#each}, <template v-for>, client:
+// directives, …) wouldn't round-trip.
+const canReverse = computed(() => framework.value === 'html');
+
 const directionTitle = computed(() =>
-  direction.value === 'nmbl-to-html'
-    ? 'Switch to converting HTML into NMBL'
-    : 'Switch back to authoring NMBL');
+  !canReverse.value
+    ? 'HTML → NMBL conversion is only available for the html target'
+    : direction.value === 'nmbl-to-html'
+      ? 'Switch to converting HTML into NMBL'
+      : 'Switch back to authoring NMBL');
 
 /** Constructs the decompiler cannot reproduce from HTML. */
 function lossyConstructs(nmbl: string): string[] {
@@ -202,6 +209,12 @@ watch(nmblSource, (value) => {
 });
 
 watch(framework, (next) => {
+  // Leaving html while reverse-converting: snap back to authoring NMBL (the
+  // reverse direction isn't available for framework targets).
+  if (next !== 'html' && direction.value === 'html-to-nmbl') {
+    direction.value = 'nmbl-to-html';
+    lossWarning.value = [];
+  }
   if (direction.value !== 'nmbl-to-html') return;
   // Swap in the new framework's idiomatic example, but only if the editor still
   // holds the example we loaded (never overwrite the user's own NMBL).
@@ -289,8 +302,13 @@ watch(htmlSource, (value) => {
   transition: border-color 0.15s;
 }
 
-.direction-toggle:hover {
+.direction-toggle:hover:not(:disabled) {
   border-color: var(--color-accent);
+}
+
+.direction-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .direction-arrow {

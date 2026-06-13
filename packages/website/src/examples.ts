@@ -108,44 +108,52 @@ export type PlaygroundFramework = 'html' | 'vue' | 'svelte' | 'astro';
 // and how NMBL's control flow compiles to its native syntax. Swapped in the
 // playground when you change the framework selector (unless you've edited).
 export const PLAYGROUND_EXAMPLES: Record<PlaygroundFramework, string> = {
-  html: `//! A plain HTML page — structure, selectors, markdown. No control flow.
+  html: `//! Plain HTML — structure, selectors, and inline markdown.
 nav.main-nav
   ul
     li > a(href="/") Home
     li > a(href="/about") About
-    li > a(href="/contact") Contact
-
-section#hero.dark
-  h1 Welcome to NMBL
-  p.lead A concise notation for HTML
 
 article.prose:md
-  ### Markdown, inline
+  ### Inline markdown
 
   Append \`:md\` to any element and write **markdown** —
-  rendered at build time.
+  rendered at build time. Great for content-heavy pages.
 
   - [links](/docs), *emphasis*, \`code\`
-  - no closing tags to forget`,
 
-  vue: `//! Vue — write native v-if / v-for; they pass straight through.
+form(action="/subscribe" method="post")
+  input(
+    type="email"
+    name="email"
+    // placeholder="you@example.com"   ← comment a prop out while iterating
+    required
+  )
+  button(type="submit") Subscribe`,
+
+  vue: `//! Vue — native v-if / v-for pass straight through.
 section.todos
   h1 {{ title }}
 
   ul
     li(v-for="todo in todos" :key="todo.id" :class="{ done: todo.done }")
-      input(type="checkbox" v-model="todo.done")
+      input(
+        type="checkbox"
+        v-model="todo.done"
+        // @change="save"   ← comment a prop out, no syntax juggling
+      )
       span.label {{ todo.text }}
 
   p.empty(v-if="!todos.length") Nothing to do 🎉
 
-  // @if is optional sugar — it compiles to <template v-if>. Use it if you like.
+  article.note:md
+    **Tip:** write markdown inline with \`:md\` — rendered at build time.
+
+  // @if is optional sugar — it compiles to <template v-if>
   @if(showStats)
-    TodoStats(:count="todos.length")
+    TodoStats(:count="todos.length")`,
 
-  button(@click="addTodo") Add todo`,
-
-  svelte: `//! Svelte — {expr} interpolation; @if / @each compile to {#if} / {#each}
+  svelte: `//! Svelte — {expr}; @if / @each compile to {#if} / {#each}.
 section.todos
   h1 {title}
 
@@ -153,22 +161,34 @@ section.todos
     ul
       @each(todo of todos :key="todo.id")
         li(class:done={todo.done})
-          input(type="checkbox" bind:checked={todo.done})
+          input(
+            type="checkbox"
+            bind:checked={todo.done}
+            // on:change={save}   ← comment a prop out inline
+          )
           span.label {todo.text}
   @else
     p.empty Nothing to do 🎉
 
+  article.note:md
+    **Tip:** write markdown inline with \`:md\` — rendered at build time.
+
   button(on:click={addTodo}) Add todo`,
 
-  astro: `//! Astro — {expr}; @each compiles to .map(); client: directives hydrate islands
+  astro: `//! Astro — {expr}; @each → .map(); client: directives hydrate islands.
 section.posts
   h1 {title}
 
   @each(post of posts :key="post.slug")
     article.card
       h2 {post.title}
-      p {post.excerpt}
-      a(href={\`/blog/\${post.slug}\`}) Read more →
+      a(
+        href={\`/blog/\${post.slug}\`}
+        // data-prefetch   ← comment a prop out while iterating
+      ) Read more →
+
+  article.note:md
+    **Tip:** write markdown inline with \`:md\` — rendered at build time.
 
   Counter(client:visible initialCount={0})`,
 };
