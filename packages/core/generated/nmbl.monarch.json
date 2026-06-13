@@ -512,6 +512,20 @@
     ],
     "adj_attrlist": [
       [
+        "`",
+        {
+          "token": "string",
+          "next": "@templateN"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter.bracket",
+          "next": "@bracketCounting"
+        }
+      ],
+      [
         "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
         "attribute.name"
       ],
@@ -530,6 +544,22 @@
       [
         "[^ \\t\\n\\r(){}\"'`=>|,]+",
         "string"
+      ],
+      [
+        "=",
+        "delimiter"
+      ],
+      [
+        ">",
+        "delimiter"
+      ],
+      [
+        "\\|",
+        "delimiter"
+      ],
+      [
+        ",",
+        "delimiter"
       ],
       [
         "[ \\t]+",

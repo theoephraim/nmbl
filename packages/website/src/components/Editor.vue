@@ -8,7 +8,7 @@ import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
 import { EditorState, Annotation } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
-import { nmblLanguage } from '../lib/codemirror-nmbl';
+import { nmblLanguage } from '@nmbl-lang/codemirror';
 
 const props = defineProps<{
   modelValue: string;

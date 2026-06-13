@@ -1,15 +1,12 @@
 {
-  "name": "@nmbl-lang/core",
+  "name": "@nmbl-lang/codemirror",
   "version": "0.1.0",
-  "description": "Lexer, parser, compiler, formatter, linter, and HTML\u2192NMBL decompiler for the NMBL templating language",
+  "description": "CodeMirror 6 language support for NMBL, driven by the generated Monarch tokenizer",
   "keywords": [
     "nmbl",
     "template",
-    "templating",
-    "compiler",
-    "parser",
-    "formatter",
-    "linter"
+    "codemirror",
+    "syntax-highlighting"
   ],
   "license": "MIT",
   "author": "Theo Ephraim",
@@ -17,7 +14,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/theoephraim/nmbl.git",
-    "directory": "packages/core"
+    "directory": "packages/codemirror"
   },
   "type": "module",
   "main": "dist/index.mjs",
@@ -26,32 +23,26 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.mts"
-    },
-    "./markdown": {
-      "import": "./dist/markdown.mjs",
-      "types": "./dist/markdown.d.mts"
-    },
-    "./monarch": "./generated/nmbl.monarch.json"
+    }
   },
   "scripts": {
     "build": "tsdown",
-    "gen": "bun scripts/gen-artifacts.ts",
     "tbuild": "turbo run build",
     "dev": "bun run build --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "htmlparser2": "catalog:",
-    "marked": "catalog:"
+    "@nmbl-lang/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@codemirror/language": "^6.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.0",
-    "monogram": "github:dmno-dev/monogram#5bb3a529547a2919466422e390ab7ca6149c6d7e",
+    "@codemirror/language": "^6.12.3",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
-    "vscode-oniguruma": "^2.0.1",
-    "vscode-textmate": "^9.3.2"
+    "@lezer/highlight": "^1.2.0"
   }
 }

@@ -102,6 +102,23 @@
         "vitest": "catalog:",
       },
     },
+    "packages/codemirror": {
+      "name": "@nmbl-lang/codemirror",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nmbl-lang/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@codemirror/language": "^6.12.3",
+        "@lezer/highlight": "^1.2.0",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+      "peerDependencies": {
+        "@codemirror/language": "^6.0.0",
+      },
+    },
     "packages/core": {
       "name": "@nmbl-lang/core",
       "version": "0.1.0",
@@ -111,7 +128,7 @@
       },
       "devDependencies": {
         "@types/node": "^25.0.0",
-        "monogram": "github:dmno-dev/monogram#7a9475b6213393dfefea2eb871363e63da52f7fb",
+        "monogram": "github:dmno-dev/monogram#5bb3a529547a2919466422e390ab7ca6149c6d7e",
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
@@ -236,6 +253,7 @@
         "@astrojs/cloudflare": "^13.7.0",
         "@astrojs/vue": "^6.0.1",
         "@nmbl-lang/astro": "workspace:*",
+        "@nmbl-lang/codemirror": "workspace:*",
         "@nmbl-lang/core": "workspace:*",
         "@nmbl-lang/vscode-extension": "workspace:*",
         "astro": "catalog:",
@@ -544,6 +562,8 @@
     "@nmbl-lang/astro": ["@nmbl-lang/astro@workspace:packages/astro"],
 
     "@nmbl-lang/cli": ["@nmbl-lang/cli@workspace:packages/cli"],
+
+    "@nmbl-lang/codemirror": ["@nmbl-lang/codemirror@workspace:packages/codemirror"],
 
     "@nmbl-lang/core": ["@nmbl-lang/core@workspace:packages/core"],
 
@@ -1247,7 +1267,7 @@
 
     "minimatch": ["minimatch@10.2.5", "", { "dependencies": { "brace-expansion": "^5.0.5" } }, "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg=="],
 
-    "monogram": ["monogram@github:dmno-dev/monogram#7a9475b", {}, "dmno-dev-monogram-7a9475b", "sha512-Ndt5o2j0qdvg9fXJMgWe4jUOogxijCNdXzkoDSVqeLe5mn5u7glQAbNDXW9DfsZ3nxOupP3Ub++3s6puvT745w=="],
+    "monogram": ["monogram@github:dmno-dev/monogram#5bb3a52", {}, "dmno-dev-monogram-5bb3a52", "sha512-TBdlXIUpLRK8IGf8MrPEZbllAjDt9rJ6OaImPQ5Y3gnw6ygzY0gdSqVAzLTSvHIyVKFwpBOdBr7isvSyjYI1oA=="],
 
     "mrmime": ["mrmime@2.0.1", "", {}, "sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ=="],
 
