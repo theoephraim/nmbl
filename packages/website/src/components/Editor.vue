@@ -4,8 +4,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
-import { EditorState, Annotation, Compartment } from '@codemirror/state';
+import { EditorView, Decoration, placeholder as cmPlaceholder } from '@codemirror/view';
+import type { DecorationSet } from '@codemirror/view';
+import { EditorState, Annotation, Compartment, StateEffect, StateField } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import { nmblLanguage } from '@nmbl-lang/codemirror';
@@ -15,11 +16,15 @@ const props = defineProps<{
   language: 'html' | 'nmbl';
   placeholder?: string;
   readonly?: boolean;
+  /** Range to highlight + scroll to (cursor sync from the other pane). */
+  highlight?: { from: number; to: number } | null;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: string];
   'focus': [];
+  /** Cursor moved by the user (offset into the document). */
+  'cursor': [offset: number];
 }>();
 
 const editorEl = ref<HTMLElement>();
@@ -30,7 +35,28 @@ const externalUpdate = Annotation.define<boolean>();
 
 // Reconfigurable read-only state (the pane that is the conversion TARGET)
 const readonlyCompartment = new Compartment();
-const readonlyExt = (ro: boolean) => [EditorState.readOnly.of(ro), EditorView.editable.of(!ro)];
+// readOnly blocks edits but keeps the pane SELECTABLE (cursor tracked), so a
+// click in the generated pane can sync a highlight back to the source.
+const readonlyExt = (ro: boolean) => EditorState.readOnly.of(ro);
+
+// ── cursor-sync highlight: a mark decoration set imperatively from outside ──
+const setSyncHighlight = StateEffect.define<{ from: number; to: number } | null>();
+const syncMark = Decoration.mark({ class: 'cm-sync-highlight' });
+const syncHighlightField = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(deco, tr) {
+    deco = deco.map(tr.changes);
+    for (const e of tr.effects) {
+      if (e.is(setSyncHighlight)) {
+        deco = e.value && e.value.to > e.value.from
+          ? Decoration.set([syncMark.range(e.value.from, e.value.to)])
+          : Decoration.none;
+      }
+    }
+    return deco;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 const theme = EditorView.theme({
   '&': {
@@ -61,6 +87,11 @@ const theme = EditorView.theme({
   '.cm-cursor': {
     borderLeftColor: 'var(--color-accent)',
   },
+  '.cm-sync-highlight': {
+    backgroundColor: 'rgba(124, 110, 246, 0.22)',
+    outline: '1px solid rgba(124, 110, 246, 0.45)',
+    borderRadius: '2px',
+  },
 });
 
 onMounted(() => {
@@ -70,6 +101,7 @@ onMounted(() => {
     basicSetup,
     theme,
     readonlyCompartment.of(readonlyExt(props.readonly ?? false)),
+    syncHighlightField,
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         // Only emit if this was a user edit, not a programmatic update
@@ -82,6 +114,11 @@ onMounted(() => {
       }
       if (update.focusChanged && update.view.hasFocus) {
         emit('focus');
+      }
+      // Only USER cursor movement syncs the other pane (programmatic updates
+      // and unfocused selection churn would cause feedback loops).
+      if (update.selectionSet && update.view.hasFocus) {
+        emit('cursor', update.state.selection.main.head);
       }
     }),
   ];
@@ -107,6 +144,20 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   view?.destroy();
+});
+
+watch(() => props.highlight, (h) => {
+  if (!view) return;
+  const len = view.state.doc.length;
+  const range = h && h.from < len
+    ? { from: Math.min(h.from, len), to: Math.min(h.to, len) }
+    : null;
+  view.dispatch({
+    effects: [
+      setSyncHighlight.of(range),
+      ...(range ? [EditorView.scrollIntoView(range.from, { y: 'center' })] : []),
+    ],
+  });
 });
 
 watch(() => props.readonly, (ro) => {

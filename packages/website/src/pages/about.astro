@@ -31,7 +31,7 @@ BaseLayout(title="About")
 
         Anywhere you want prose, append `:md` and write plain markdown. Need a component, a loop, or fine-grained markup? Drop back out and write NMBL. You toggle between the two line by line, in a single template.
 
-        This is the gap MDX never quite closed. MDX gives you lovely authoring for prose but less control over the surrounding markup; hand-written templates give you total control but make prose sections miserable to write. NMBL lets you have both — full structural control where you need it, frictionless markdown where you don't — which makes it a genuine alternative to MDX for content-heavy pages. And because the rendered markdown is spliced back into the host template, your components and interpolation still work right inside the prose.
+        This is the gap MDX leaves open. MDX is markdown-first — prose is effortless, but the moment you need real structure around it you're fighting the markdown/JSX boundary. Hand-written templates are the opposite: total structural control, but every prose section is `<p>`-and-`<a>` soup. NMBL flips the default — structure-first, with markdown one `:md` away — so you get frictionless prose exactly where you need it without giving up control of the markup. For content-heavy pages, that's a genuinely better trade than MDX. And because the rendered markdown is spliced back into the host template, your components and interpolation still work right inside the prose.
 
         That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.
 

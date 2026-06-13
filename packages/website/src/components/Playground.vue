@@ -27,6 +27,8 @@
         language="nmbl"
         placeholder="Write NMBL here..."
         :readonly="direction === 'html-to-nmbl'"
+        :highlight="nmblHighlight"
+        @cursor="onNmblCursor"
       )
     .editor-pane(:class="{ 'pane-output': direction === 'nmbl-to-html' }" :style="{ order: direction === 'html-to-nmbl' ? 1 : 2 }")
       .pane-header
@@ -38,13 +40,15 @@
         language="html"
         placeholder="Paste HTML here..."
         :readonly="direction === 'nmbl-to-html'"
+        :highlight="htmlHighlight"
+        @cursor="onHtmlCursor"
       )
   .playground-error(v-if="error") {{ error }}
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { compile, decompile } from '@nmbl-lang/core';
+import { compile, decompile, type SourceMapping } from '@nmbl-lang/core';
 import { mdFilter } from '@nmbl-lang/core/markdown';
 import Editor from './Editor.vue';
 import { PLAYGROUND_EXAMPLE_NMBL } from '../examples';
@@ -99,6 +103,8 @@ const lossWarning = ref<string[]>([]);
 // edited (the htmlSource watch runs the first decompile). Switching back
 // before editing loses nothing — the warning is informational, not a gate.
 function toggleDirection() {
+  nmblHighlight.value = null;
+  htmlHighlight.value = null;
   if (direction.value === 'nmbl-to-html') {
     direction.value = 'html-to-nmbl';
     lossWarning.value = lossyConstructs(nmblSource.value);
@@ -109,6 +115,39 @@ function toggleDirection() {
   }
 }
 
+// ── cursor sync: the compiler's source↔generated mappings drive a highlight
+// in the opposite pane. Only meaningful in NMBL → HTML mode (the decompiler
+// has no mappings, and hand-edited HTML wouldn't match compiled offsets).
+let mappings: SourceMapping[] = [];
+const htmlHighlight = ref<{ from: number; to: number } | null>(null);
+const nmblHighlight = ref<{ from: number; to: number } | null>(null);
+
+function findMapping(offset: number, side: 'sourceSpan' | 'generatedSpan'): SourceMapping | null {
+  let best: SourceMapping | null = null;
+  let bestWidth = Infinity;
+  for (const m of mappings) {
+    const sp = m[side];
+    if (offset < sp.start.offset || offset > sp.end.offset) continue;
+    const width = sp.end.offset - sp.start.offset;
+    if (width < bestWidth) { best = m; bestWidth = width; }
+  }
+  return best;
+}
+
+function onNmblCursor(offset: number) {
+  if (direction.value !== 'nmbl-to-html') return;
+  nmblHighlight.value = null; // active pane stays clean; highlight the other one
+  const m = findMapping(offset, 'sourceSpan');
+  htmlHighlight.value = m ? { from: m.generatedSpan.start.offset, to: m.generatedSpan.end.offset } : null;
+}
+
+function onHtmlCursor(offset: number) {
+  if (direction.value !== 'nmbl-to-html') return;
+  htmlHighlight.value = null;
+  const m = findMapping(offset, 'generatedSpan');
+  nmblHighlight.value = m ? { from: m.sourceSpan.start.offset, to: m.sourceSpan.end.offset } : null;
+}
+
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
 // Initialize HTML from default NMBL
@@ -116,13 +155,14 @@ compileNmbl(PLAYGROUND_EXAMPLE_NMBL);
 
 function compileNmbl(source: string) {
   try {
-    const { html, errors } = compile(source, { framework: framework.value, filters: { md: mdFilter } });
+    const { html, errors, mappings: m } = compile(source, { framework: framework.value, filters: { md: mdFilter } });
     if (errors.length > 0) {
       error.value = errors.map(e => e.message).join('\n');
     } else {
       error.value = '';
     }
     htmlSource.value = html;
+    mappings = m;
   } catch (e) {
     error.value = String(e);
   }
