@@ -218,4 +218,58 @@ section.docs
     expect(out).toContain('<template lang="nmbl">\ndiv#app');
     expect(out).not.toContain('<div id="app">');
   });
+
+  async function loadAstro(page: string): Promise<string> {
+    const { mkdtempSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const file = join(mkdtempSync(join(tmpdir(), 'nmbl-test-')), 'page.astro');
+    writeFileSync(file, page);
+    return await getPlugin('nmbl:astro-sfc').load.call(ctx, file) as string;
+  }
+
+  it('a literal </template> inside the body does not truncate the block', async () => {
+    // A `:md` block names the closing tag in prose. The block must still extend
+    // to the REAL </template>, so content after the mention survives.
+    const page = `---
+---
+
+<template lang="nmbl">
+section.docs
+  div:md
+    Close your Vue block with \`</template>\`.
+  p.after still here
+</template>
+`;
+    const out = await loadAstro(page);
+    expect(out).toContain('<section class="docs">');
+    expect(out).toContain('still here'); // content past the stray </template> survived
+  });
+
+  it('a full Vue SFC shown in a body code block compiles intact', async () => {
+    // The fenced example contains a balanced <template lang="nmbl">…</template>;
+    // neither tag should be treated as the page block's own boundary.
+    const page = `---
+---
+
+<template lang="nmbl">
+section.docs
+  div:md
+    Basic usage:
+
+    \`\`\`vue
+    <template lang="nmbl">
+    div#app
+      p hi
+    </template>
+    \`\`\`
+  p.after wrap up
+</template>
+`;
+    const out = await loadAstro(page);
+    expect(out).toContain('<section class="docs">');
+    expect(out).toContain('wrap up');
+    // The example's markup stays as escaped text, not compiled as real markup.
+    expect(out).not.toContain('<div id="app">');
+  });
 });

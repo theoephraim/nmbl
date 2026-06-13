@@ -196,19 +196,25 @@ export default function nmblPlugin(options: NmblPluginOptions = {}): Plugin[] {
       const bodyStart = fm ? fm[0].length : 0;
       const body = src.slice(bodyStart);
 
-      const templateRegex = /<template[^>]*\blang=(["'])nmbl\1[^>]*>([\s\S]*?)<\/template>/g;
-      let result = body;
-      let match;
+      // Match the body's nmbl template block with a GREEDY content capture: the
+      // first `<template lang="nmbl">` opening through the LAST `</template>`. A
+      // literal `</template>` *inside* the template — a Vue SFC shown in a `:md`
+      // code block, or the tag named in prose — therefore can't prematurely close
+      // the block. (An Astro page carries a single nmbl template block.)
+      const templateRegex = /<template[^>]*\blang=(["'])nmbl\1[^>]*>([\s\S]*)<\/template>/;
+      const match = templateRegex.exec(body);
+      if (!match) return;
 
-      while ((match = templateRegex.exec(body)) !== null) {
-        const { html, errors } = await compileAsync(dedent(match[2]), { framework: 'astro' }, filters);
-        if (errors.length > 0) {
-          this.error(`NMBL compilation failed in ${id}:\n${formatErrors(errors)}`);
-        }
-        // Replace <template lang="nmbl">...</template> with just the compiled HTML
-        // (no <template> wrapper — in Astro, <template> is a regular HTML element)
-        result = result.replace(match[0], html);
+      const { html, errors } = await compileAsync(dedent(match[2]), { framework: 'astro' }, filters);
+      if (errors.length > 0) {
+        this.error(`NMBL compilation failed in ${id}:\n${formatErrors(errors)}`);
       }
+
+      // Splice the compiled HTML in by index (not String.replace, whose `$`
+      // sequences would be interpreted). The <template> wrapper is dropped — in
+      // Astro, <template> is a regular HTML element, not a slot for markup.
+      const result =
+        body.slice(0, match.index) + html + body.slice(match.index + match[0].length);
 
       return src.slice(0, bodyStart) + result;
     },
