@@ -62,27 +62,6 @@
     }
   ],
   "repository": {
-    "nmbl-frontmatter": {
-      "comment": "YAML frontmatter delimited by --- at the very top of a .nmbl file",
-      "begin": "\\A(---)[ \\t]*$",
-      "beginCaptures": {
-        "1": {
-          "name": "punctuation.definition.frontmatter.begin.nmbl"
-        }
-      },
-      "end": "^(---)[ \\t]*$",
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.frontmatter.end.nmbl"
-        }
-      },
-      "contentName": "meta.embedded.block.frontmatter.yaml source.yaml",
-      "patterns": [
-        {
-          "include": "source.yaml"
-        }
-      ]
-    },
     "indent": {
       "name": "variable.other.nmbl",
       "match": "(?!)"
@@ -214,6 +193,18 @@
       },
       "patterns": [
         {
+          "include": "#renderedblockcomment"
+        },
+        {
+          "include": "#renderedcomment"
+        },
+        {
+          "include": "#silentcomment"
+        },
+        {
+          "include": "#blockcomment"
+        },
+        {
           "include": "#attrname"
         },
         {
@@ -257,6 +248,27 @@
         },
         {
           "include": "#attrlist"
+        }
+      ]
+    },
+    "nmbl-frontmatter": {
+      "comment": "YAML frontmatter delimited by --- at the very top of a .nmbl file",
+      "begin": "\\A(---)[ \\t]*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.nmbl"
+        }
+      },
+      "end": "^(---)[ \\t]*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.nmbl"
+        }
+      },
+      "contentName": "meta.embedded.block.frontmatter.yaml source.yaml",
+      "patterns": [
+        {
+          "include": "source.yaml"
         }
       ]
     },
@@ -352,7 +364,40 @@
       "contentName": "meta.embedded.block.markdown text.html.markdown",
       "patterns": [
         {
-          "include": "text.html.markdown"
+          "match": "^\\s*#{1,6}\\s.*$",
+          "name": "markup.heading.markdown"
+        },
+        {
+          "match": "^\\s*>\\s?",
+          "name": "markup.quote.markdown"
+        },
+        {
+          "match": "^\\s*([-*+]|\\d+[.)])\\s",
+          "name": "punctuation.definition.list.begin.markdown"
+        },
+        {
+          "begin": "`",
+          "end": "`",
+          "name": "markup.inline.raw.string.markdown"
+        },
+        {
+          "match": "(!?\\[)([^\\]]*)(\\])(\\()([^)]+)(\\))",
+          "captures": {
+            "2": {
+              "name": "string.other.link.title.markdown"
+            },
+            "5": {
+              "name": "markup.underline.link.markdown"
+            }
+          }
+        },
+        {
+          "match": "(\\*\\*|__)(?=\\S)(.+?)(?<=\\S)(\\1)",
+          "name": "markup.bold.markdown"
+        },
+        {
+          "match": "(\\*|_)(?=\\S)([^*_]+?)(?<=\\S)(\\1)",
+          "name": "markup.italic.markdown"
         }
       ]
     },

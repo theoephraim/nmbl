@@ -110,6 +110,27 @@ function injectNmblContentBlocks(
   //   • With zero chars it matches bare ":md" at line start.
   //   • With "article" it matches "article:md".
   // Group 2 captures the tag head for rescoping; group 3 captures ":md".
+  // Whitespace-tolerant Markdown patterns, applied inline instead of embedding
+  // the full `text.html.markdown` grammar. NMBL indents `:md` bodies, and the
+  // full grammar treats any line indented >=4 spaces as a raw code block — so a
+  // structurally-indented `:md` body renders flat (headings/lists/emphasis lost).
+  // These patterns ignore leading indentation and carry no raw-block rule.
+  // (Mirrors packages/website/src/grammars/markdown-embedded.json.)
+  const markdownPatterns = [
+    { match: '^\\s*#{1,6}\\s.*$', name: 'markup.heading.markdown' },
+    { match: '^\\s*>\\s?', name: 'markup.quote.markdown' },
+    { match: '^\\s*([-*+]|\\d+[.)])\\s', name: 'punctuation.definition.list.begin.markdown' },
+    { begin: '`', end: '`', name: 'markup.inline.raw.string.markdown' },
+    {
+      match: '(!?\\[)([^\\]]*)(\\])(\\()([^)]+)(\\))',
+      captures: {
+        '2': { name: 'string.other.link.title.markdown' },
+        '5': { name: 'markup.underline.link.markdown' },
+      },
+    },
+    { match: '(\\*\\*|__)(?=\\S)(.+?)(?<=\\S)(\\1)', name: 'markup.bold.markdown' },
+    { match: '(\\*|_)(?=\\S)([^*_]+?)(?<=\\S)(\\1)', name: 'markup.italic.markdown' },
+  ];
   const markdownBlock = {
     comment: 'NMBL :md content block — body embeds Markdown (any tag:md or bare :md)',
     begin: '^(\\s*)([^\\s]*)((:)md)\\s*$',
@@ -119,7 +140,7 @@ function injectNmblContentBlocks(
     } as Record<string, unknown>,
     while: whileMoreIndented,
     contentName: 'meta.embedded.block.markdown text.html.markdown',
-    patterns: [{ include: 'text.html.markdown' }],
+    patterns: markdownPatterns,
   };
 
   // ── Rule 4: generic raw content block (any other tag: or tag:mode) ────────
@@ -145,21 +166,52 @@ function injectNmblContentBlocks(
     repository: Record<string, unknown>;
   };
 
+  // YAML frontmatter delimited by `---` at the very top of a .nmbl file.
+  const frontmatterBlock = {
+    comment: 'YAML frontmatter delimited by --- at the very top of a .nmbl file',
+    begin: '\\A(---)[ \\t]*$',
+    beginCaptures: {
+      '1': { name: 'punctuation.definition.frontmatter.begin.nmbl' },
+    } as Record<string, unknown>,
+    end: '^(---)[ \\t]*$',
+    endCaptures: {
+      '1': { name: 'punctuation.definition.frontmatter.end.nmbl' },
+    } as Record<string, unknown>,
+    contentName: 'meta.embedded.block.frontmatter.yaml source.yaml',
+    patterns: [{ include: 'source.yaml' }],
+  };
+
   // Add to repository (keyed so they can be referenced or inspected).
+  g.repository['nmbl-frontmatter'] = frontmatterBlock;
   g.repository['nmbl-script-block'] = scriptBlock;
   g.repository['nmbl-style-block'] = styleBlock;
   g.repository['nmbl-markdown-block'] = markdownBlock;
   g.repository['nmbl-generic-raw-block'] = genericRawBlock;
 
   // Prepend include references so they fire BEFORE all other patterns.
-  // Order matters: most-specific rules first (script, style, md), then the
-  // generic catch-all last (it matches any tag:mode that didn't already fire).
+  // Frontmatter first (it's anchored to file start), then most-specific content
+  // rules (script, style, md), then the generic catch-all last.
   g.patterns.unshift(
+    { include: '#nmbl-frontmatter' },
     { include: '#nmbl-script-block' },
     { include: '#nmbl-style-block' },
     { include: '#nmbl-markdown-block' },
     { include: '#nmbl-generic-raw-block' },
   );
+
+  // Allow comments inside attribute-list parens, e.g. `div(\n  // note\n  foo)`.
+  // monogram's generated `attrlist` rule doesn't include the comment rules, so
+  // prepend them here (previously a hand-edit to the generated JSON that regen
+  // would clobber — now durable in the generator).
+  const attrlist = g.repository['attrlist'] as { patterns?: unknown[] } | undefined;
+  if (attrlist?.patterns) {
+    attrlist.patterns.unshift(
+      { include: '#renderedblockcomment' },
+      { include: '#renderedcomment' },
+      { include: '#silentcomment' },
+      { include: '#blockcomment' },
+    );
+  }
 }
 
 // TextMate grammar + language configuration → the VS Code extension package
