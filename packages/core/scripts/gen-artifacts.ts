@@ -115,12 +115,35 @@ function injectNmblContentBlocks(
   // full grammar treats any line indented >=4 spaces as a raw code block — so a
   // structurally-indented `:md` body renders flat (headings/lists/emphasis lost).
   // These patterns ignore leading indentation and carry no raw-block rule.
-  // (Mirrors packages/website/src/grammars/markdown-embedded.json.)
+  //
+  // This is intentionally fuller than the website's minimal `:md` grammar
+  // (packages/website/src/grammars/markdown-embedded.json) — the website only
+  // shows short snippets, but the editor is for real authoring. Block rules come
+  // first (fenced code first, so its body isn't re-parsed), then inline rules.
   const markdownPatterns = [
+    // Fenced code block — raw body, not re-tokenised. The end repeats the same
+    // fence run (\1); group 2 scopes the info string / language.
+    {
+      begin: '^\\s*(`{3,}|~{3,})[ \\t]*(\\S+)?.*$',
+      end: '^\\s*\\1[ \\t]*$',
+      name: 'markup.fenced_code.block.markdown',
+      beginCaptures: {
+        '2': { name: 'fenced_code.block.language.markdown' },
+      } as Record<string, unknown>,
+    },
+    // ATX heading (`#`..`######` + space).
     { match: '^\\s*#{1,6}\\s.*$', name: 'markup.heading.markdown' },
+    // Horizontal rule (`---`, `***`, `___`, optionally spaced).
+    { match: '^\\s*([-*_])(?:[ \\t]*\\1){2,}[ \\t]*$', name: 'meta.separator.markdown' },
+    // Blockquote.
     { match: '^\\s*>\\s?', name: 'markup.quote.markdown' },
+    // List marker (unordered or ordered).
     { match: '^\\s*([-*+]|\\d+[.)])\\s', name: 'punctuation.definition.list.begin.markdown' },
+    // Pipe-table row.
+    { match: '^\\s*\\|.*\\|[ \\t]*$', name: 'markup.table.markdown' },
+    // Inline code span.
     { begin: '`', end: '`', name: 'markup.inline.raw.string.markdown' },
+    // Links and images: `[text](url)` / `![alt](url)`.
     {
       match: '(!?\\[)([^\\]]*)(\\])(\\()([^)]+)(\\))',
       captures: {
@@ -128,8 +151,11 @@ function injectNmblContentBlocks(
         '5': { name: 'markup.underline.link.markdown' },
       },
     },
-    { match: '(\\*\\*|__)(?=\\S)(.+?)(?<=\\S)(\\1)', name: 'markup.bold.markdown' },
-    { match: '(\\*|_)(?=\\S)([^*_]+?)(?<=\\S)(\\1)', name: 'markup.italic.markdown' },
+    // Emphasis: bold-italic, then bold, then italic (most-specific first), strike.
+    { match: '(\\*\\*\\*|___)(?=\\S)(.+?)(?<=\\S)\\1', name: 'markup.bold.italic.markdown' },
+    { match: '(\\*\\*|__)(?=\\S)(.+?)(?<=\\S)\\1', name: 'markup.bold.markdown' },
+    { match: '(\\*|_)(?=\\S)([^*_]+?)(?<=\\S)\\1', name: 'markup.italic.markdown' },
+    { match: '(~~)(?=\\S)(.+?)(?<=\\S)(~~)', name: 'markup.strikethrough.markdown' },
   ];
   const markdownBlock = {
     comment: 'NMBL :md content block — body embeds Markdown (any tag:md or bare :md)',
