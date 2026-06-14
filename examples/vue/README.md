@@ -7,25 +7,28 @@ This example demonstrates how to use NMBL syntax with Vue Single File Components
 For full intellisense support and syntax highlighting:
 
 ### Required VSCode Extensions
-1. **NMBL Extension** - Install from `packages/vscode-extension` for NMBL syntax highlighting
-2. **Vue - Official** (Vue.volar) - For Vue language support
-3. **TypeScript Vue Plugin** (Vue.vscode-typescript-vue-plugin) - For TypeScript integration
+1. **Vue - Official** (`Vue.volar`) — Vue language support + TypeScript integration (this supersedes the old "TypeScript Vue Plugin"; no separate TS plugin is needed).
+2. **NMBL Extension** — install from `packages/vscode-extension` (`bun run build && bun run install-local`) for NMBL syntax highlighting, completion, and auto-import.
+
+### How the two cooperate
+- **Type-checking** (variables, `@if`/`@each` narrowing, component prop types, errors) comes from the Vue extension via the `@nmbl-lang/vue-language-plugin` configured in `tsconfig.json`.
+- **Highlighting, tag/attribute/component completion, and auto-import** come from the NMBL extension.
 
 ### Setup Steps
-1. Install the required extensions
-2. Open this folder (`examples/vue`) in VSCode
-3. Select TypeScript version:
-   - Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-   - Run "TypeScript: Select TypeScript Version"
-   - Choose "Use Workspace Version"
-4. Restart VSCode or reload the window (`Cmd+R` / `Ctrl+R`)
+1. Install the extensions above.
+2. Open this folder (`examples/vue`) in VSCode.
+3. Run "TypeScript: Select TypeScript Version" → "Use Workspace Version" (`Cmd/Ctrl+Shift+P`).
+4. Reload the window (`Cmd/Ctrl+R`).
+
+> Tip: `tsconfig.json` here sets `vueCompilerOptions.strictTemplates: true`, so unknown components and unknown props are flagged in NMBL templates too.
 
 ### What You Should See
-- ✅ Variables from `<script>` recognized in `<template lang="nmbl">`
-- ✅ Component props and events with intellisense
+- ✅ Variables from `<script>` recognized in `<template lang="nmbl">` (completion + hover inside `{{ }}` and bindings)
+- ✅ Component prop **types** checked; unknown props flagged (with `strictTemplates`)
+- ✅ `@if`/`@each` type-narrowing; NMBL compile errors + lint shown as squiggles
+- ✅ Component name, HTML tag, attribute, event, and directive completion (+ auto-import)
 - ✅ CSS classes linked between `<style>` and template
-- ✅ Vue directives with autocomplete
-- ✅ Syntax highlighting for NMBL templates
+- ✅ Syntax highlighting for NMBL templates, including embedded `:md` (with fenced code)
 
 ## Features
 

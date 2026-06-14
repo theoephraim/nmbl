@@ -1,62 +1,9 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { Code } from 'astro-expressive-code/components';
-
-const vueExample = `<script setup lang="ts">...</script>
-
-<template lang="nmbl">
-div#app
-  header.site-header
-    h1 {{ title }}
-    nav
-      a(href="/home") Home
-      a(href="/about") About
-
-  main.content
-    article(v-for="post in posts" :key="post.id")
-      h2 {{ post.title }}
-      p {{ post.excerpt }}
-      button(@click="viewPost(post.id)") Read More
-
-  footer
-    p © 2024 My Site
-</template>
-
-<style scoped>...</style>
-`;
-
-const viteConfigExample = `import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import nmbl from '@nmbl-lang/vite-plugin';
-
-export default defineConfig({
-  plugins: [
-    nmbl(),  // must be before vue()
-    vue(),
-  ],
-});`;
-
-const tsconfigExample = `{
-  "compilerOptions": {
-    // ... your existing options
-  },
-  "vueCompilerOptions": {
-    "plugins": ["@nmbl-lang/vue-language-plugin"]
-  }
-}`;
-
-const installExample = `# Using npm
-npm install --save-dev @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
-
-# Using bun
-bun add -d @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
-
-# Using pnpm
-pnpm add -D @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin`;
+import GuideLayout from '../../layouts/GuideLayout.astro';
 ---
 
 <template lang="nmbl">
-BaseLayout(title="Vue Integration Guide")
+GuideLayout(title="Vue Integration Guide")
   section.guide-hero
     .container
       .breadcrumb
@@ -73,34 +20,65 @@ BaseLayout(title="Vue Integration Guide")
             a(href="#installation") Installation
             a(href="#configuration") Configuration
             a(href="#basic-usage") Basic Usage
+            a(href="#control-flow") Control Flow
+            a(href="#comments") Comments
             a(href="#intellisense-features") Intellisense Features
             a(href="#troubleshooting") Troubleshooting
 
         .prose
-          div:md
+          Fragment:md
             ## Installation
 
             To use NMBL in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
 
-          Code(code={installExample} lang="bash")
+            ```bash
+            # Using npm
+            npm install --save-dev @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
 
-          div:md
+            # Using bun
+            bun add -d @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
+
+            # Using pnpm
+            pnpm add -D @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
+            ```
+
             ## Configuration
 
             ### Vite Config
 
             Add the NMBL plugin to your `vite.config.ts`. It must be listed **before** the Vue plugin:
 
-          Code(code={viteConfigExample} lang="ts" meta={'title="vite.config.ts"'})
+            ```ts title="vite.config.ts"
+            import { defineConfig } from 'vite';
+            import vue from '@vitejs/plugin-vue';
+            import nmbl from '@nmbl-lang/vite-plugin';
 
-          div:md
+            export default defineConfig({
+              plugins: [
+                nmbl(),  // must be before vue()
+                vue(),
+              ],
+            });
+            ```
+
             ### TypeScript Config
 
             Add the NMBL plugin to your `tsconfig.json` to enable intellisense:
 
-          Code(code={tsconfigExample} lang="json" meta={'title="tsconfig.json"'})
+            ```json title="tsconfig.json"
+            {
+              "compilerOptions": {
+                // ... your existing options
+              },
+              "vueCompilerOptions": {
+                "plugins": ["@nmbl-lang/vue-language-plugin"],
+                "strictTemplates": true
+              }
+            }
+            ```
 
-          div:md
+            `strictTemplates` is optional but recommended: it makes Vue flag unknown components and **unknown props** (not just wrong-typed ones) in your NMBL templates, exactly as it would in a plain `<template>`.
+
             ### VS Code Setup
 
             The NMBL VS Code extension provides syntax highlighting (not yet on the marketplace — install it from the repo). Vue intellisense works through the Vue - Official extension (Volar).
@@ -109,9 +87,76 @@ BaseLayout(title="Vue Integration Guide")
 
             Add `lang="nmbl"` to your Vue template block, then write the markup as NMBL:
 
-          Code(code={vueExample} lang="vue" meta={'title="App.vue"'})
+            ```vue title="App.vue"
+            <script setup lang="ts">...</script>
 
-          div:md
+            <template lang="nmbl">
+            div#app
+              header.site-header
+                h1 {{ title }}
+                nav
+                  a(href="/home") Home
+                  a(href="/about") About
+
+              main.content
+                article(v-for="post in posts" :key="post.id")
+                  h2 {{ post.title }}
+                  p {{ post.excerpt }}
+                  button(@click="viewPost(post.id)") Read More
+
+              // embedded markdown!
+              .prose:md
+                ## some title
+
+                - list item1 with [link](https)
+                - **bold** list item
+
+              footer
+                p © 2024 My Site
+            </template>
+
+            <style scoped>...</style>
+            ```
+
+            ## Control Flow
+
+            NMBL has `@if` / `@elseif` / `@else` and `@each` blocks that compile to Vue's native `v-if` and `v-for`:
+
+            ```nmbl
+            @if(user)
+              p Welcome back, {{ user.name }}
+            @elseif(guest)
+              p Hello, guest
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(post of posts :key="post.id")
+                li {{ post.title }}
+            ```
+
+            `@if` becomes `<template v-if="…">` and `@each` becomes `<template v-for="… of …" :key="…">`. The conditions and loop expressions are passed straight through, so you write them exactly as you would in a Vue template. Plain `v-if` / `v-for` directives still work too — the `@`-blocks are just optional sugar.
+
+            ## Comments
+
+            `//` comments are stripped from the output (use them for dev notes); `//!` comments are rendered as real HTML comments:
+
+            ```nmbl
+            // dev note — never shipped
+            //! becomes <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            You can also comment out individual props inside a tag's parens — handy while debugging:
+
+            ```nmbl
+            button(
+              type="submit"
+              // disabled
+              /* aria-label="Save" */
+            ) Save
+            ```
+
             ## Intellisense Features
 
             With the Vue language plugin installed, you get full intellisense support:
@@ -136,7 +181,7 @@ BaseLayout(title="Vue Integration Guide")
               h4 ♻️ Refactoring
               p Rename variables and have them update across template and script
 
-          div:md
+          Fragment:md
             ## Troubleshooting
 
           .troubleshooting:md
@@ -144,9 +189,9 @@ BaseLayout(title="Vue Integration Guide")
 
             Make sure the Vue language plugin is properly configured in your `tsconfig.json` and restart your IDE.
 
-            ### No component auto-import suggestions
+            ### No component / tag completion
 
-            Currently, you need to type the full component name first. Auto-import will then suggest adding the import statement. This experience is being improved.
+            Component name, HTML tag, attribute, event, and directive completion (plus auto-import on accept) are provided by the NMBL VS Code extension. Make sure it's installed and reload the window. Note: a component's **own props/emits** aren't suggested yet — type them and rely on type-checking to validate.
 
             ### CSS classes not linking to styles
 
@@ -176,264 +221,3 @@ BaseLayout(title="Vue Integration Guide")
                 <line x1="10" y1="14" x2="21" y2="3"></line>
                 </svg>
 </template>
-
-<style>
-  .guide-hero {
-    padding: 3rem 0;
-    background: linear-gradient(to bottom, var(--color-bg-subtle), transparent);
-  }
-
-  .breadcrumb {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    margin-bottom: 1rem;
-  }
-
-  .breadcrumb a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--color-accent);
-  }
-
-  .guide-hero h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  .lead {
-    font-size: 1.25rem;
-    color: var(--color-text-muted);
-  }
-
-  .guide-content {
-    padding: 4rem 0;
-  }
-
-  .content-grid {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 4rem;
-    align-items: start;
-  }
-
-  .toc {
-    position: sticky;
-    top: 2rem;
-  }
-
-  .toc h3 {
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    margin-bottom: 1rem;
-  }
-
-  .toc nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .toc a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    padding: 0.25rem 0;
-    border-left: 2px solid transparent;
-    padding-left: 1rem;
-    transition: all 0.2s;
-  }
-
-  .toc a:hover {
-    color: var(--color-text);
-    border-left-color: var(--color-accent);
-  }
-
-  .prose {
-    max-width: 65ch;
-  }
-
-  .prose h2 {
-    font-size: 2rem;
-    margin-top: 3rem;
-    margin-bottom: 1rem;
-    padding-top: 1rem;
-  }
-
-  .prose h2:first-child {
-    margin-top: 0;
-    padding-top: 0;
-  }
-
-  .prose h3 {
-    font-size: 1.5rem;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  .prose h4 {
-    font-size: 1.25rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .prose p {
-    line-height: 1.7;
-    margin-bottom: 1rem;
-    color: var(--color-text-muted);
-  }
-
-  .prose ul, .prose ol {
-    margin-bottom: 1rem;
-    padding-left: 2rem;
-  }
-
-  .prose li {
-    margin-bottom: 0.5rem;
-    line-height: 1.7;
-    color: var(--color-text-muted);
-  }
-
-  .prose strong {
-    color: var(--color-text);
-  }
-
-  .prose code {
-    background: var(--color-bg-subtle);
-    padding: 0.125rem 0.375rem;
-    border-radius: 4px;
-    font-family: var(--font-mono);
-    font-size: 0.875em;
-  }
-
-  .prose pre {
-    background: var(--color-bg-code);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 1.5rem;
-    overflow-x: auto;
-    margin-bottom: 2rem;
-  }
-
-  .prose pre code {
-    background: transparent;
-    padding: 0;
-    font-size: 0.875rem;
-    line-height: 1.5;
-  }
-
-  .prose table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 2rem;
-  }
-
-  .prose th {
-    text-align: left;
-    padding: 0.75rem;
-    border-bottom: 2px solid var(--color-border);
-    font-weight: 600;
-  }
-
-  .prose td {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-muted);
-  }
-
-  .comparison {
-    margin: 2rem 0;
-  }
-
-  .comparison h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
-  }
-
-  .feature {
-    padding: 1.5rem;
-    background: var(--color-bg-subtle);
-    border-radius: 8px;
-  }
-
-  .feature h4 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-  }
-
-  .feature p {
-    margin: 0;
-    font-size: 0.875rem;
-  }
-
-  .troubleshooting {
-    margin: 2rem 0;
-  }
-
-  .troubleshooting h3 {
-    font-size: 1.125rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .next-steps {
-    margin-top: 4rem;
-    padding: 2rem;
-    background: var(--color-bg-subtle);
-    border-radius: 12px;
-  }
-
-  .next-steps h2 {
-    margin-top: 0;
-  }
-
-  .next-links {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .next-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    color: var(--color-text);
-    text-decoration: none;
-    transition: all 0.2s;
-  }
-
-  .next-link:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-    transform: translateX(2px);
-  }
-
-  @media (max-width: 768px) {
-    .guide-hero h1 {
-      font-size: 2rem;
-    }
-
-    .content-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .toc {
-      display: none;
-    }
-  }
-</style>
