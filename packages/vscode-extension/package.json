@@ -105,7 +105,15 @@
           "source.js": "javascript",
           "source.ts": "typescript",
           "text.html.markdown": "markdown",
-          "source.css": "css"
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
         }
       },
       {
@@ -119,7 +127,15 @@
           "source.js": "javascript",
           "source.ts": "typescript",
           "text.html.markdown": "markdown",
-          "source.css": "css"
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
         }
       },
       {
@@ -134,7 +150,15 @@
           "source.js": "javascript",
           "source.ts": "typescript",
           "text.html.markdown": "markdown",
-          "source.css": "css"
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
         }
       },
       {
@@ -148,7 +172,15 @@
           "source.js": "javascript",
           "source.ts": "typescript",
           "text.html.markdown": "markdown",
-          "source.css": "css"
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
         }
       },
       {

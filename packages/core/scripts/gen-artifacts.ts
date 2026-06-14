@@ -120,17 +120,47 @@ function injectNmblContentBlocks(
   // (packages/website/src/grammars/markdown-embedded.json) — the website only
   // shows short snippets, but the editor is for real authoring. Block rules come
   // first (fenced code first, so its body isn't re-parsed), then inline rules.
+  // Fenced code blocks: one rule per common language so the body is highlighted
+  // by that language's grammar (group 1 = fence, repeated by the end; group 2 =
+  // info string). Unrecognised / no-language fences fall through to a raw rule.
+  // `lang` is the VS Code language id (for embeddedLanguages); `scope` is the
+  // grammar to embed. Keep the corresponding entries in the vscode-extension
+  // package.json `embeddedLanguages` maps in sync.
+  const fencedLangs = [
+    { re: 'js|javascript|mjs|cjs', scope: 'source.js', lang: 'javascript' },
+    { re: 'ts|typescript|mts|cts', scope: 'source.ts', lang: 'typescript' },
+    { re: 'jsx', scope: 'source.js.jsx', lang: 'javascriptreact' },
+    { re: 'tsx', scope: 'source.tsx', lang: 'typescriptreact' },
+    { re: 'json|jsonc|json5', scope: 'source.json', lang: 'json' },
+    { re: 'html', scope: 'text.html.basic', lang: 'html' },
+    { re: 'css', scope: 'source.css', lang: 'css' },
+    { re: 'scss', scope: 'source.css.scss', lang: 'scss' },
+    { re: 'sh|bash|shell|zsh|console', scope: 'source.shell', lang: 'shellscript' },
+    { re: 'py|python', scope: 'source.python', lang: 'python' },
+    { re: 'yaml|yml', scope: 'source.yaml', lang: 'yaml' },
+    { re: 'nmbl', scope: 'source.nmbl', lang: 'nmbl' },
+  ];
+  const fencedRules = fencedLangs.map((l) => ({
+    begin: `^\\s*(\`{3,}|~{3,})[ \\t]*(${l.re})\\b.*$`,
+    end: '^\\s*\\1[ \\t]*$',
+    name: 'markup.fenced_code.block.markdown',
+    beginCaptures: {
+      '2': { name: 'fenced_code.block.language.markdown' },
+    } as Record<string, unknown>,
+    contentName: `meta.embedded.block.${l.lang} ${l.scope}`,
+    patterns: [{ include: l.scope }],
+  }));
+  // Fallback: fence with no/unknown language — raw body, not re-tokenised.
+  const fencedRaw = {
+    begin: '^\\s*(`{3,}|~{3,}).*$',
+    end: '^\\s*\\1[ \\t]*$',
+    name: 'markup.fenced_code.block.markdown',
+  };
+
   const markdownPatterns = [
-    // Fenced code block — raw body, not re-tokenised. The end repeats the same
-    // fence run (\1); group 2 scopes the info string / language.
-    {
-      begin: '^\\s*(`{3,}|~{3,})[ \\t]*(\\S+)?.*$',
-      end: '^\\s*\\1[ \\t]*$',
-      name: 'markup.fenced_code.block.markdown',
-      beginCaptures: {
-        '2': { name: 'fenced_code.block.language.markdown' },
-      } as Record<string, unknown>,
-    },
+    // Language-specific fenced blocks first, then the raw fallback.
+    ...fencedRules,
+    fencedRaw,
     // ATX heading (`#`..`######` + space).
     { match: '^\\s*#{1,6}\\s.*$', name: 'markup.heading.markdown' },
     // Horizontal rule (`---`, `***`, `___`, optionally spaced).

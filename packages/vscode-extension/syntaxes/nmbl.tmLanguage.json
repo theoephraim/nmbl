@@ -364,14 +364,201 @@
       "contentName": "meta.embedded.block.markdown text.html.markdown",
       "patterns": [
         {
-          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(\\S+)?.*$",
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(js|javascript|mjs|cjs)\\b.*$",
           "end": "^\\s*\\1[ \\t]*$",
           "name": "markup.fenced_code.block.markdown",
           "beginCaptures": {
             "2": {
               "name": "fenced_code.block.language.markdown"
             }
-          }
+          },
+          "contentName": "meta.embedded.block.javascript source.js",
+          "patterns": [
+            {
+              "include": "source.js"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(ts|typescript|mts|cts)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.typescript source.ts",
+          "patterns": [
+            {
+              "include": "source.ts"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(jsx)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.javascriptreact source.js.jsx",
+          "patterns": [
+            {
+              "include": "source.js.jsx"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(tsx)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.typescriptreact source.tsx",
+          "patterns": [
+            {
+              "include": "source.tsx"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(json|jsonc|json5)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.json source.json",
+          "patterns": [
+            {
+              "include": "source.json"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(html)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.html text.html.basic",
+          "patterns": [
+            {
+              "include": "text.html.basic"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(css)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.css source.css",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(scss)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.scss source.css.scss",
+          "patterns": [
+            {
+              "include": "source.css.scss"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(sh|bash|shell|zsh|console)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.shellscript source.shell",
+          "patterns": [
+            {
+              "include": "source.shell"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(py|python)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.python source.python",
+          "patterns": [
+            {
+              "include": "source.python"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(yaml|yml)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.yaml source.yaml",
+          "patterns": [
+            {
+              "include": "source.yaml"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,})[ \\t]*(nmbl)\\b.*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown",
+          "beginCaptures": {
+            "2": {
+              "name": "fenced_code.block.language.markdown"
+            }
+          },
+          "contentName": "meta.embedded.block.nmbl source.nmbl",
+          "patterns": [
+            {
+              "include": "source.nmbl"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(`{3,}|~{3,}).*$",
+          "end": "^\\s*\\1[ \\t]*$",
+          "name": "markup.fenced_code.block.markdown"
         },
         {
           "match": "^\\s*#{1,6}\\s.*$",
