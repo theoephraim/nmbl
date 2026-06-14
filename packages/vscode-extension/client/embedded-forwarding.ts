@@ -632,7 +632,11 @@ export function registerEmbeddedForwarding(
         return new vscode.CompletionList([...componentItems, ...htmlItems], true);
       },
     },
-    // No trigger characters — VS Code fires completions on typing automatically
+    // Trigger characters: VS Code auto-triggers on word chars, but attribute
+    // syntax leads with non-word chars — `v-if` (`-`), `@click` (`@`), `:prop`
+    // (`:`), `#slot` (`#`). Without these, the completion session drops at that
+    // character and never re-fires for those (the common case the user hits).
+    '-', '@', ':', '#',
   );
 
   // ── Definition ────────────────────────────────────────────────────────────

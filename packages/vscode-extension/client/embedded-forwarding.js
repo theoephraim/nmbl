@@ -607,7 +607,12 @@ function registerEmbeddedForwarding(context) {
             log(`  kept ${componentItems.length} component(s) + ${htmlItems.length} html tag(s)`);
             return new vscode.CompletionList([...componentItems, ...htmlItems], true);
         },
-    });
+    }, 
+    // Trigger characters: VS Code auto-triggers on word chars, but attribute
+    // syntax leads with non-word chars — `v-if` (`-`), `@click` (`@`), `:prop`
+    // (`:`), `#slot` (`#`). Without these, the completion session drops at that
+    // character and never re-fires for those (the common case the user hits).
+    '-', '@', ':', '#');
     // ── Definition ────────────────────────────────────────────────────────────
     const definitionProvider = vscode.languages.registerDefinitionProvider(SELECTOR, {
         async provideDefinition(doc, position) {
