@@ -65,6 +65,18 @@ export function looksLikeHtml(text: string): boolean {
 }
 
 /**
+ * True when the text is an SVG document/fragment (root element is `<svg>`).
+ *
+ * SVG passes `looksLikeHtml`, but converting it to NMBL is almost never wanted —
+ * it's verbose markup with namespaces, `viewBox`, path data, etc. that a user
+ * pasting an icon wants verbatim. The paste-to-NMBL provider skips these so a
+ * plain Ctrl+V keeps the SVG as-is. (The explicit convert command still works.)
+ */
+export function isSvg(text: string): boolean {
+  return /^<svg[\s>]/i.test(text.trim());
+}
+
+/**
  * Re-indent NMBL output for insertion at a cursor position.
  *
  * The first line of `nmbl` is inserted at the cursor column so it should NOT
@@ -144,6 +156,9 @@ const pasteProvider: vscode.DocumentPasteEditProvider = {
     const pastedText: string =
       typeof textItem.value === 'string' ? textItem.value : '';
     if (!pastedText || !looksLikeHtml(pastedText)) return undefined;
+    // Leave SVG pastes alone — converting an icon/graphic to NMBL is never the
+    // intent, and this provider is the default paste action.
+    if (isSvg(pastedText)) return undefined;
 
     // For .nmbl files — always in scope; for embedded files — must be in region
     const languageId = document.languageId;

@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   looksLikeHtml,
+  isSvg,
   reindent,
   dedentSelection,
   chooseFramework,
@@ -75,6 +76,31 @@ describe('looksLikeHtml', () => {
 
   it('rejects whitespace only', () => {
     expect(looksLikeHtml('   ')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isSvg
+// ---------------------------------------------------------------------------
+
+describe('isSvg', () => {
+  it('detects an svg document with attributes', () => {
+    expect(isSvg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4h16"/></svg>')).toBe(true);
+  });
+
+  it('detects a bare <svg> and tolerates leading whitespace', () => {
+    expect(isSvg('<svg>')).toBe(true);
+    expect(isSvg('  \n  <svg viewBox="0 0 10 10"></svg>')).toBe(true);
+  });
+
+  it('is case-insensitive', () => {
+    expect(isSvg('<SVG></SVG>')).toBe(true);
+  });
+
+  it('does not match other tags (incl. svg children pasted alone)', () => {
+    expect(isSvg('<div><svg></svg></div>')).toBe(false);
+    expect(isSvg('<path d="M4 4h16"/>')).toBe(false);
+    expect(isSvg('<svganimate>')).toBe(false); // must be the svg element, not a prefix
   });
 });
 

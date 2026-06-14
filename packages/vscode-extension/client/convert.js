@@ -50,6 +50,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.looksLikeHtml = looksLikeHtml;
+exports.isSvg = isSvg;
 exports.reindent = reindent;
 exports.dedentSelection = dedentSelection;
 exports.chooseFramework = chooseFramework;
@@ -93,6 +94,17 @@ function looksLikeHtml(text) {
     if (/^<[a-zA-Z][^>]*>$/.test(trimmed))
         return true;
     return false;
+}
+/**
+ * True when the text is an SVG document/fragment (root element is `<svg>`).
+ *
+ * SVG passes `looksLikeHtml`, but converting it to NMBL is almost never wanted —
+ * it's verbose markup with namespaces, `viewBox`, path data, etc. that a user
+ * pasting an icon wants verbatim. The paste-to-NMBL provider skips these so a
+ * plain Ctrl+V keeps the SVG as-is. (The explicit convert command still works.)
+ */
+function isSvg(text) {
+    return /^<svg[\s>]/i.test(text.trim());
 }
 /**
  * Re-indent NMBL output for insertion at a cursor position.
@@ -166,6 +178,10 @@ const pasteProvider = {
         // DataTransferItem.value may be a string or a DataTransferFile
         const pastedText = typeof textItem.value === 'string' ? textItem.value : '';
         if (!pastedText || !looksLikeHtml(pastedText))
+            return undefined;
+        // Leave SVG pastes alone — converting an icon/graphic to NMBL is never the
+        // intent, and this provider is the default paste action.
+        if (isSvg(pastedText))
             return undefined;
         // For .nmbl files — always in scope; for embedded files — must be in region
         const languageId = document.languageId;
