@@ -2,7 +2,8 @@ import type { VueLanguagePlugin } from '@vue/language-core';
 import type * as CompilerDOM from '@vue/compiler-dom';
 import { SourceMap } from '@volar/source-map';
 import { toString, type Segment } from 'muggle-string';
-import { compile } from '@nmbl-lang/core';
+import { compile, lint } from '@nmbl-lang/core';
+import type { NmblError, LintMessage } from '@nmbl-lang/core';
 
 // Helper to build source mappings
 function buildMappings<T>(chunks: Segment<T>[]) {
@@ -90,6 +91,12 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
       // Compile NMBL to HTML and build source mappings
       const parsed = compileWithMappings(template);
       const map = new SourceMap(parsed.mappings);
+
+      // Surface NMBL's own compile errors + lint findings as template
+      // diagnostics. Their spans are already in NMBL (template) coordinates, so
+      // report them straight through — unlike the Vue compiler errors below,
+      // which are in generated-HTML space and need the HTML→NMBL remap.
+      reportNmblDiagnostics(template, parsed.errors, options);
 
       const compileOptions: CompilerDOM.CompilerOptions = {
         ...options,
@@ -240,12 +247,9 @@ const plugin: VueLanguagePlugin = ({ modules }) => {
 function compileWithMappings(nmblCode: string) {
   const codes: Segment<any>[] = [];
 
-  // Compile NMBL to HTML with native mappings
+  // Compile NMBL to HTML with native mappings. `errors` are surfaced as
+  // diagnostics by the caller (reportNmblDiagnostics).
   const { html, mappings, errors } = compile(nmblCode, { framework: 'vue' });
-
-  if (errors.length > 0) {
-    console.warn('NMBL compilation errors:', errors);
-  }
 
   // Sort mappings by generated position
   const sortedMappings = [...mappings]
@@ -285,6 +289,47 @@ function compileWithMappings(nmblCode: string) {
     mappings: buildMappings(codes),
     errors,
   };
+}
+
+// Report NMBL compile errors and lint findings through the template compiler's
+// diagnostic callbacks so they appear as squiggles in the `<template lang="nmbl">`
+// region. Spans are already in NMBL (template) coordinates — reported as-is.
+function reportNmblDiagnostics(
+  template: string,
+  compileErrors: NmblError[],
+  options?: CompilerDOM.CompilerOptions,
+) {
+  if (!options) return;
+
+  // Build a CompilerError-shaped object Volar can position via loc offsets.
+  const toCompilerError = (message: string, span: { start: { offset: number; line?: number; column?: number }; end: { offset: number; line?: number; column?: number } }) =>
+    ({
+      name: 'NmblDiagnostic',
+      message,
+      code: 0,
+      loc: {
+        start: { offset: span.start.offset, line: span.start.line ?? 0, column: span.start.column ?? 0 },
+        end: { offset: span.end.offset, line: span.end.line ?? 0, column: span.end.column ?? 0 },
+        source: '',
+      },
+    }) as unknown as CompilerDOM.CompilerError;
+
+  for (const err of compileErrors) {
+    options.onError?.(toCompilerError(err.message, err.span));
+  }
+
+  // Lint findings: errors → onError, everything else → onWarn.
+  let lintMessages: LintMessage[] = [];
+  try {
+    lintMessages = lint(template);
+  } catch {
+    lintMessages = [];
+  }
+  for (const m of lintMessages) {
+    const err = toCompilerError(`${m.message} (${m.ruleId})`, m.span);
+    if (m.severity === 'error') options.onError?.(err);
+    else options.onWarn?.(err);
+  }
 }
 
 module.exports = plugin;
