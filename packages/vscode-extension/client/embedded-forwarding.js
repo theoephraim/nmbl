@@ -64,7 +64,10 @@ exports.scriptAnchorPosition = scriptAnchorPosition;
 exports.mapToTemplateItem = mapToTemplateItem;
 exports.registerEmbeddedForwarding = registerEmbeddedForwarding;
 const vscode = __importStar(require("vscode"));
+const fs = __importStar(require("node:fs"));
+const path = __importStar(require("node:path"));
 const vscode_html_languageservice_1 = require("vscode-html-languageservice");
+const component_api_1 = require("./component-api");
 const TEMPLATE_RE = /<template[^>]*\blang=(["'])nmbl\1[^>]*>([\s\S]*?)<\/template>/;
 /**
  * Find the `<template lang="nmbl">` body region in a raw document string.
@@ -380,6 +383,59 @@ function buildAttributeItems(wordRange, tag) {
     }
     return items;
 }
+// Resolve a component tag to its props/emits by locating its import in the
+// document's <script> block, reading the component file, and parsing
+// defineProps/defineEmits. Best-effort: only relative imports, common shapes;
+// returns undefined when it can't resolve (callers fall back to generic attrs).
+function resolveComponentApi(doc, docText, tag) {
+    const scriptText = findScriptBlockText(docText, doc.languageId);
+    if (!scriptText)
+        return undefined;
+    const spec = (0, component_api_1.extractImportSource)(scriptText, tag);
+    if (!spec || !spec.startsWith('.'))
+        return undefined; // only relative imports
+    const baseDir = path.dirname(doc.uri.fsPath);
+    const resolved = path.resolve(baseDir, spec);
+    const candidates = /\.\w+$/.test(spec)
+        ? [resolved]
+        : [
+            ...['.vue', '.ts', '.tsx', '.js', '.jsx'].map((e) => resolved + e),
+            ...['.vue', '.ts', '.tsx', '.js', '.jsx'].map((e) => path.join(resolved, 'index' + e)),
+        ];
+    for (const file of candidates) {
+        try {
+            const src = fs.readFileSync(file, 'utf8');
+            const api = (0, component_api_1.extractComponentApi)(src);
+            if (api.props.length || api.emits.length)
+                return api;
+        }
+        catch {
+            /* try next candidate */
+        }
+    }
+    return undefined;
+}
+/** Completion items for a component's own props (`:label` + `label`) and emits (`@change`). */
+function buildComponentApiItems(wordRange, api) {
+    const items = [];
+    const add = (label, kind, detail, sort) => {
+        const item = new vscode.CompletionItem(label, kind);
+        item.insertText = label;
+        item.range = wordRange;
+        item.filterText = label;
+        item.detail = detail;
+        item.sortText = sort; // `00_` ranks component-specific items above generic attrs/directives
+        items.push(item);
+    };
+    for (const p of api.props) {
+        add(':' + p, vscode.CompletionItemKind.Field, '(prop)', `00_${p}_bound`);
+        add(p, vscode.CompletionItemKind.Field, '(prop, static)', `00_${p}`);
+    }
+    for (const e of api.emits) {
+        add('@' + e, vscode.CompletionItemKind.Event, '(emit)', `00_@${e}`);
+    }
+    return items;
+}
 // ---------------------------------------------------------------------------
 // VS Code provider helpers
 // ---------------------------------------------------------------------------
@@ -488,7 +544,18 @@ function registerEmbeddedForwarding(context) {
                 const attrWordRange = doc.getWordRangeAtPosition(position, /[@:#]?[A-Za-z][\w-]*/) ??
                     attrPrefixRange(doc, position);
                 const attrItems = buildAttributeItems(attrWordRange, attrCtx.tag);
-                log(`  attr position (tag=${attrCtx.tag}) — ${attrItems.length} item(s)`);
+                // For a component tag, also offer its own props (:label) and emits
+                // (@change), parsed best-effort from the imported component file.
+                let propCount = 0;
+                if (attrCtx.tag && isPascalCase(attrCtx.tag)) {
+                    const api = resolveComponentApi(doc, text, attrCtx.tag);
+                    if (api) {
+                        const propItems = buildComponentApiItems(attrWordRange, api);
+                        propCount = propItems.length;
+                        attrItems.unshift(...propItems);
+                    }
+                }
+                log(`  attr position (tag=${attrCtx.tag}) — ${propCount} prop/emit + ${attrItems.length - propCount} generic item(s)`);
                 return new vscode.CompletionList(attrItems, true);
             }
             // 3. The word prefix must look like a tag-name position
