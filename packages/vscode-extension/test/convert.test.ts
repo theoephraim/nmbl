@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   looksLikeHtml,
-  isSvg,
+  containsSvg,
   reindent,
   dedentSelection,
   chooseFramework,
@@ -83,24 +83,30 @@ describe('looksLikeHtml', () => {
 // isSvg
 // ---------------------------------------------------------------------------
 
-describe('isSvg', () => {
+describe('containsSvg', () => {
   it('detects an svg document with attributes', () => {
-    expect(isSvg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4h16"/></svg>')).toBe(true);
+    expect(containsSvg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4h16"/></svg>')).toBe(true);
   });
 
-  it('detects a bare <svg> and tolerates leading whitespace', () => {
-    expect(isSvg('<svg>')).toBe(true);
-    expect(isSvg('  \n  <svg viewBox="0 0 10 10"></svg>')).toBe(true);
+  it('detects a bare <svg> and tolerates surrounding whitespace', () => {
+    expect(containsSvg('<svg>')).toBe(true);
+    expect(containsSvg('  \n  <svg viewBox="0 0 10 10"></svg>')).toBe(true);
   });
 
   it('is case-insensitive', () => {
-    expect(isSvg('<SVG></SVG>')).toBe(true);
+    expect(containsSvg('<SVG></SVG>')).toBe(true);
   });
 
-  it('does not match other tags (incl. svg children pasted alone)', () => {
-    expect(isSvg('<div><svg></svg></div>')).toBe(false);
-    expect(isSvg('<path d="M4 4h16"/>')).toBe(false);
-    expect(isSvg('<svganimate>')).toBe(false); // must be the svg element, not a prefix
+  it('detects svg nested inside other markup', () => {
+    expect(containsSvg('<div><svg></svg></div>')).toBe(true);
+    expect(containsSvg('<button class="icon-btn"><svg viewBox="0 0 24 24"><path d="M4 4"/></svg> Save</button>')).toBe(true);
+  });
+
+  it('does not match svg lookalikes or the closing tag alone', () => {
+    expect(containsSvg('<path d="M4 4h16"/>')).toBe(false);
+    expect(containsSvg('<svganimate>')).toBe(false); // must be the svg element, not a prefix
+    expect(containsSvg('</svg>')).toBe(false); // closing tag only, no opening
+    expect(containsSvg('<div>plain html</div>')).toBe(false);
   });
 });
 
