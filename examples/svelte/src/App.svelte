@@ -1,6 +1,6 @@
 <script lang="ts">
   import Badge from './components/Badge.svelte';
-  // import Button from './components/Button.svelte';
+  import Button from './components/Button.svelte';
 
   let loggedIn = $state(false);
   let items = $state(['Apple', 'Banana', 'Cherry']);

@@ -77,16 +77,31 @@ div#app
   h1.title(@click="handleTitleClick")
     | NMBL + Vue Example
     Badge.title-badge(text="Beta" color="blue" rounded)
+     
+  p.item-count You have {{ items.length ?? 0 }} items in your list.
 
   // comment
-  //- another comment
+  //! another comment
   VButton(
     :label="loggedIn ? 'Log out' : 'Log in'"
     variant="primary"
-    size="lg"
-    @click="toggle"
+    size="lg" 
+    // commentedParam="true"
+    @click="toggle" // comment
     style="margin: 0 auto 2rem; display: block"
   )
+
+  div:md
+    ## Embedded markdown
+    
+    A list:
+    - a [link](https://example.com)
+    - with **bold**, _italic_, and `code` formatting.
+
+    ```ts
+    const x = 1;
+    console.log(x);
+    ```
 
   @if(loggedIn)
     div.content

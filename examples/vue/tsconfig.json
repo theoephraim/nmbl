@@ -16,8 +16,8 @@
   "vueCompilerOptions": {
     "plugins": [
       "@nmbl-lang/vue-language-plugin",
-      // "@vue/language-plugin-pug"
-    ]
+    ],
+    "strictTemplates": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "*.d.ts"]
 }

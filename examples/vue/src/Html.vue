@@ -12,8 +12,7 @@ function handleClick() {
   <div class="class1 class2" @click="handleClick"></div>
   <slot name="foo"></slot>
   <Badge text="Hello" color="blue" rounded />
-  <VButton label="Click me" variant="primary" size="lg" @click="handleClick" />
-
+  <VButton label="Click me" variant="primary" size="lg" @click="handleClick" />  
 </template>
 
 <style scoped>

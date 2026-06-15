@@ -7,8 +7,11 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  /** The color of the badge */
   color: 'blue',
+  /** Whether the badge should have rounded corners */
   rounded: false,
+  /** Whether the badge should have an outline style */
   outline: false
 });
 </script>
