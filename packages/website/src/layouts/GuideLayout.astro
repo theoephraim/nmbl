@@ -1,0 +1,16 @@
+---
+import BaseLayout from './BaseLayout.astro';
+// Shared styles for all framework guide pages. Imported here (not globally) so the
+// guide CSS only loads on pages that use this layout — keeps it out of the index,
+// about, etc., which carry their own scoped styles.
+import '../styles/guides.css';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<BaseLayout title={title}>
+  <slot />
+</BaseLayout>

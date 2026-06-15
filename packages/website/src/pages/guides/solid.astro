@@ -1,0 +1,157 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Solid Integration Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Solid
+      h1 Solid Integration
+      p.lead Use NMBL markup in Solid components with the nmbl tagged template
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#installation") Installation
+            a(href="#configuration") Configuration
+            a(href="#basic-usage") Basic Usage
+            a(href="#control-flow") Control Flow
+            a(href="#comments") Comments
+            a(href="#editor-support") Editor Support
+            a(href="#troubleshooting") Troubleshooting
+
+        .prose
+          Fragment:md
+            ## Installation
+
+            Solid (like other JSX frameworks) uses NMBL's Vite plugin. Install it as a dev dependency:
+
+            ```bash
+            # Using npm
+            npm install --save-dev @nmbl-lang/vite-plugin
+
+            # Using bun
+            bun add -d @nmbl-lang/vite-plugin
+
+            # Using pnpm
+            pnpm add -D @nmbl-lang/vite-plugin
+            ```
+
+            ## Configuration
+
+            Add the NMBL plugin to your `vite.config.ts`. It must come **before** the Solid plugin, and you tell it to target Solid's JSX:
+
+            ```ts title="vite.config.ts"
+            import { defineConfig } from 'vite';
+            import solid from 'vite-plugin-solid';
+            import nmbl from '@nmbl-lang/vite-plugin';
+
+            export default defineConfig({
+              plugins: [
+                nmbl({ jsx: { framework: 'solid' } }), // must come before solid()
+                solid(),
+              ],
+            });
+            ```
+
+            ## Basic Usage
+
+            Unlike Vue, Svelte, and Astro (which use a `<template lang="nmbl">` block), JSX frameworks use a **tagged template**. Import the `nmbl` tag and return ``nmbl`…` `` from your component. Solid signals are called as functions inside `${…}` holes:
+
+            ```tsx title="App.tsx"
+            import { createSignal } from 'solid-js';
+            import { nmbl } from '@nmbl-lang/vite-plugin/tag';
+
+            export default function App() {
+              const [count, setCount] = createSignal(0);
+
+              return nmbl`
+                div#app
+                  h1.title NMBL + Solid
+                  button(onClick=${() => setCount(count() + 1)}) Clicked ${count()} times
+              `;
+            }
+            ```
+
+            The plugin compiles the tagged template to Solid JSX at build time. Interpolation uses `${expr}` holes — and because Solid is signal-based, you call signals where you read them (`${count()}`), keeping the markup reactive.
+
+            ## Control Flow
+
+            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX control-flow expressions Solid uses. Conditions and loop sources go in `${…}` holes (call your signals there):
+
+            ```nmbl
+            @if(${loggedIn()})
+              p Welcome back, ${user().name}
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(item of ${items()} :key="item.id")
+                li ${item.name}
+            ```
+
+            `@if(${cond})` compiles to a JSX conditional and `@each(item of ${items()})` to a `.map()` expression — the same primitives Solid's JSX uses. One JSX-specific rule worth knowing: when you use `:key`, the loop body must have a single root element (the key goes on it) — a multi-root `@each` body with `:key` is a compile error. NMBL's `@await` / `@key` / `@snippet` are Svelte-only and will error in the JSX target.
+
+            ## Comments
+
+            `//` comments are stripped from the output (dev notes); `//!` comments are rendered as real HTML comments:
+
+            ```nmbl
+            // dev note — never shipped
+            //! becomes <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            You can also comment out individual props inside a tag's parens — handy while debugging:
+
+            ```nmbl
+            button(
+              type="button"
+              // disabled
+              /* aria-label="Add" */
+            ) Add
+            ```
+
+            ## Editor Support
+
+            The NMBL VS Code extension highlights ``nmbl`…` `` tagged templates inside `.tsx`, `.jsx`, `.ts`, and `.js` files, so the markup reads as NMBL rather than a plain string.
+
+          Fragment:md
+            > **Note:** The NMBL language server (diagnostics, completions, go-to-definition) currently covers standalone `.nmbl` files and `<template lang="nmbl">` blocks in Svelte/Astro — not the JSX tagged-template form yet. You get syntax highlighting in Solid files today; for the richest tooling, factor shared markup into a `.nmbl` file. Vue remains the most complete for full type intellisense via its dedicated Volar plugin.
+
+            ## Troubleshooting
+
+          .troubleshooting:md
+            ### Tagged template not compiling
+
+            Make sure `nmbl({ jsx: { framework: 'solid' } })` is listed **before** `vite-plugin-solid` in your Vite `plugins` array, and restart the dev server after editing the config.
+
+            ### Reactivity not updating
+
+            Solid is signal-based — read signals by calling them where they are used (`${count()}`, not `${count}`). Reading a signal outside a `${…}` hole won't track it.
+
+            ### Syntax errors with indentation
+
+            NMBL uses indentation for structure. The first line of the template (inside the backticks) sets the base indent — keep it consistent (2-space steps, no tabs).
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="https://github.com/theoephraim/nmbl/tree/main/examples/solid" target="_blank")
+                span View Example Project
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+</template>
