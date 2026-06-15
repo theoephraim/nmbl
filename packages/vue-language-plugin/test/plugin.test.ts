@@ -263,40 +263,7 @@ describe('@nmbl-lang/vue-language-plugin', () => {
     });
   });
 
-  describe('NMBL diagnostics (compile errors + lint)', () => {
-    type Diag = { message: string; loc?: { start: { offset: number }; end: { offset: number } } };
-    function collect(src: string): { errors: Diag[]; warnings: Diag[] } {
-      const errors: Diag[] = [];
-      const warnings: Diag[] = [];
-      plugin.compileSFCTemplate?.('nmbl', src, {
-        onError: (e: Diag) => errors.push(e),
-        onWarn: (w: Diag) => warnings.push(w),
-      } as any);
-      return { errors, warnings };
-    }
-
-    test('reports an NMBL compile error with an NMBL-space position', () => {
-      const { errors } = collect('@each(items as (a, b))\n  span x');
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].message).toMatch(/@each/);
-      // Position is in NMBL source (the @each keyword at offset 0), not HTML.
-      expect(errors[0].loc!.start.offset).toBe(0);
-    });
-
-    test('reports a lint error (duplicate attribute) via onError', () => {
-      const { errors } = collect('div(class="a" class="b")');
-      expect(errors.some(e => /no-duplicate-attributes/.test(e.message))).toBe(true);
-    });
-
-    test('reports a lint warning (prefer-div-shorthand) via onWarn', () => {
-      const { warnings } = collect('div.foo\n  span hi');
-      expect(warnings.some(w => /prefer-div-shorthand/.test(w.message))).toBe(true);
-    });
-
-    test('clean template produces no NMBL diagnostics', () => {
-      const { errors, warnings } = collect('.foo(role="main")\n  p Hello');
-      expect(errors).toHaveLength(0);
-      expect(warnings).toHaveLength(0);
-    });
-  });
+  // NMBL compile-error + lint diagnostics moved to the NMBL VS Code extension's
+  // DiagnosticCollection (source 'nmbl') — see vscode-extension/diagnostics.ts +
+  // its tests. The Vue plugin only surfaces genuine Vue template-compiler errors.
 });

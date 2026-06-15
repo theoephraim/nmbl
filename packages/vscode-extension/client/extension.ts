@@ -9,6 +9,7 @@ import {
 import { registerEmbeddedForwarding } from './embedded-forwarding';
 import { registerConversions } from './convert';
 import { registerFormatting } from './format';
+import { registerNmblDiagnostics } from './diagnostics';
 
 let client: LanguageClient;
 
@@ -67,6 +68,11 @@ export function activate(context: ExtensionContext): void {
 
   // Register the document formatter (.nmbl) + format-document command.
   registerFormatting(context);
+
+  // Publish NMBL compile errors + lint for <template lang="nmbl"> in .vue files,
+  // under our own collection so they read `source: 'nmbl'` (the Vue plugin's
+  // channel forces `source: 'vue'`).
+  registerNmblDiagnostics(context);
 }
 
 export function deactivate(): Thenable<void> | undefined {
