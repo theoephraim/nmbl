@@ -274,7 +274,32 @@ function injectNmblContentBlocks(
 const tmGrammar = generateTmLanguage(grammar, 'nmbl');
 injectNmblContentBlocks(tmGrammar);
 emit(join(vscodeExt, 'syntaxes/nmbl.tmLanguage.json'), json(tmGrammar));
-emit(join(vscodeExt, 'language-configuration.json'), json(generateLanguageConfig(grammar)));
+
+const langConfig = generateLanguageConfig(grammar) as Record<string, unknown>;
+fixLanguageConfigBrackets(langConfig);
+emit(join(vscodeExt, 'language-configuration.json'), json(langConfig));
+
+// monogram only emits the `${ … }` pair, which makes every bare `}` an
+// UNMATCHED closing bracket — VS Code colors those red (e.g. the `}}` of a
+// `{{ interpolation }}`). Replace with the standard pairs so braces, attribute
+// parens `(…)`, and `[…]` balance; keep `${`/backtick auto-closing.
+function fixLanguageConfigBrackets(cfg: Record<string, unknown>) {
+  const pairs: [string, string][] = [['(', ')'], ['[', ']'], ['{', '}']];
+  cfg.brackets = pairs;
+  cfg.colorizedBracketPairs = pairs;
+  cfg.autoClosingPairs = [
+    { open: '(', close: ')' },
+    { open: '[', close: ']' },
+    { open: '{', close: '}' },
+    { open: '${', close: '}' },
+    { open: '"', close: '"', notIn: ['string'] },
+    { open: "'", close: "'", notIn: ['string'] },
+    { open: '`', close: '`', notIn: ['string', 'comment'] },
+  ];
+  cfg.surroundingPairs = [
+    ['(', ')'], ['[', ']'], ['{', '}'], ['"', '"'], ["'", "'"], ['`', '`'],
+  ];
+}
 
 // tree-sitter
 const ts = generateTreeSitter(grammar, 'nmbl');
