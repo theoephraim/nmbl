@@ -294,7 +294,11 @@ emit(join(vscodeExt, 'language-configuration.json'), json(langConfig));
 // `{{ interpolation }}`). Replace with the standard pairs so braces, attribute
 // parens `(…)`, and `[…]` balance; keep `${`/backtick auto-closing.
 function fixLanguageConfigBrackets(cfg: Record<string, unknown>) {
-  const pairs: [string, string][] = [['(', ')'], ['[', ']'], ['{', '}']];
+  // `{{`/`}}` is listed before `{`/`}` and, because VS Code matches the longest
+  // bracket string, a `{{ interpolation }}` is treated as ONE pair (single
+  // colour) instead of nested `{`…`{`…`}`…`}` (which rainbow-colours the inner
+  // braces). A lone `{ … }` still matches via the single-brace pair.
+  const pairs: [string, string][] = [['(', ')'], ['[', ']'], ['{{', '}}'], ['{', '}']];
   cfg.brackets = pairs;
   cfg.colorizedBracketPairs = pairs;
   cfg.autoClosingPairs = [
