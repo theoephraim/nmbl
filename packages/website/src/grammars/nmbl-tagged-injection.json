@@ -1,0 +1,20 @@
+{
+  "scopeName": "inline.nmbl-tagged",
+  "injectionSelector": "L:source.tsx, L:source.ts, L:source.js, L:source.jsx",
+  "comment": "Highlights the NMBL body of a `nmbl`…`` tagged template literal inside JS/TS/JSX code samples (the JSX target — React / Solid / Qwik). Registered via `injectTo` against the JS-family root scopes in astro.config. The surrounding JavaScript stays JS-highlighted; only the template body switches to `source.nmbl`. Unlike the `<template lang=\"nmbl\">` injection, a single multi-scope selector is fine here because the JS grammars have no special tagged-template handling to clash with. `${…}` interpolation holes render as plain text, which is acceptable for a code sample.",
+  "patterns": [
+    {
+      "begin": "(?<![A-Za-z0-9_$.])(nmbl)(`)",
+      "beginCaptures": {
+        "1": { "name": "entity.name.function.tagged-template.js" },
+        "2": { "name": "punctuation.definition.string.template.begin.js" }
+      },
+      "end": "(`)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.string.template.end.js" }
+      },
+      "contentName": "source.nmbl",
+      "patterns": [{ "include": "source.nmbl" }]
+    }
+  ]
+}
