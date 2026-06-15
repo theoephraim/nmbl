@@ -123,7 +123,6 @@
           "source.svelte"
         ],
         "embeddedLanguages": {
-          "source.nmbl": "nmbl",
           "source.js": "javascript",
           "source.ts": "typescript",
           "text.html.markdown": "markdown",
@@ -168,7 +167,6 @@
           "source.astro"
         ],
         "embeddedLanguages": {
-          "source.nmbl": "nmbl",
           "source.js": "javascript",
           "source.ts": "typescript",
           "text.html.markdown": "markdown",
