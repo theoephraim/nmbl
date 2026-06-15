@@ -118,7 +118,7 @@
     },
     "textchunk": {
       "name": "text.nmbl",
-      "match": "[^ \\t\\n\\r()>|]+"
+      "match": "[^ \\t\\n\\r(){}>|]+"
     },
     "attrname": {
       "name": "entity.other.attribute-name.nmbl",

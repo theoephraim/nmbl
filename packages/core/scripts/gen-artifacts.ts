@@ -268,6 +268,16 @@ function injectNmblContentBlocks(
       { include: '#blockcomment' },
     );
   }
+
+  // Exclude `{` and `}` from the inline text-chunk so interpolation braces always
+  // tokenize as `punctuation` (like the closing `}}`). Otherwise text glued to a
+  // brace — e.g. `#{{ id }}` — swallows the opening `{{` into one text token while
+  // the `}}` stay punctuation, so VS Code's bracket colorization sees unmatched
+  // closers and paints them red. (Highlight-only; the parser is unaffected.)
+  const textchunk = g.repository['textchunk'] as { match?: string } | undefined;
+  if (textchunk?.match) {
+    textchunk.match = textchunk.match.replace('()>|', '(){}>|');
+  }
 }
 
 // TextMate grammar + language configuration → the VS Code extension package
