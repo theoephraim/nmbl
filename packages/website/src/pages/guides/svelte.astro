@@ -132,6 +132,8 @@ GuideLayout(title="Svelte Integration Guide")
 
             ## Editor Support
 
+            > **⚠️ Editor support is still catching up — but nothing is wrong with your code.** NMBL templates compile and run as native Svelte, with no build or runtime caveats whatsoever. The gap is purely *in-editor type-checking*: Svelte's language tooling type-checks `.svelte` files **before** preprocessors run ([sveltejs/language-tools#339](https://github.com/sveltejs/language-tools/issues/339)), so it analyzes the raw NMBL template instead of the compiled Svelte output. In practice you may see **false red squiggles** on `@each` loop variables (`item`, `i`) and props aren't type-checked inside templates. These are editor-only false positives — your code builds and runs correctly. We're actively working on closing this gap.
+
             Svelte editor support comes from `@nmbl-lang/language-server` (a Volar 2.4 server) wired through the NMBL VS Code extension. It activates only on `.svelte` files that contain a `<template lang="nmbl">` block — other Svelte files are left untouched.
 
           .features-grid
@@ -149,7 +151,7 @@ GuideLayout(title="Svelte Integration Guide")
               p NMBL syntax errors and unsupported control-flow blocks are surfaced inline
 
           Fragment:md
-            > **Note:** Deep, framework-type-aware checking of expressions inside `@if` / `@each` is not yet available for Svelte — the expressions compile to Svelte syntax but aren't run through a TypeScript type-checker. For the fullest type intellisense today, Vue is the most complete via its dedicated Volar plugin.
+            > **Want the fullest type intellisense today?** Vue is the most complete target — its dedicated Volar plugin runs the NMBL template through a real type-checker, so expression and prop types are fully validated.
 
             ## Troubleshooting
 
