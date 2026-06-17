@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import { nmbl } from '@nmbl-lang/vite-plugin/tag';
+import FullExample from './FullExample';
 
 interface Item {
   id: number;
@@ -70,5 +71,8 @@ export default function App() {
         div.login-prompt
           p.info Please log in to see your items.
           p.hint Click the button above to get started!
+
+      //! Full feature tour (see FullExample.tsx)
+      FullExample
   `;
 }

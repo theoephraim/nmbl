@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import ItemCard from './components/ItemCard.vue';
 import Badge from './components/Badge.vue';
 import VButton from './components/VButton.vue';
+import FullExample from './FullExample.vue';
 
 interface Item {
   id: number;
@@ -195,6 +196,9 @@ div#app
     div.login-prompt
       p.info Please log in to see and manage your items.
       p.hint Click the button above to get started!
+
+  //! Full feature tour (see FullExample.vue)
+  FullExample
 </template>
 
 <style scoped>

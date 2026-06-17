@@ -1,6 +1,7 @@
 <script lang="ts">
   import Badge from './components/Badge.svelte';
   import Button from './components/Button.svelte';
+  import FullExample from './FullExample.svelte';
 
   let loggedIn = $state(false);
   let items = $state(['Apple', 'Banana', 'Cherry']);
@@ -52,6 +53,9 @@ div#app
         | Add
   @else
     p Please log in to see your items.
+
+  // Full feature tour (see FullExample.svelte)
+  FullExample
 </template>
 
 <style>
