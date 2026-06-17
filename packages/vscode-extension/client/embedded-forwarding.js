@@ -46,7 +46,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VUE_DIRECTIVES = void 0;
+exports.CONTROL_FLOW_KEYWORDS = exports.ASTRO_CLIENT_DIRECTIVES = exports.SVELTE_DIRECTIVES = exports.VUE_DIRECTIVES = void 0;
 exports.findNmblRegion = findNmblRegion;
 exports.isOffsetInNmblRegion = isOffsetInNmblRegion;
 exports.isTagNamePosition = isTagNamePosition;
@@ -57,11 +57,16 @@ exports.findScriptAnchorOffset = findScriptAnchorOffset;
 exports.findLastNonBlankLineOffset = findLastNonBlankLineOffset;
 exports.htmlTagNames = htmlTagNames;
 exports.buildHtmlTagItems = buildHtmlTagItems;
+exports.languageIdToFramework = languageIdToFramework;
 exports.attributeContext = attributeContext;
+exports.isExpressionPosition = isExpressionPosition;
 exports.buildAttributeItems = buildAttributeItems;
+exports.buildKeywordItems = buildKeywordItems;
 exports.nmblRegionAt = nmblRegionAt;
 exports.scriptAnchorPosition = scriptAnchorPosition;
 exports.mapToTemplateItem = mapToTemplateItem;
+exports.scriptProxyPosition = scriptProxyPosition;
+exports.proxyScopeIdentifierItems = proxyScopeIdentifierItems;
 exports.registerEmbeddedForwarding = registerEmbeddedForwarding;
 const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("node:fs"));
@@ -261,13 +266,31 @@ function buildHtmlTagItems(wordRange) {
         return item;
     });
 }
-// ---------------------------------------------------------------------------
-// Attribute / directive / event completions
-// ---------------------------------------------------------------------------
-/** Vue's built-in directives — not in the HTML dataset, so listed here. */
+/** Map a VS Code languageId to a host framework (defaults to vue). */
+function languageIdToFramework(languageId) {
+    if (languageId === 'svelte')
+        return 'svelte';
+    if (languageId === 'astro')
+        return 'astro';
+    return 'vue';
+}
+/**
+ * Vue's built-in directives — not in the HTML dataset, so listed here.
+ * Includes control-flow (`v-if`/`v-for`/…): NMBL's `@if`/`@each` blocks compile
+ * to these, but the `v-*` attribute form stays a valid, preferred way to author
+ * conditionals/loops in `.vue`, so we still offer them there.
+ */
 exports.VUE_DIRECTIVES = [
     'v-if', 'v-else-if', 'v-else', 'v-for', 'v-bind', 'v-on', 'v-model', 'v-show',
     'v-html', 'v-text', 'v-slot', 'v-pre', 'v-once', 'v-memo', 'v-cloak',
+];
+/** Svelte's element directive prefixes — used as `on:click`, `bind:value`, etc. */
+exports.SVELTE_DIRECTIVES = [
+    'bind:', 'class:', 'style:', 'use:', 'transition:', 'in:', 'out:', 'animate:',
+];
+/** Astro's client-hydration directives — only valid on framework components. */
+exports.ASTRO_CLIENT_DIRECTIVES = [
+    'client:load', 'client:idle', 'client:visible', 'client:media', 'client:only',
 ];
 function htmlAttributeData(tag) {
     try {
@@ -278,13 +301,12 @@ function htmlAttributeData(tag) {
     }
 }
 /**
- * Classify the cursor's context by scanning template text up to it, so we can
- * tell an attribute-name position (inside a tag's `(...)`) apart from
- * expressions — `@if(...)` control flow, `{{ }}` interpolations, `{…}` brace
- * values, and quoted attribute values — which already get TS completion.
- * Returns the enclosing tag name when in an attribute position.
+ * Scan template text from the region start up to the cursor, tracking the
+ * nesting of strings, `{{ }}` interpolations, `{…}` braces, `@if(…)`/`@each(…)`
+ * control parens, and tag attribute `(…)` groups. Shared by attributeContext
+ * (attribute-name detection) and isExpressionPosition (JS-expression detection).
  */
-function attributeContext(before) {
+function scanContext(before) {
     let inStr = null;
     let interp = 0;
     const stack = [];
@@ -346,19 +368,52 @@ function attributeContext(before) {
             continue;
         }
     }
+    return { inStr, interp, stack };
+}
+/**
+ * Classify the cursor's context, so we can tell an attribute-name position
+ * (inside a tag's `(...)`) apart from expressions. Returns the enclosing tag
+ * name when in an attribute position.
+ */
+function attributeContext(before) {
+    const { inStr, interp, stack } = scanContext(before);
     if (inStr || interp > 0)
         return { inAttr: false, tag: null };
     const top = stack[stack.length - 1];
     return top?.kind === 'attr' ? { inAttr: true, tag: top.tag } : { inAttr: false, tag: null };
 }
 /**
- * Completions for an attribute-name position: Vue directives, plus the element's
- * HTML attributes and events (an `on*` attribute becomes a Vue `@event`). Both
- * plain (`disabled`) and bound (`:disabled`) forms are offered. Component-
- * specific props/emits are NOT included — those are type-derived and would need
- * deeper Vue integration.
+ * True when the cursor sits inside a JavaScript expression: a `{…}` interpolation
+ * or `={…}` attribute value (brace frame), a `@if(…)`/`@elseif(…)`/`@each(…)`
+ * condition (control frame), or a `{{ … }}` interpolation. Used to forward
+ * identifier completion / hover / go-to-definition to the frontmatter scope.
+ *
+ * Returns false inside a string literal — an identifier reference is never
+ * mid-string, and a plain (unbound) attribute value like `class="title"` must
+ * not be mistaken for an expression.
  */
-function buildAttributeItems(wordRange, tag) {
+function isExpressionPosition(before) {
+    const { inStr, interp, stack } = scanContext(before);
+    if (inStr)
+        return false;
+    if (interp > 0)
+        return true;
+    const top = stack[stack.length - 1];
+    return top?.kind === 'brace' || top?.kind === 'control';
+}
+/**
+ * Completions for an attribute-name position, tailored to the host framework:
+ *  - vue:    Vue directives (`v-model`, `v-show`, …); `on*` events as `@event`.
+ *  - svelte: Svelte directives (`bind:`, `class:`, …); `on*` events as `on:event`.
+ *  - astro:  no element directives (native `onclick` events come from the HTML
+ *            dataset as-is); `client:*` directives are offered on component
+ *            (PascalCase) tags.
+ *
+ * In every framework the element's HTML attributes are offered in both plain
+ * (`disabled`) and bound (`:disabled`) forms. Component-specific props/emits are
+ * NOT included — those are type-derived and would need deeper integration.
+ */
+function buildAttributeItems(wordRange, tag, framework = 'vue') {
     const items = [];
     const add = (label, kind, detail, sort) => {
         const item = new vscode.CompletionItem(label, kind);
@@ -369,12 +424,31 @@ function buildAttributeItems(wordRange, tag) {
         item.sortText = sort;
         items.push(item);
     };
-    for (const d of exports.VUE_DIRECTIVES)
-        add(d, vscode.CompletionItemKind.Keyword, '(vue directive)', `0_${d}`);
+    const isComponentTag = !!tag && /^[A-Z]/.test(tag);
+    if (framework === 'vue') {
+        for (const d of exports.VUE_DIRECTIVES)
+            add(d, vscode.CompletionItemKind.Keyword, '(vue directive)', `0_${d}`);
+    }
+    else if (framework === 'svelte') {
+        for (const d of exports.SVELTE_DIRECTIVES)
+            add(d, vscode.CompletionItemKind.Keyword, '(svelte directive)', `0_${d}`);
+    }
+    else if (framework === 'astro' && isComponentTag) {
+        for (const d of exports.ASTRO_CLIENT_DIRECTIVES)
+            add(d, vscode.CompletionItemKind.Keyword, '(astro client directive)', `0_${d}`);
+    }
     for (const a of tag ? htmlAttributeData(tag) : []) {
-        if (a.name.startsWith('on')) {
+        if (a.name.startsWith('on') && framework === 'vue') {
             const ev = '@' + a.name.slice(2);
             add(ev, vscode.CompletionItemKind.Event, '(event)', `1_${ev}`);
+        }
+        else if (a.name.startsWith('on') && framework === 'svelte') {
+            const ev = 'on:' + a.name.slice(2);
+            add(ev, vscode.CompletionItemKind.Event, '(event)', `1_${ev}`);
+        }
+        else if (a.name.startsWith('on')) {
+            // astro: native lowercase event handler attribute, used as-is.
+            add(a.name, vscode.CompletionItemKind.Event, '(event)', `1_${a.name}`);
         }
         else {
             add(a.name, vscode.CompletionItemKind.Property, '(attribute)', `2_${a.name}`);
@@ -435,6 +509,34 @@ function buildComponentApiItems(wordRange, api) {
         add('@' + e, vscode.CompletionItemKind.Event, '(emit)', `00_@${e}`);
     }
     return items;
+}
+// ---------------------------------------------------------------------------
+// NMBL control-flow keyword completions
+// ---------------------------------------------------------------------------
+/**
+ * The NMBL control-flow blocks offered at a block-start position. Each carries a
+ * snippet body so the cursor lands inside the parens (or after `@else`). These
+ * are framework-agnostic NMBL syntax — they compile to `v-if`/`{#if}`/JSX per
+ * the host target.
+ */
+exports.CONTROL_FLOW_KEYWORDS = [
+    { label: '@if', snippet: '@if(${1:condition})', detail: 'NMBL conditional block' },
+    { label: '@elseif', snippet: '@elseif(${1:condition})', detail: 'NMBL else-if clause' },
+    { label: '@else', snippet: '@else', detail: 'NMBL else clause' },
+    { label: '@each', snippet: '@each(${1:items} as ${2:item})', detail: 'NMBL loop block' },
+];
+/** Build CompletionItems for the NMBL control-flow keywords, targeted at `range`. */
+function buildKeywordItems(range) {
+    return exports.CONTROL_FLOW_KEYWORDS.map(({ label, snippet, detail }) => {
+        const item = new vscode.CompletionItem(label, vscode.CompletionItemKind.Keyword);
+        item.insertText = new vscode.SnippetString(snippet);
+        item.range = range;
+        item.filterText = label;
+        item.detail = detail;
+        // Sort just after components/directives, before plain HTML tags.
+        item.sortText = `0_${label}`;
+        return item;
+    });
 }
 // ---------------------------------------------------------------------------
 // VS Code provider helpers
@@ -513,6 +615,76 @@ function mapToTemplateItem(source, templateWordRange, alreadyImported) {
     item.command = source.command;
     return item;
 }
+// CompletionItemKinds that aren't useful as bare expression identifiers.
+const NON_IDENTIFIER_KINDS = new Set([
+    vscode.CompletionItemKind.Keyword,
+    vscode.CompletionItemKind.Snippet,
+    vscode.CompletionItemKind.Text,
+    vscode.CompletionItemKind.Color,
+    vscode.CompletionItemKind.File,
+    vscode.CompletionItemKind.Folder,
+    vscode.CompletionItemKind.Unit,
+    vscode.CompletionItemKind.Operator,
+]);
+/**
+ * For go-to-definition / hover inside an nmbl region: resolve the position in
+ * the script/frontmatter block to proxy the request to. Returns a target for
+ * either a component tag (PascalCase) or an identifier used in an expression
+ * (`{…}`, `@if(…)`, …) — but only when that identifier is actually declared in
+ * the script block (so plain HTML tags and loop-local bindings yield nothing).
+ */
+function scriptProxyPosition(doc, position) {
+    const region = nmblRegionAt(doc, position);
+    if (!region)
+        return undefined;
+    const wordRange = doc.getWordRangeAtPosition(position, /[A-Za-z_$][\w$]*/);
+    if (!wordRange)
+        return undefined;
+    const word = doc.getText(wordRange);
+    const text = doc.getText();
+    const before = text.slice(region.start, doc.offsetAt(position));
+    // Forward component tags (PascalCase) and identifiers in expression position.
+    if (!isPascalCase(word) && !isExpressionPosition(before))
+        return undefined;
+    const scriptPos = findWordInScript(text, word, doc.languageId);
+    if (scriptPos === undefined)
+        return undefined;
+    return doc.positionAt(scriptPos);
+}
+/**
+ * Inside a template expression, offer the identifiers in scope at the
+ * script/frontmatter block by proxying completion to its anchor. Auto-import
+ * edits (additionalTextEdits) are preserved — they land in the script block of
+ * the same document, exactly as for component completion.
+ */
+async function proxyScopeIdentifierItems(doc, wordRange) {
+    const anchor = scriptAnchorPosition(doc);
+    if (!anchor)
+        return [];
+    try {
+        const result = await vscode.commands.executeCommand('vscode.executeCompletionItemProvider', doc.uri, anchor, undefined, 60);
+        const items = !result ? [] : Array.isArray(result) ? result : result.items;
+        const out = [];
+        for (const source of items) {
+            if (source.kind !== undefined && NON_IDENTIFIER_KINDS.has(source.kind))
+                continue;
+            const label = getItemLabel(source.label);
+            const item = new vscode.CompletionItem(source.label, source.kind);
+            item.detail = source.detail;
+            item.documentation = source.documentation;
+            item.insertText = label;
+            item.range = wordRange;
+            item.filterText = label;
+            item.additionalTextEdits = source.additionalTextEdits;
+            item.command = source.command;
+            out.push(item);
+        }
+        return out;
+    }
+    catch {
+        return [];
+    }
+}
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
@@ -533,6 +705,7 @@ function registerEmbeddedForwarding(context) {
                 return undefined;
             }
             const text = doc.getText();
+            const framework = languageIdToFramework(doc.languageId);
             // 2. Attribute-name position (inside a tag's `(...)`) — offer directives,
             //    HTML attributes, and events. Checked BEFORE the tag-name flow because
             //    a multi-line attribute line has a whitespace prefix that also looks
@@ -543,7 +716,7 @@ function registerEmbeddedForwarding(context) {
                 // Attribute names can carry `@`/`:`/`#` prefixes (events, binds, slots).
                 const attrWordRange = doc.getWordRangeAtPosition(position, /[@:#]?[A-Za-z][\w-]*/) ??
                     attrPrefixRange(doc, position);
-                const attrItems = buildAttributeItems(attrWordRange, attrCtx.tag);
+                const attrItems = buildAttributeItems(attrWordRange, attrCtx.tag, framework);
                 // For a component tag, also offer its own props (:label) and emits
                 // (@change), parsed best-effort from the imported component file.
                 let propCount = 0;
@@ -555,20 +728,56 @@ function registerEmbeddedForwarding(context) {
                         attrItems.unshift(...propItems);
                     }
                 }
-                log(`  attr position (tag=${attrCtx.tag}) — ${propCount} prop/emit + ${attrItems.length - propCount} generic item(s)`);
+                log(`  attr position (tag=${attrCtx.tag}, fw=${framework}) — ${propCount} prop/emit + ${attrItems.length - propCount} generic item(s)`);
                 return new vscode.CompletionList(attrItems, true);
             }
-            // 3. The word prefix must look like a tag-name position
+            // 2b. Expression position (`{…}` / `={…}` / `@if(…)` / `@each(…)`) — offer
+            //     the frontmatter's in-scope identifiers by proxying completion to the
+            //     script anchor. Member access (`foo.|`) can't be resolved this way
+            //     (the anchor has no `foo.` text), so bail — that needs the upstream
+            //     type-aware path.
+            if (isExpressionPosition(before)) {
+                const typed = before.match(/[\w$]*$/)?.[0] ?? '';
+                const prevChar = before[before.length - typed.length - 1];
+                if (prevChar === '.') {
+                    log('  expression member access — skipped (needs type info)');
+                    return undefined;
+                }
+                const exprWordRange = doc.getWordRangeAtPosition(position, /[A-Za-z_$][\w$]*/) ??
+                    new vscode.Range(position, position);
+                const exprItems = await proxyScopeIdentifierItems(doc, exprWordRange);
+                log(`  expression position — ${exprItems.length} in-scope identifier(s)`);
+                return new vscode.CompletionList(exprItems, true);
+            }
+            // 3. The word prefix must look like a tag-name (or `@`-block) position
             const wordRange = doc.getWordRangeAtPosition(position, /[A-Za-z][A-Za-z0-9_]*/);
             const wordStart = wordRange ? wordRange.start : position;
-            // linePrefix = text from line start up to but not including the word
+            // linePrefix = text from line start up to but not including the word.
+            // A leading `@` (control-flow block being typed) lands in linePrefix
+            // since the word regex excludes it — strip it for block-start detection.
             const lineText = doc.lineAt(position.line).text;
             const linePrefix = lineText.substring(0, wordStart.character);
-            if (!isTagNamePosition(linePrefix)) {
+            const hasAtPrefix = linePrefix.endsWith('@');
+            const blockStart = isTagNamePosition(linePrefix) ||
+                (hasAtPrefix && isTagNamePosition(linePrefix.slice(0, -1)));
+            if (!blockStart) {
                 log(`  bail: not a tag-name position (linePrefix=${JSON.stringify(linePrefix)})`);
                 return undefined;
             }
             const effectiveWordRange = wordRange ?? new vscode.Range(position, position);
+            // 3a. NMBL control-flow keywords (`@if`/`@each`/…). The replace range
+            //     includes a leading `@` if the user already typed one so the
+            //     snippet doesn't double it.
+            const keywordRange = hasAtPrefix
+                ? new vscode.Range(wordStart.translate(0, -1), effectiveWordRange.end)
+                : effectiveWordRange;
+            const keywordItems = buildKeywordItems(keywordRange);
+            // After an explicit `@`, the user wants a control-flow block — skip the
+            // tag/component suggestions (and the proxy roundtrip) entirely.
+            if (hasAtPrefix) {
+                log(`  @-block position — ${keywordItems.length} keyword(s)`);
+                return new vscode.CompletionList(keywordItems, true);
+            }
             // 4. Standard HTML tags — always available at a tag position, no proxy.
             const htmlItems = buildHtmlTagItems(effectiveWordRange);
             // 4. Component candidates — proxy completion to the script/frontmatter
@@ -604,8 +813,8 @@ function registerEmbeddedForwarding(context) {
                     log(`  host completion threw ${e} — html tags only`);
                 }
             }
-            log(`  kept ${componentItems.length} component(s) + ${htmlItems.length} html tag(s)`);
-            return new vscode.CompletionList([...componentItems, ...htmlItems], true);
+            log(`  kept ${componentItems.length} component(s) + ${keywordItems.length} keyword(s) + ${htmlItems.length} html tag(s)`);
+            return new vscode.CompletionList([...componentItems, ...keywordItems, ...htmlItems], true);
         },
     }, 
     // Trigger characters: VS Code auto-triggers on word chars, but attribute
@@ -616,21 +825,11 @@ function registerEmbeddedForwarding(context) {
     // ── Definition ────────────────────────────────────────────────────────────
     const definitionProvider = vscode.languages.registerDefinitionProvider(SELECTOR, {
         async provideDefinition(doc, position) {
-            if (!nmblRegionAt(doc, position))
-                return undefined;
-            const wordRange = doc.getWordRangeAtPosition(position, /[A-Z][A-Za-z0-9_]*/);
-            if (!wordRange)
-                return undefined;
-            const word = doc.getText(wordRange);
-            if (!isPascalCase(word))
-                return undefined;
-            // Find the identifier in the script/frontmatter block
-            const text = doc.getText();
-            const scriptPos = findWordInScript(text, word, doc.languageId);
-            if (scriptPos === undefined)
+            const target = scriptProxyPosition(doc, position);
+            if (!target)
                 return undefined;
             try {
-                const result = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', doc.uri, doc.positionAt(scriptPos));
+                const result = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', doc.uri, target);
                 return result && result.length > 0 ? result : undefined;
             }
             catch {
@@ -641,20 +840,11 @@ function registerEmbeddedForwarding(context) {
     // ── Hover ─────────────────────────────────────────────────────────────────
     const hoverProvider = vscode.languages.registerHoverProvider(SELECTOR, {
         async provideHover(doc, position) {
-            if (!nmblRegionAt(doc, position))
-                return undefined;
-            const wordRange = doc.getWordRangeAtPosition(position, /[A-Z][A-Za-z0-9_]*/);
-            if (!wordRange)
-                return undefined;
-            const word = doc.getText(wordRange);
-            if (!isPascalCase(word))
-                return undefined;
-            const text = doc.getText();
-            const scriptPos = findWordInScript(text, word, doc.languageId);
-            if (scriptPos === undefined)
+            const target = scriptProxyPosition(doc, position);
+            if (!target)
                 return undefined;
             try {
-                const result = await vscode.commands.executeCommand('vscode.executeHoverProvider', doc.uri, doc.positionAt(scriptPos));
+                const result = await vscode.commands.executeCommand('vscode.executeHoverProvider', doc.uri, target);
                 return result && result.length > 0 ? result[0] : undefined;
             }
             catch {

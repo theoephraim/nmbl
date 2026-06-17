@@ -20,11 +20,15 @@ export class Range {
   ) {}
 }
 
+export class SnippetString {
+  constructor(public value: string = '') {}
+}
+
 export class CompletionItem {
   kind?: CompletionItemKind;
   documentation?: string;
   detail?: string;
-  insertText?: string;
+  insertText?: string | SnippetString;
   range?: Range;
   additionalTextEdits?: TextEdit[];
   filterText?: string;

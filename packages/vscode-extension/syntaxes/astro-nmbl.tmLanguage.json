@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "scopeName": "astro.nmbl",
-  "injectionSelector": "source.astro - (meta.embedded | source)",
+  "injectionSelector": "L:source.astro - (meta.embedded.block.nmbl | meta source)",
   "patterns": [
     {
       "begin": "(?<=<template\\s+lang=\"nmbl\"\\s*>)",

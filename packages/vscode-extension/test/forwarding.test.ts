@@ -19,14 +19,21 @@ import {
   htmlTagNames,
   buildHtmlTagItems,
   attributeContext,
+  isExpressionPosition,
   buildAttributeItems,
+  buildKeywordItems,
+  CONTROL_FLOW_KEYWORDS,
+  languageIdToFramework,
   VUE_DIRECTIVES,
+  SVELTE_DIRECTIVES,
+  ASTRO_CLIENT_DIRECTIVES,
 } from '../client/embedded-forwarding';
 import {
   CompletionItem,
   CompletionItemKind,
   Range,
   Position,
+  SnippetString,
 } from './__mocks__/vscode';
 
 // ---------------------------------------------------------------------------
@@ -439,34 +446,162 @@ describe('attributeContext', () => {
 });
 
 // ---------------------------------------------------------------------------
+// isExpressionPosition (JS-expression detection)
+// ---------------------------------------------------------------------------
+
+describe('isExpressionPosition', () => {
+  const expr = (s: string) => isExpressionPosition(s);
+
+  it('is true inside a {…} interpolation', () => {
+    expect(expr('h1 {titl')).toBe(true);
+    expect(expr('p Welcome {user.nam')).toBe(true);
+  });
+
+  it('is true inside an ={…} attribute value', () => {
+    expect(expr('a(href={ur')).toBe(true);
+    expect(expr('li(:data-idx={i')).toBe(true);
+  });
+
+  it('is true inside @if / @elseif / @each conditions', () => {
+    expect(expr('@if(loggedIn')).toBe(true);
+    expect(expr('@elseif(coun')).toBe(true);
+    expect(expr('@each(items as ite')).toBe(true);
+  });
+
+  it('is true inside a {{ … }} interpolation', () => {
+    expect(expr('p {{ user.nam')).toBe(true);
+  });
+
+  it('is false at a plain tag / text position', () => {
+    expect(expr('  div')).toBe(false);
+    expect(expr('p Here are the items')).toBe(false);
+  });
+
+  it('is false in an attribute-name position', () => {
+    expect(expr('button(@cli')).toBe(false);
+    expect(expr('input(:val')).toBe(false);
+  });
+
+  it('is false inside a string literal (plain attr value)', () => {
+    expect(expr('div(class="titl')).toBe(false);
+  });
+
+  it('is false after a {…} interpolation closes', () => {
+    expect(expr('h1 {title} ')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // buildAttributeItems
 // ---------------------------------------------------------------------------
 
 describe('buildAttributeItems', () => {
   const range = new Range(new Position(2, 4), new Position(2, 8));
+  const labelsFor = (tag: string | null, fw: Parameters<typeof buildAttributeItems>[2]) =>
+    buildAttributeItems(range, tag, fw).map(i => getItemLabel(i.label));
 
-  it('includes Vue directives', () => {
+  it('includes Vue directives for the vue framework (defaults to vue)', () => {
     const labels = buildAttributeItems(range, 'div').map(i => getItemLabel(i.label));
     for (const d of VUE_DIRECTIVES) expect(labels).toContain(d);
+    expect(labels).toContain('v-model');
+  });
+
+  it('keeps control-flow directives for vue (still a preferred form there)', () => {
+    const labels = labelsFor('div', 'vue');
     expect(labels).toContain('v-if');
+    expect(labels).toContain('v-for');
   });
 
-  it('derives @events from the element on* attributes', () => {
-    const labels = buildAttributeItems(range, 'button').map(i => getItemLabel(i.label));
-    expect(labels).toContain('@click');
-    expect(labels).toContain('@input');
-    // never the raw on* form
-    expect(labels).not.toContain('onclick');
+  it('does not leak Vue control-flow directives into astro/svelte', () => {
+    for (const fw of ['astro', 'svelte'] as const) {
+      const labels = labelsFor('div', fw);
+      expect(labels).not.toContain('v-if');
+      expect(labels).not.toContain('v-for');
+    }
   });
 
-  it('offers plain and bound forms of regular attributes', () => {
-    const labels = buildAttributeItems(range, 'button').map(i => getItemLabel(i.label));
-    expect(labels).toContain('disabled');
-    expect(labels).toContain(':disabled');
+  it('derives @events for vue, on:events for svelte, native on* for astro', () => {
+    expect(labelsFor('button', 'vue')).toContain('@click');
+    expect(labelsFor('button', 'vue')).not.toContain('onclick');
+
+    expect(labelsFor('button', 'svelte')).toContain('on:click');
+    expect(labelsFor('button', 'svelte')).not.toContain('@click');
+
+    expect(labelsFor('button', 'astro')).toContain('onclick');
+    expect(labelsFor('button', 'astro')).not.toContain('@click');
+  });
+
+  it('offers Svelte directives only for the svelte framework', () => {
+    const svelte = labelsFor('div', 'svelte');
+    for (const d of SVELTE_DIRECTIVES) expect(svelte).toContain(d);
+    expect(svelte).not.toContain('v-model');
+  });
+
+  it('offers astro client:* directives only on component (PascalCase) tags', () => {
+    const onComponent = labelsFor('Counter', 'astro');
+    for (const d of ASTRO_CLIENT_DIRECTIVES) expect(onComponent).toContain(d);
+    // Plain HTML element: no client directives, and no Vue/Svelte directives.
+    const onDiv = labelsFor('div', 'astro');
+    expect(onDiv).not.toContain('client:load');
+    expect(onDiv).not.toContain('v-model');
+    expect(onDiv).not.toContain('bind:');
+  });
+
+  it('offers plain and bound forms of regular attributes in every framework', () => {
+    for (const fw of ['vue', 'svelte', 'astro'] as const) {
+      const labels = labelsFor('button', fw);
+      expect(labels).toContain('disabled');
+      expect(labels).toContain(':disabled');
+    }
   });
 
   it('targets items at the given word range', () => {
     const item = buildAttributeItems(range, 'div')[0];
     expect(item.range).toBe(range);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// languageIdToFramework
+// ---------------------------------------------------------------------------
+
+describe('languageIdToFramework', () => {
+  it('maps known host languageIds', () => {
+    expect(languageIdToFramework('svelte')).toBe('svelte');
+    expect(languageIdToFramework('astro')).toBe('astro');
+    expect(languageIdToFramework('vue')).toBe('vue');
+  });
+  it('defaults unknown languageIds to vue', () => {
+    expect(languageIdToFramework('plaintext')).toBe('vue');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildKeywordItems (NMBL control-flow)
+// ---------------------------------------------------------------------------
+
+describe('buildKeywordItems', () => {
+  const range = new Range(new Position(3, 2), new Position(3, 5));
+
+  it('offers @if/@elseif/@else/@each', () => {
+    const labels = buildKeywordItems(range).map(i => getItemLabel(i.label));
+    expect(labels).toEqual(['@if', '@elseif', '@else', '@each']);
+  });
+
+  it('inserts snippets targeted at the given range', () => {
+    for (const item of buildKeywordItems(range)) {
+      expect(item.insertText).toBeInstanceOf(SnippetString);
+      expect(item.range).toBe(range);
+      expect(item.kind).toBe(CompletionItemKind.Keyword);
+    }
+  });
+
+  it('@each snippet binds the loop variable', () => {
+    const each = buildKeywordItems(range).find(i => getItemLabel(i.label) === '@each')!;
+    expect((each.insertText as SnippetString).value).toContain(' as ');
+  });
+
+  it('CONTROL_FLOW_KEYWORDS stays in sync with the builder', () => {
+    expect(buildKeywordItems(range).length).toBe(CONTROL_FLOW_KEYWORDS.length);
   });
 });
