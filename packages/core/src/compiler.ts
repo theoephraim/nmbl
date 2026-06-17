@@ -110,6 +110,66 @@ export class Compiler {
     return this.attributeAliases[name] ?? name;
   }
 
+  /**
+   * Frameworks that express a dynamic attribute value with JSX-style braces
+   * (`name={expr}`). Vue keeps its own binding syntax (`:name="expr"`), and the
+   * `html` target has no binding concept, so both fall through to the colon form.
+   */
+  private usesBraceBinding(): boolean {
+    return this.framework === 'astro' || this.framework === 'svelte' || this.framework === 'jsx';
+  }
+
+  /**
+   * The JS expression carried by a bound attribute, normalized across the forms
+   * the parser produces:
+   *   :name        → `name`       (shorthand; value === name)
+   *   :name="expr" → `expr`       (quotes already stripped by the parser)
+   *   :name={expr} → `expr`       (surrounding braces stripped here)
+   *   :name=`tpl`  → `` `tpl` ``  (backticks restored)
+   */
+  private boundExpression(attr: AttributeNode): string {
+    const value = attr.value ?? attr.name;
+    if (attr.expression) return value.slice(1, -1); // drop the `{` … `}`
+    if (attr.templateLiteral) return '`' + value + '`';
+    return value;
+  }
+
+  /**
+   * Is `attr` a dynamic `class` — `:class="…"` / `:class={…}` (bound) or, in a
+   * brace-binding framework, `class={…}` (unbound expression)? These are merged
+   * with the element's static classes into a single `class={…}` so we never emit
+   * a duplicate `class` attribute. `:class` in vue/html stays separate (Vue
+   * merges static `class` + `:class` natively).
+   */
+  private isDynamicClass(attr: AttributeNode): boolean {
+    if (attr.name !== 'class') return false;
+    if (attr.bound) return true;
+    return attr.expression && this.usesBraceBinding();
+  }
+
+  /** The JS expression of a dynamic class attribute (either authored form). */
+  private classDynamicExpression(attr: AttributeNode): string {
+    if (attr.bound) return this.boundExpression(attr);
+    return (attr.value ?? '').slice(1, -1); // class={expr} → expr
+  }
+
+  /**
+   * Build the contents of a merged `class={ … }` value: the static classes (if
+   * any) concatenated with the dynamic expression via a template literal.
+   *   .foo.bar + :class="active"  →  `foo bar ${(active) ?? ''}`
+   *   :class="active" (no static) →  active
+   *
+   * In the template-literal case the dynamic part is guarded with `?? ''` so a
+   * nullish value doesn't stringify to "undefined"/"null" in the class string.
+   * (The bare-expression case needs no guard: `class={undefined}` renders nothing
+   * in JSX rather than the literal text.)
+   */
+  private mergedClassExpression(staticClasses: string[], dynamic: AttributeNode): string {
+    const expr = this.classDynamicExpression(dynamic);
+    if (staticClasses.length === 0) return expr;
+    return '`' + staticClasses.join(' ') + " ${(" + expr + ") ?? ''}`";
+  }
+
   private spanWithPrefix(span: SourceSpan): SourceSpan {
     // Create a span that starts 1 character earlier (includes the dot/hash prefix)
     return {
@@ -460,17 +520,17 @@ export class Compiler {
   private compileAttributesTracked(node: ElementNode): void {
     // Merge classes: CSS shorthand classes + static class attribute
     const allClasses = [...node.classes];
-    let boundClass: AttributeNode | null = null;
+    let dynamicClass: AttributeNode | null = null;
     let staticClassAttr: AttributeNode | null = null;
     const filteredAttrs: AttributeNode[] = [];
 
     for (const attr of node.attributes) {
-      if (!attr.bound && attr.name === 'class' && attr.value) {
+      if (this.isDynamicClass(attr)) {
+        dynamicClass = attr;
+      } else if (!attr.bound && attr.name === 'class' && attr.value) {
         // Static class attr: merge into class list
         allClasses.push(...attr.value.split(/\s+/).filter(Boolean));
         staticClassAttr = attr;  // Keep reference to the attribute for its span
-      } else if (attr.bound && attr.name === 'class') {
-        boundClass = attr;
       } else {
         filteredAttrs.push(attr);
       }
@@ -489,8 +549,26 @@ export class Compiler {
       this.write('"');
     }
 
-    // Emit merged classes
-    if (allClasses.length > 0) {
+    // Brace-binding frameworks: merge static + dynamic class into one class={…}
+    // so we never emit a duplicate `class` attribute.
+    const braceMergeClass = this.usesBraceBinding() && dynamicClass !== null;
+    if (braceMergeClass) {
+      this.write(' ');
+      this.write(this.aliasAttr('class') + '={');
+      if (allClasses.length > 0) {
+        // Guard the dynamic part so a nullish value isn't stringified into the
+        // class list (`?? ''`); see mergedClassExpression.
+        this.write('`' + allClasses.join(' ') + ' ${(');
+        this.writeClassDynExprTracked(dynamicClass!);
+        this.write(") ?? ''}`");
+      } else {
+        this.writeClassDynExprTracked(dynamicClass!);
+      }
+      this.write('}');
+    }
+
+    // Emit merged static classes (skipped when merged into class={…} above)
+    if (!braceMergeClass && allClasses.length > 0) {
       this.write(' ');
       this.write(this.aliasAttr('class') + '=');
 
@@ -567,10 +645,11 @@ export class Compiler {
       this.write('"');
     }
 
-    // Emit bound class separately
-    if (boundClass) {
+    // Emit the dynamic class separately (vue/html `:class`, kept apart so Vue's
+    // native static-class + `:class` merge still applies).
+    if (!braceMergeClass && dynamicClass) {
       this.write(' ');
-      this.compileAttributeTracked(boundClass);
+      this.compileAttributeTracked(dynamicClass);
     }
 
     // Emit remaining attributes
@@ -583,6 +662,12 @@ export class Compiler {
   private compileAttributeTracked(attr: AttributeNode): void {
     const prefix = attr.bound ? ':' : '';
     const name = this.aliasAttr(attr.name);
+
+    // Dynamic value in a brace-binding framework: `:name="expr"` → `name={expr}`.
+    if (attr.bound && this.usesBraceBinding()) {
+      this.writeBoundBraceAttributeTracked(attr, name);
+      return;
+    }
 
     if (attr.value === null) {
       // Boolean attribute - map the whole thing
@@ -663,6 +748,63 @@ export class Compiler {
     this.write('"');
   }
 
+  /**
+   * Emit a bound attribute as `name={expr}` (astro/svelte/jsx), mapping the
+   * attribute name and the expression back to their source spans. Mirrors the
+   * value-locating logic of compileAttributeTracked but drops the `:` prefix and
+   * wraps the expression in braces instead of quotes.
+   */
+  private writeBoundBraceAttributeTracked(attr: AttributeNode, name: string): void {
+    const exprText = this.boundExpression(attr);
+
+    // Name maps to the source name (after the leading ':').
+    const nameEndOffset = attr.span.start.offset + 1 + attr.name.length;
+    const nameSpan = span(attr.span.start, this.calculatePosition(nameEndOffset));
+    this.write(name, nameSpan, { nodeType: 'Attribute', attributeName: attr.name });
+    this.write('={');
+
+    // Locate where the expression text begins in the source so the mapping
+    // points at the expression rather than the whole attribute.
+    const delimOffset = this.findQuoteInAttribute(attr);
+    // For quoted strings and `{…}` expressions the delimiter is one char before
+    // the expression; for template literals the backticks are part of exprText.
+    const exprStartOffset =
+      delimOffset < 0 ? -1 : attr.templateLiteral ? delimOffset : delimOffset + 1;
+
+    if (exprStartOffset < 0) {
+      // Shorthand (`:name`) or bare value — fall back to the whole attr span.
+      this.write(exprText, attr.span, { nodeType: 'Attribute', attributeName: attr.name });
+    } else {
+      const exprSpan = span(
+        this.calculatePosition(exprStartOffset),
+        this.calculatePosition(exprStartOffset + exprText.length),
+      );
+      this.write(exprText, exprSpan, { nodeType: 'Attribute', attributeName: attr.name });
+    }
+    this.write('}');
+  }
+
+  /**
+   * Write the expression of a dynamic class attribute, mapped to its source
+   * span. Used inside a merged `class={ … }` (with or without a template-literal
+   * static prefix).
+   */
+  private writeClassDynExprTracked(attr: AttributeNode): void {
+    const exprText = this.classDynamicExpression(attr);
+    const delimOffset = this.findQuoteInAttribute(attr);
+    const exprStartOffset =
+      delimOffset < 0 ? -1 : attr.templateLiteral ? delimOffset : delimOffset + 1;
+    if (exprStartOffset < 0) {
+      this.write(exprText, attr.span, { nodeType: 'Attribute', attributeName: 'class' });
+    } else {
+      const exprSpan = span(
+        this.calculatePosition(exprStartOffset),
+        this.calculatePosition(exprStartOffset + exprText.length),
+      );
+      this.write(exprText, exprSpan, { nodeType: 'Attribute', attributeName: 'class' });
+    }
+  }
+
   private findQuoteInAttribute(attr: AttributeNode): number {
     // Find the position of the opening quote within the attribute span
     if (!this.source) return -1;
@@ -721,15 +863,15 @@ export class Compiler {
 
     // Merge classes: CSS shorthand classes + static class attribute
     const allClasses = [...node.classes];
-    let boundClass: AttributeNode | null = null;
+    let dynamicClass: AttributeNode | null = null;
     const filteredAttrs: AttributeNode[] = [];
 
     for (const attr of node.attributes) {
-      if (!attr.bound && attr.name === 'class' && attr.value) {
+      if (this.isDynamicClass(attr)) {
+        dynamicClass = attr;
+      } else if (!attr.bound && attr.name === 'class' && attr.value) {
         // Static class attr: merge into class list
         allClasses.push(...attr.value.split(/\s+/).filter(Boolean));
-      } else if (attr.bound && attr.name === 'class') {
-        boundClass = attr;
       } else {
         filteredAttrs.push(attr);
       }
@@ -740,14 +882,18 @@ export class Compiler {
       parts.push(`${this.aliasAttr('id')}="${node.id}"`);
     }
 
-    // Emit merged classes
-    if (allClasses.length > 0) {
-      parts.push(`${this.aliasAttr('class')}="${allClasses.join(' ')}"`);
-    }
-
-    // Emit bound class separately
-    if (boundClass) {
-      parts.push(this.compileAttribute(boundClass));
+    if (dynamicClass && this.usesBraceBinding()) {
+      // Merge static + dynamic classes into a single `class={…}`.
+      parts.push(`${this.aliasAttr('class')}={${this.mergedClassExpression(allClasses, dynamicClass)}}`);
+    } else {
+      // Emit merged static classes …
+      if (allClasses.length > 0) {
+        parts.push(`${this.aliasAttr('class')}="${allClasses.join(' ')}"`);
+      }
+      // … then the dynamic class separately (vue/html `:class`).
+      if (dynamicClass) {
+        parts.push(this.compileAttribute(dynamicClass));
+      }
     }
 
     // Emit remaining attributes
@@ -761,6 +907,11 @@ export class Compiler {
   private compileAttribute(attr: AttributeNode): string {
     const prefix = attr.bound ? ':' : '';
     const name = this.aliasAttr(attr.name);
+
+    // Dynamic value in a brace-binding framework: `:name="expr"` → `name={expr}`.
+    if (attr.bound && this.usesBraceBinding()) {
+      return `${name}={${this.boundExpression(attr)}}`;
+    }
 
     if (attr.value === null) {
       // Boolean attribute

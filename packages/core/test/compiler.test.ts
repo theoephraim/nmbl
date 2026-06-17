@@ -199,6 +199,119 @@ describe('Compiler', () => {
     });
   });
 
+  describe('bound attributes - framework binding syntax', () => {
+    // html/vue keep `:name="expr"`; astro/svelte/jsx emit JSX-style `name={expr}`.
+    test('html keeps the colon binding form', () => {
+      expect(compile('a(:href="url")', { framework: 'html' }).html.trim()).toBe('<a :href="url"></a>');
+    });
+
+    test('vue keeps the colon binding form', () => {
+      expect(compile('a(:href="url")', { framework: 'vue' }).html.trim()).toBe('<a :href="url"></a>');
+    });
+
+    for (const framework of ['astro', 'svelte', 'jsx'] as const) {
+      describe(framework, () => {
+        const out = (src: string) => compile(src, { framework }).html.trim();
+        const open = (inner: string) => `<a ${inner}></a>`;
+
+        test('quoted value → braces', () => {
+          expect(out('a(:href="url")')).toBe(open('href={url}'));
+        });
+
+        test('bound shorthand → braces with the name as expr', () => {
+          expect(out('a(:href)')).toBe(open('href={href}'));
+        });
+
+        test('expression value drops the colon, keeps the braces', () => {
+          expect(out('a(:href={base + path})')).toBe(open('href={base + path}'));
+        });
+
+        test('template-literal value → braced template literal', () => {
+          expect(out('a(:href=`/${slug}`)')).toBe(open('href={`/${slug}`}'));
+        });
+
+        test('unbound expression attribute is unchanged', () => {
+          expect(out('a(href={url})')).toBe(open('href={url}'));
+        });
+
+        test('boolean attribute is unchanged', () => {
+          expect(compile('input(disabled)', { framework }).html.trim()).toMatch(/^<input disabled\s*\/?>$/);
+        });
+      });
+    }
+
+    test('jsx applies attribute aliases to the bound name', () => {
+      const html = compile('div(:class="active")', {
+        framework: 'jsx',
+        attributeAliases: { class: 'className' },
+      }).html.trim();
+      expect(html).toBe('<div className={active}></div>');
+    });
+  });
+
+  describe('static + dynamic class merging', () => {
+    // Vue/HTML keep static `class` and `:class` separate (Vue merges natively).
+    test('vue keeps shorthand class and :class separate', () => {
+      expect(compile('div.foo(:class="active")', { framework: 'vue' }).html.trim())
+        .toBe('<div class="foo" :class="active"></div>');
+    });
+
+    test('html keeps shorthand class and :class separate', () => {
+      expect(compile('div.foo(:class="active")', { framework: 'html' }).html.trim())
+        .toBe('<div class="foo" :class="active"></div>');
+    });
+
+    for (const framework of ['astro', 'svelte', 'jsx'] as const) {
+      describe(framework, () => {
+        const out = (src: string) => compile(src, { framework }).html.trim();
+
+        test(':class merges shorthand classes into one template literal', () => {
+          expect(out('div.foo(:class="active")')).toBe("<div class={`foo ${(active) ?? ''}`}></div>");
+        });
+
+        test('class={} merges shorthand classes the same way', () => {
+          expect(out('div.foo(class={active})')).toBe("<div class={`foo ${(active) ?? ''}`}></div>");
+        });
+
+        test('merges multiple shorthand classes and a static class attr', () => {
+          expect(out('div.foo.bar(class="baz" :class="active")'))
+            .toBe("<div class={`foo bar baz ${(active) ?? ''}`}></div>");
+        });
+
+        test('dynamic class with no static classes stays a bare expression', () => {
+          // Bare form needs no nullish guard — `class={undefined}` renders nothing in JSX.
+          expect(out('div(:class="active")')).toBe('<div class={active}></div>');
+          expect(out('div(class={active})')).toBe('<div class={active}></div>');
+        });
+
+        test('a merged expression value is parenthesized then guarded', () => {
+          expect(out('div.foo(:class={cond ? a : b})')).toBe("<div class={`foo ${(cond ? a : b) ?? ''}`}></div>");
+          // `??` can't be mixed with `||`/`&&` unguarded — the parens make it valid.
+          expect(out('div.foo(:class={a || b})')).toBe("<div class={`foo ${(a || b) ?? ''}`}></div>");
+        });
+
+        test('static-only classes are still a plain string (no braces)', () => {
+          expect(out('div.foo.bar')).toBe('<div class="foo bar"></div>');
+        });
+
+        test('never emits a duplicate class attribute', () => {
+          const html = out('div.foo(class="bar" :class="active")');
+          expect(html.match(/class[={]/g)?.length).toBe(1);
+        });
+      });
+    }
+
+    // React (jsx + aliases) must alias the merged class to className.
+    test('react aliases the merged class to className', () => {
+      const react = { framework: 'jsx' as const, attributeAliases: { class: 'className', for: 'htmlFor' } };
+      expect(compile('div.foo(:class="active")', react).html.trim())
+        .toBe("<div className={`foo ${(active) ?? ''}`}></div>");
+      expect(compile('div.foo', react).html.trim()).toBe('<div className="foo"></div>');
+      expect(compile('label(:for="id") Hi', react).html.trim())
+        .toBe('<label htmlFor={id}>Hi</label>');
+    });
+  });
+
   describe('void elements', () => {
     test('no closing tag', () => {
       const { html } = compile('br');
