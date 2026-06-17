@@ -46,9 +46,11 @@ connection.onInitialize((params) => {
 
               const root = sourceScript.generated.root;
 
-              // Standalone .nmbl file
-              if (root instanceof NmblVirtualCode) {
-                return root.compileErrors.map((err) => {
+              // Both the standalone .nmbl case and the host-document
+              // (.svelte / .astro) case carry compile errors plus linter
+              // findings whose spans are already in document-offset space.
+              if (root instanceof NmblVirtualCode || root instanceof NmblHostVirtualCode) {
+                const compileDiags = root.compileErrors.map((err) => {
                   const startOffset = err.span?.start.offset ?? 0;
                   const endOffset = err.span?.end.offset ?? startOffset;
                   return {
@@ -62,26 +64,20 @@ connection.onInitialize((params) => {
                     code: err.code,
                   };
                 });
-              }
 
-              // Host document (.svelte / .astro) with embedded NMBL region —
-              // the error spans have already been shifted to host-document offsets
-              // by NmblHostVirtualCode's constructor.
-              if (root instanceof NmblHostVirtualCode) {
-                return root.compileErrors.map((err) => {
-                  const startOffset = err.span?.start.offset ?? 0;
-                  const endOffset = err.span?.end.offset ?? startOffset;
-                  return {
-                    severity: 1 as const,
-                    range: {
-                      start: document.positionAt(startOffset),
-                      end: document.positionAt(endOffset),
-                    },
-                    source: 'nmbl',
-                    message: err.message,
-                    code: err.code,
-                  };
-                });
+                const lintDiags = root.lintMessages.map((msg) => ({
+                  // LSP DiagnosticSeverity: 1 = Error, 2 = Warning.
+                  severity: (msg.severity === 'error' ? 1 : 2) as 1 | 2,
+                  range: {
+                    start: document.positionAt(msg.span.start.offset),
+                    end: document.positionAt(msg.span.end.offset),
+                  },
+                  source: 'nmbl',
+                  message: msg.message,
+                  code: msg.ruleId,
+                }));
+
+                return [...compileDiags, ...lintDiags];
               }
 
               return [];

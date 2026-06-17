@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { IScriptSnapshot } from '@volar/language-core';
-import { NmblVirtualCode, convertMappings } from '../src/language-plugin.js';
+import { NmblVirtualCode, NmblHostVirtualCode, convertMappings } from '../src/language-plugin.js';
 import { compile } from '@nmbl-lang/core';
 
 /** Minimal IScriptSnapshot from a plain string. */
@@ -64,6 +64,27 @@ describe('convertMappings', () => {
 // ---------------------------------------------------------------------------
 // NmblVirtualCode unit tests
 // ---------------------------------------------------------------------------
+describe('lint diagnostics', () => {
+  it('surfaces linter findings on a standalone .nmbl file with source-space spans', () => {
+    const source = '.foo.foo Hi';
+    const vc = new NmblVirtualCode(makeSnapshot(source));
+    const dup = vc.lintMessages.find((m) => m.ruleId === 'no-duplicate-classes');
+    expect(dup).toBeDefined();
+    expect(dup!.severity).toBe('warning');
+    // The span points at the duplicate class in the original source.
+    expect(source.slice(dup!.span.start.offset, dup!.span.end.offset)).toBe('foo');
+  });
+
+  it('shifts host-document lint spans out of the dedented region', () => {
+    const astro = ['---', 'const x = 1;', '---', '<template lang="nmbl">', '  .foo.foo Hi', '</template>'].join('\n');
+    const vc = new NmblHostVirtualCode(makeSnapshot(astro), 'astro');
+    const dup = vc.lintMessages.find((m) => m.ruleId === 'no-duplicate-classes');
+    expect(dup).toBeDefined();
+    // After remapping, the offset lands on the duplicate `.foo` in the host doc.
+    expect(astro.slice(dup!.span.start.offset, dup!.span.end.offset)).toBe('foo');
+  });
+});
+
 describe('NmblVirtualCode', () => {
   it('creates virtual code for a simple template', () => {
     const source = 'div#app\n  p.lead hello';

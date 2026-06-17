@@ -1,6 +1,6 @@
 import type { CodeMapping, IScriptSnapshot, LanguagePlugin, VirtualCode } from '@volar/language-core';
-import { compile } from '@nmbl-lang/core';
-import type { SourceMapping } from '@nmbl-lang/core';
+import { compile, lint } from '@nmbl-lang/core';
+import type { SourceMapping, LintMessage } from '@nmbl-lang/core';
 import { URI } from 'vscode-uri';
 
 // ---------------------------------------------------------------------------
@@ -83,6 +83,18 @@ export function dedentedOffsetToOriginal(
   // The original offset = start of that line in original + indent + col
   const origLineStart = origLineStartOffsets[line] ?? 0;
   return origLineStart + indent + col;
+}
+
+/**
+ * Run the NMBL linter, swallowing any throw — diagnostics must never crash the
+ * server, and a malformed in-progress document can make the parser unhappy.
+ */
+function safeLint(source: string): LintMessage[] {
+  try {
+    return lint(source);
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -187,6 +199,8 @@ export class NmblVirtualCode implements VirtualCode {
 
   /** Compile errors from @nmbl-lang/core — surfaced as diagnostics by the server. */
   compileErrors: ReturnType<typeof compile>['errors'];
+  /** Linter findings from @nmbl-lang/core — surfaced as diagnostics by the server. */
+  lintMessages: LintMessage[];
 
   mappings: CodeMapping[];
   embeddedCodes: VirtualCode[];
@@ -198,6 +212,9 @@ export class NmblVirtualCode implements VirtualCode {
     const { html, mappings: sourceMappings, errors } = compile(source, { framework: 'html' });
 
     this.compileErrors = errors;
+    // Lint operates on the raw source, so its spans are already 1:1 with the
+    // document — no remapping needed for the standalone .nmbl case.
+    this.lintMessages = safeLint(source);
 
     // The root virtual code covers the entire NMBL source 1:1 (used for
     // features like document symbols that operate on the raw source).
@@ -251,6 +268,7 @@ export class NmblHostVirtualCode implements VirtualCode {
   languageId = 'nmbl';
 
   compileErrors: ReturnType<typeof compile>['errors'];
+  lintMessages: LintMessage[];
   mappings: CodeMapping[];
   embeddedCodes: VirtualCode[];
 
@@ -272,6 +290,7 @@ export class NmblHostVirtualCode implements VirtualCode {
     if (!match) {
       // Should not happen — callers check for match first. Return empty.
       this.compileErrors = [];
+      this.lintMessages = [];
       this.mappings = [];
       this.embeddedCodes = [];
       this.regionStart = 0;
@@ -322,6 +341,24 @@ export class NmblHostVirtualCode implements VirtualCode {
         span: {
           start: { ...err.span.start, offset: origStart },
           end: { ...err.span.end, offset: origEnd },
+        },
+      };
+    });
+
+    // Lint the dedented region, then shift each finding's span from
+    // dedented-space back to host-document space (mirrors compileErrors above).
+    this.lintMessages = safeLint(dedented).map((msg) => {
+      const origStart =
+        this.regionStart +
+        dedentedOffsetToOriginal(msg.span.start.offset, dedented, origLineStartOffsets, indent);
+      const origEnd =
+        this.regionStart +
+        dedentedOffsetToOriginal(msg.span.end.offset, dedented, origLineStartOffsets, indent);
+      return {
+        ...msg,
+        span: {
+          start: { ...msg.span.start, offset: origStart },
+          end: { ...msg.span.end, offset: origEnd },
         },
       };
     });
