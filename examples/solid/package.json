@@ -13,6 +13,7 @@
     "vite": "catalog:"
   },
   "devDependencies": {
+    "@nmbl-lang/typescript-plugin": "workspace:*",
     "typescript": "catalog:"
   }
 }

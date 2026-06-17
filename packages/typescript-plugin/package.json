@@ -1,0 +1,50 @@
+{
+  "name": "@nmbl-lang/typescript-plugin",
+  "version": "0.1.0",
+  "description": "TypeScript language-service plugin that teaches tsserver about nmbl`…` templates so component imports aren't flagged as unused",
+  "keywords": [
+    "nmbl",
+    "template",
+    "typescript",
+    "tsserver",
+    "language-service",
+    "react",
+    "solid"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/typescript-plugin"
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.cts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.cjs",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "tbuild": "turbo run build",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

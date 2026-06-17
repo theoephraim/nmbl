@@ -28,6 +28,7 @@
         "vite": "catalog:",
       },
       "devDependencies": {
+        "@nmbl-lang/typescript-plugin": "workspace:*",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "typescript": "catalog:",
@@ -42,6 +43,7 @@
         "vite-plugin-solid": "catalog:",
       },
       "devDependencies": {
+        "@nmbl-lang/typescript-plugin": "workspace:*",
         "typescript": "catalog:",
       },
     },
@@ -185,6 +187,18 @@
       },
       "peerDependencies": {
         "svelte": ">=5.0.0",
+      },
+    },
+    "packages/typescript-plugin": {
+      "name": "@nmbl-lang/typescript-plugin",
+      "version": "0.1.0",
+      "devDependencies": {
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+      "peerDependencies": {
+        "typescript": ">=5.0.0",
       },
     },
     "packages/vite-plugin": {
@@ -575,6 +589,8 @@
     "@nmbl-lang/prettier-plugin": ["@nmbl-lang/prettier-plugin@workspace:packages/prettier-plugin"],
 
     "@nmbl-lang/svelte": ["@nmbl-lang/svelte@workspace:packages/svelte"],
+
+    "@nmbl-lang/typescript-plugin": ["@nmbl-lang/typescript-plugin@workspace:packages/typescript-plugin"],
 
     "@nmbl-lang/vite-plugin": ["@nmbl-lang/vite-plugin@workspace:packages/vite-plugin"],
 
