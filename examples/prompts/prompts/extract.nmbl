@@ -1,0 +1,23 @@
+---
+title: Extract structured fields
+description: Pull named fields out of unstructured text as JSON.
+model: claude-opus-4-8
+tags: [extraction, data]
+---
+system:md
+  You extract structured data. If a field is missing, return null — never guess.
+
+task
+  instructions:md
+    Extract the following fields from the text and return **JSON only**.
+
+  fields
+    field(name="company" type="string")
+    field(name="amount" type="number")
+    field(name="due_date" type="date")
+
+  text:md
+    Invoice from Acme Corp for $4,100.00, due 2026-07-01.
+
+  output_format:md
+    A single JSON object. No markdown fences, no commentary.

@@ -10,6 +10,8 @@ import { EditorState, Annotation, Compartment, StateEffect, StateField } from '@
 import { basicSetup } from 'codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import { nmblLanguage } from '@nmbl-lang/codemirror';
+import { markdownOverlay } from './markdown-overlay';
+import { indentRainbow } from './indent-rainbow';
 
 const props = defineProps<{
   modelValue: string;
@@ -92,6 +94,40 @@ const theme = EditorView.theme({
     outline: '1px solid rgba(124, 110, 246, 0.45)',
     borderRadius: '2px',
   },
+  // Rainbow indent guides (see indent-rainbow.ts) — a thin coloured bar at the
+  // start of each indent level. box-shadow, so no layout shift.
+  '.cm-indent-rainbow': {
+    opacity: '0.18',
+  },
+  '.cm-indent-rainbow-0': { boxShadow: 'inset 1.5px 0 0 var(--rainbow-0)' },
+  '.cm-indent-rainbow-1': { boxShadow: 'inset 1.5px 0 0 var(--rainbow-1)' },
+  '.cm-indent-rainbow-2': { boxShadow: 'inset 1.5px 0 0 var(--rainbow-2)' },
+  '.cm-indent-rainbow-3': { boxShadow: 'inset 1.5px 0 0 var(--rainbow-3)' },
+  '.cm-indent-rainbow-4': { boxShadow: 'inset 1.5px 0 0 var(--rainbow-4)' },
+  '.cm-indent-rainbow-5': { boxShadow: 'inset 1.5px 0 0 var(--rainbow-5)' },
+  // Markdown highlighting inside :md content blocks (see markdown-overlay.ts).
+  '.cm-md-heading': {
+    color: 'var(--color-text)',
+    fontWeight: '700',
+  },
+  '.cm-md-strong': {
+    color: 'var(--color-text)',
+    fontWeight: '700',
+  },
+  '.cm-md-em': {
+    fontStyle: 'italic',
+  },
+  '.cm-md-code': {
+    color: 'var(--color-accent)',
+  },
+  '.cm-md-link': {
+    color: 'var(--color-accent)',
+    textDecoration: 'underline',
+  },
+  '.cm-md-list': {
+    color: 'var(--color-text-muted)',
+    fontWeight: '700',
+  },
 });
 
 onMounted(() => {
@@ -100,6 +136,7 @@ onMounted(() => {
   const extensions = [
     basicSetup,
     theme,
+    indentRainbow,
     readonlyCompartment.of(readonlyExt(props.readonly ?? false)),
     syncHighlightField,
     EditorView.updateListener.of((update) => {
@@ -126,7 +163,7 @@ onMounted(() => {
   if (props.language === 'html') {
     extensions.push(htmlLang());
   } else if (props.language === 'nmbl') {
-    extensions.push(nmblLanguage);
+    extensions.push(nmblLanguage, markdownOverlay);
   }
 
   if (props.placeholder) {

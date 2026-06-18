@@ -1,0 +1,157 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Qwik Integration Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Qwik
+      h1 Qwik Integration
+      p.lead Use NMBL markup in Qwik components with the nmbl tagged template
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#installation") Installation
+            a(href="#configuration") Configuration
+            a(href="#basic-usage") Basic Usage
+            a(href="#control-flow") Control Flow
+            a(href="#comments") Comments
+            a(href="#editor-support") Editor Support
+            a(href="#troubleshooting") Troubleshooting
+
+        .prose
+          Fragment:md
+            ## Installation
+
+            Qwik (like other JSX frameworks) uses NMBL's Vite plugin. Install it as a dev dependency:
+
+            ```bash
+            # Using npm
+            npm install --save-dev @nmbl-lang/vite-plugin
+
+            # Using bun
+            bun add -d @nmbl-lang/vite-plugin
+
+            # Using pnpm
+            pnpm add -D @nmbl-lang/vite-plugin
+            ```
+
+            ## Configuration
+
+            Add the NMBL plugin to your `vite.config.ts`. It must come **before** the Qwik plugin, and you tell it to target Qwik's JSX:
+
+            ```ts title="vite.config.ts"
+            import { defineConfig } from 'vite';
+            import { qwikVite } from '@builder.io/qwik/optimizer';
+            import nmbl from '@nmbl-lang/vite-plugin';
+
+            export default defineConfig({
+              plugins: [
+                nmbl({ jsx: { framework: 'qwik' } }), // must come before qwikVite()
+                qwikVite(),
+              ],
+            });
+            ```
+
+            ## Basic Usage
+
+            Unlike Vue, Svelte, and Astro (which use a `<template lang="nmbl">` block), JSX frameworks use a **tagged template**. Import the `nmbl` tag and return ``nmbl`…` `` from your component. Qwik signals are read through `.value` inside `${…}` holes:
+
+            ```tsx title="App.tsx"
+            import { component$, useSignal } from '@builder.io/qwik';
+            import { nmbl } from '@nmbl-lang/vite-plugin/tag';
+
+            export const App = component$(() => {
+              const count = useSignal(0);
+
+              return nmbl`
+                div#app
+                  h1.title NMBL + Qwik
+                  button(onClick$=${() => count.value++}) Clicked ${count.value} times
+              `;
+            });
+            ```
+
+            The plugin compiles the tagged template to Qwik JSX at build time. Interpolation uses `${expr}` holes, and Qwik's `$`-suffixed handlers (`onClick$`) pass straight through. Unlike React, Qwik keeps native HTML attribute names — `class` and `for` are preserved, not renamed.
+
+            ## Control Flow
+
+            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX control-flow expressions Qwik uses. Conditions and loop sources go in `${…}` holes (read signals with `.value` there):
+
+            ```nmbl
+            @if(${loggedIn.value})
+              p Welcome back, ${user.value.name}
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(item of ${items.value} :key="item.id")
+                li ${item.name}
+            ```
+
+            `@if(${cond})` compiles to a JSX conditional and `@each(item of ${items.value})` to a `.map()` expression — the same primitives Qwik's JSX uses. One JSX-specific rule worth knowing: when you use `:key`, the loop body must have a single root element (the key goes on it) — a multi-root `@each` body with `:key` is a compile error. NMBL's `@await` / `@key` / `@snippet` are Svelte-only and will error in the JSX target.
+
+            ## Comments
+
+            `//` comments are stripped from the output (dev notes); `//!` comments are rendered as real HTML comments:
+
+            ```nmbl
+            // dev note — never shipped
+            //! becomes <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            You can also comment out individual props inside a tag's parens — handy while debugging:
+
+            ```nmbl
+            button(
+              type="button"
+              // disabled
+              /* aria-label="Add" */
+            ) Add
+            ```
+
+            ## Editor Support
+
+            The NMBL VS Code extension highlights ``nmbl`…` `` tagged templates inside `.tsx`, `.jsx`, `.ts`, and `.js` files, so the markup reads as NMBL rather than a plain string.
+
+          Fragment:md
+            > **Note:** The NMBL language server (diagnostics, completions, go-to-definition) currently covers standalone `.nmbl` files and `<template lang="nmbl">` blocks in Svelte/Astro — not the JSX tagged-template form yet. You get syntax highlighting in Qwik files today; for the richest tooling, factor shared markup into a `.nmbl` file. Vue remains the most complete for full type intellisense via its dedicated Volar plugin.
+
+            ## Troubleshooting
+
+          .troubleshooting:md
+            ### Tagged template not compiling
+
+            Make sure `nmbl({ jsx: { framework: 'qwik' } })` is listed **before** `qwikVite()` in your Vite `plugins` array, and restart the dev server after editing the config.
+
+            ### Reactivity not updating
+
+            Qwik is signal-based — read and write signals through `.value` (`${count.value}`, not `${count}`). Reading a signal outside a `${…}` hole won't track it.
+
+            ### Syntax errors with indentation
+
+            NMBL uses indentation for structure. The first line of the template (inside the backticks) sets the base indent — keep it consistent (2-space steps, no tabs).
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="https://github.com/theoephraim/nmbl/tree/main/examples/qwik" target="_blank")
+                span View Example Project
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+</template>

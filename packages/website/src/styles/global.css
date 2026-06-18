@@ -11,12 +11,52 @@
   --color-accent-hover: #9486ff;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Canonical NMBL rainbow ramp — depth-as-colour. The brand's one piece of
+     colour beyond purple: indent guides, the mascot trail, loaders, dividers.
+     Same six hues everywhere so the motif reads as intentional, not decoration.
+     Cycle by indent depth: level N uses --rainbow-(N mod 6). */
+  --rainbow-0: #ff595e;
+  --rainbow-1: #ff924c;
+  --rainbow-2: #ffca3a;
+  --rainbow-3: #8ac926;
+  --rainbow-4: #1982c4;
+  --rainbow-5: #9b6cf0;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* Rainbow indent guides on static code samples (see src/ec-indent-rainbow.mjs).
+   Painted on a pseudo-element so `opacity` dims only the bars, not the code text.
+   The plugin sets the --ir-* custom properties per line; lines with no
+   indentation leave them unset and the pseudo-element paints nothing.
+
+   The guides must start where the CODE TEXT starts, not at the line's left
+   edge. Expressive Code pads `.code` with `padding-inline-start` (its value
+   lives in non-inheriting @property vars we can't read), so anchoring to
+   `.ec-line` puts the bars ~20px left of the text everywhere EC keeps its
+   default padding — only the homepage showcase, which zeroes that padding,
+   lined up. Fix: paint on a `.code::after` that re-inherits `.code`'s computed
+   padding and uses `background-origin: content-box`, so the bars line up with
+   the text for any padding value. `::after` (not `::before`) avoids EC's own
+   `.code::before` line-marker pseudo. */
+.expressive-code .ec-line .code::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  padding-inline-start: inherit;
+  background-image: var(--ir-image, none);
+  background-size: var(--ir-size, auto);
+  background-position: var(--ir-pos, 0 0);
+  background-origin: content-box;
+  background-repeat: no-repeat;
+  opacity: 0.18;
+  pointer-events: none;
 }
 
 html {
@@ -41,8 +81,20 @@ a:hover {
   color: var(--color-accent-hover);
 }
 
+/* Disable ligatures in code — `=>`, `!=`, `->` etc. should read as the literal
+   characters, not glyphs. */
 code, pre {
   font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+/* expressive-code ships its own font + feature settings at higher specificity,
+   so force ligatures off on its rendered blocks. */
+.expressive-code pre,
+.expressive-code code {
+  font-variant-ligatures: none !important;
+  font-feature-settings: 'liga' 0, 'calt' 0 !important;
 }
 
 .container {

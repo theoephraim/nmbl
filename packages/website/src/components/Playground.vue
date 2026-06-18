@@ -1,14 +1,20 @@
 <template lang="nmbl">
 .playground
   .playground-toolbar
-    label.framework-label
-      span Framework
-      select.framework-select(v-model="framework")
-        option(value="html") html
-        option(value="vue") vue
-        option(value="svelte") svelte
-        option(value="astro") astro
-    button.direction-toggle(@click="toggleDirection" :disabled="!canReverse" :title="directionTitle")
+    .framework-picker(role="tablist" aria-label="Framework")
+      button.fw-btn(
+        v-for="fw in FRAMEWORKS"
+        :key="fw.value"
+        type="button"
+        role="tab"
+        :class="{ active: framework === fw.value }"
+        :aria-selected="framework === fw.value"
+        :title="fw.label"
+        @click="framework = fw.value"
+      )
+        img.fw-logo(:src="fw.icon" alt="" width="26" height="26")
+        span.fw-name {{ fw.label }}
+    button.direction-toggle(v-if="canReverse" @click="toggleDirection" :title="directionTitle")
       span.direction-side {{ direction === 'nmbl-to-html' ? 'NMBL' : 'HTML' }}
       span.direction-arrow →
       span.direction-side {{ direction === 'nmbl-to-html' ? 'HTML' : 'NMBL' }}
@@ -33,7 +39,7 @@
       )
     .editor-pane(:class="{ 'pane-output': direction === 'nmbl-to-html' }" :style="{ order: direction === 'html-to-nmbl' ? 1 : 2 }")
       .pane-header
-        span HTML
+        span {{ outputLabel }}
           span.pane-tag(v-if="direction === 'nmbl-to-html'") generated
         span.pane-stats {{ htmlStats }}
       Editor(
@@ -55,6 +61,19 @@ import Editor from './Editor.vue';
 import { PLAYGROUND_EXAMPLES, type PlaygroundFramework } from '../examples';
 
 const framework = ref<PlaygroundFramework>('html');
+
+// The icon picker that replaces the framework dropdown.
+const FRAMEWORKS: { value: PlaygroundFramework; label: string; icon: string }[] = [
+  { value: 'html', label: 'HTML', icon: '/logos/html5.svg' },
+  { value: 'vue', label: 'Vue', icon: '/logos/vue.svg' },
+  { value: 'svelte', label: 'Svelte', icon: '/logos/svelte.svg' },
+  { value: 'astro', label: 'Astro', icon: '/logos/astro.svg' },
+  { value: 'react', label: 'React', icon: '/logos/react.svg' },
+  { value: 'solid', label: 'Solid', icon: '/logos/solid.svg' },
+  { value: 'qwik', label: 'Qwik', icon: '/logos/qwik.svg' },
+  { value: 'prompt', label: 'Prompt', icon: '/logos/prompt.svg' },
+];
+
 const nmblSource = ref(PLAYGROUND_EXAMPLES[framework.value]);
 const htmlSource = ref('');
 
@@ -92,10 +111,34 @@ const error = ref('');
 const GUIDES: Record<PlaygroundFramework, { href: string; label: string }> = {
   html: { href: '/guides', label: 'Integration guides' },
   vue: { href: '/guides/vue', label: 'Using NMBL with Vue' },
-  svelte: { href: '/guides', label: 'Svelte guide (coming soon)' },
-  astro: { href: '/guides', label: 'Astro guide (coming soon)' },
+  svelte: { href: '/guides/svelte', label: 'Using NMBL with Svelte' },
+  astro: { href: '/guides/astro', label: 'Using NMBL with Astro' },
+  react: { href: '/guides/react', label: 'Using NMBL with React' },
+  solid: { href: '/guides/solid', label: 'Using NMBL with Solid' },
+  qwik: { href: '/guides/qwik', label: 'Using NMBL with Qwik' },
+  prompt: { href: '/guides/prompts', label: 'NMBL for prompts' },
 };
 const guide = computed(() => GUIDES[framework.value]);
+
+// Output pane label per target: HTML for vue/svelte/astro/html, JSX for the
+// tagged-template frameworks, structured text for 'prompt'.
+const outputLabel = computed(() => {
+  const fw = framework.value;
+  if (fw === 'prompt') return 'Prompt';
+  if (fw === 'react' || fw === 'solid' || fw === 'qwik') return 'JSX';
+  return 'HTML';
+});
+
+// PlaygroundFramework → core compile options. react/solid both target 'jsx';
+// React additionally aliases class→className / for→htmlFor.
+function compileOptionsFor(fw: PlaygroundFramework) {
+  if (fw === 'react') return { framework: 'jsx' as const, attributeAliases: { class: 'className', for: 'htmlFor' } };
+  if (fw === 'solid') return { framework: 'jsx' as const, jsxRawHtml: 'solid' as const };
+  // Qwik is JSX too, but keeps native HTML attribute names (class/for) and uses
+  // dangerouslySetInnerHTML for raw-HTML blocks (the default jsxRawHtml).
+  if (fw === 'qwik') return { framework: 'jsx' as const };
+  return { framework: fw };
+}
 
 // HTML → NMBL only makes sense for the html target — the decompiler turns plain
 // HTML back into NMBL, and framework output ({#each}, <template v-for>, client:
@@ -178,7 +221,7 @@ compileNmbl(nmblSource.value);
 
 function compileNmbl(source: string) {
   try {
-    const { html, errors, mappings: m } = compile(source, { framework: framework.value, filters: { md: mdFilter } });
+    const { html, errors, mappings: m } = compile(source, { ...compileOptionsFor(framework.value), filters: { md: mdFilter } });
     if (errors.length > 0) {
       error.value = errors.map(e => e.message).join('\n');
     } else {
@@ -245,33 +288,55 @@ watch(htmlSource, (value) => {
   align-items: center;
   gap: 1rem;
   margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.framework-label {
+.framework-picker {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+  gap: 0.375rem;
+  flex-wrap: wrap;
 }
 
-.framework-select {
+.fw-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 60px;
+  padding: 0.5rem 0.25rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
-  color: var(--color-text);
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  color: var(--color-text-muted);
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 
-.framework-select:focus {
-  outline: 1px solid var(--color-accent);
+.fw-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.fw-btn.active {
+  border-color: var(--color-accent);
+  background: rgba(124, 110, 246, 0.1);
+  color: var(--color-text);
+}
+
+.fw-logo {
+  width: 26px;
+  height: 26px;
+}
+
+/* html/prompt have no brand color, so de-emphasize all logos until selected */
+.fw-btn:not(.active) .fw-logo {
+  filter: grayscale(0.6);
+  opacity: 0.8;
+}
+
+.fw-name {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
 }
 
 .guide-link {

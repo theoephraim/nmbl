@@ -1,0 +1,168 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Prompts & Structured Data Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Prompts & Structured Data
+      h1 Prompts & Structured Data
+      p.lead Use NMBL as a structure-first format for AI prompts and XML-like documents
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#the-idea") The Idea
+            a(href="#authoring") Authoring
+            a(href="#render-to-a-string") Render to a String
+            a(href="#parse-to-an-object") Parse to an Object
+            a(href="#loading-many-files") Loading Many Files
+            a(href="#when-to-reach-for-this") When to Reach for This
+
+        .prose
+          Fragment:md
+            ## The Idea
+
+            NMBL's structure-first syntax isn't only for HTML. The same
+            indentation-based tags compile to an XML-ish string, and large
+            markdown sections can stay as raw text — which makes NMBL a
+            comfortable way to author **AI prompts** (Anthropic recommends XML
+            tags to delimit prompt sections) or any structured document: light
+            tags and attributes wrapped around prose.
+
+            One source, two outputs:
+
+            - render to an XML-like **string** to feed a model
+            - parse to a structured **object** to read frontmatter and walk
+              sections as data
+
+            ## Authoring
+
+            A standalone `.nmbl` file with YAML frontmatter, tags for structure,
+            and `:md` blocks for prose. Author the prose with `:md` (not a bare
+            `:` text block) so you keep markdown highlighting in your editor — the
+            prompt target keeps it as text either way.
+
+            ```nmbl title="prompts/summarize.nmbl"
+            ---
+            title: Summarize a document
+            model: claude-opus-4-8
+            tags: [summary, writing]
+            ---
+            system:md
+              You are a precise summarization assistant.
+
+            task
+              instructions:md
+                Summarize the document in **three bullet points**.
+              document(source="report.pdf")
+                body:md
+                  Inject the document text here.
+              output_format:md
+                Return a markdown bulleted list.
+            ```
+
+            ## Render to a String
+
+            Compile with the `prompt` target. Arbitrary tags pass through,
+            attributes become metadata, and `:md` sections stay as text
+            (re-indented to nest under their tag):
+
+            ```ts
+            import { compile } from '@nmbl-lang/core';
+
+            const { html } = compile(source, { framework: 'prompt' });
+            ```
+
+            ```xml title="output"
+            <system>
+              You are a precise summarization assistant.
+            </system>
+            <task>
+              <instructions>
+                Summarize the document in **three bullet points**.
+              </instructions>
+              <document source="report.pdf">
+                <body>
+                  Inject the document text here.
+                </body>
+              </document>
+              <output_format>
+                Return a markdown bulleted list.
+              </output_format>
+            </task>
+            ```
+
+            The markdown stays literal — no escaping — which is what a model reads
+            best. Runtime constructs like `@if` or `{@html}` are compile errors
+            under this target: a prompt document is static structure, not a
+            template.
+
+            ## Parse to an Object
+
+            The same file can be read as data through the `@nmbl-lang/core/structured`
+            entry point:
+
+            ```ts
+            import { parseStructured } from '@nmbl-lang/core/structured';
+
+            const { frontmatter, tree, body } = parseStructured(source);
+            // frontmatter → { title, model, tags }
+            // tree        → [{ tag: 'system', content: { mode: 'md', text } },
+            //                { tag: 'task', children: [ … ] }]
+            // body        → the template with frontmatter stripped (pass to compile())
+            ```
+
+            Content-mode sections come through as `{ mode, text }` with the
+            markdown preserved as text; CSS shorthand (`#id` / `.class`) and
+            explicit attributes fold into a flat `attrs` map.
+
+            ## Loading Many Files
+
+            `parseStructured` takes a plain string — it has no opinion about
+            *where* the source comes from. A folder, a database row, an HTTP
+            response all work the same. Reading a folder is just glue:
+
+            ```ts
+            import { readdirSync, readFileSync } from 'node:fs';
+            import { parseStructured } from '@nmbl-lang/core/structured';
+
+            const prompts = Object.fromEntries(
+              readdirSync('./prompts')
+                .filter((f) => f.endsWith('.nmbl'))
+                .map((f) => [f, parseStructured(readFileSync(`./prompts/${f}`, 'utf8'))]),
+            );
+            ```
+
+            Now `prompts` is a registry you can filter by frontmatter, render on
+            demand, or validate.
+
+            ## When to Reach for This
+
+            This shines when prompts have real nested structure or attributes and
+            you manage many of them programmatically. For a single flat prompt,
+            plain markdown with frontmatter is often enough — reach for NMBL here
+            when the structure (and the one-source-two-outputs property) actually
+            earns its keep.
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="https://github.com/theoephraim/nmbl/tree/main/examples/prompts" target="_blank")
+                span View Example Project
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+</template>

@@ -1,0 +1,24 @@
+---
+title: Review a code diff
+description: Find correctness bugs and risky changes in a diff.
+model: claude-opus-4-8
+tags: [code, review]
+---
+system:md
+  You are a senior engineer doing a focused code review. You only flag issues
+  you are confident about.
+
+task
+  instructions:md
+    Review the diff for **correctness bugs** and **risky changes**.
+    Ignore style nits.
+
+  diff(format="unified" path="src/")
+    body:md
+      ```diff
+      - const total = items.reduce((a, b) => a + b)
+      + const total = items.reduce((a, b) => a + b, 0)
+      ```
+
+  output_format:md
+    For each finding: a one-line title, the file, and why it matters.

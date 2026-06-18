@@ -1,0 +1,141 @@
+---
+import { Code } from 'astro-expressive-code/components';
+import { FRAMEWORK_INTEGRATIONS } from '../examples';
+
+// Per-framework integration snippets with a language toggle. The toggle is
+// plain DOM (no island) — the code blocks are highlighted at build time by
+// expressive-code, and we just show/hide panels on the client.
+const frameworks = [
+  { value: 'vue', label: 'Vue', icon: '/logos/vue.svg', lang: 'vue', file: 'App.vue' },
+  { value: 'svelte', label: 'Svelte', icon: '/logos/svelte.svg', lang: 'svelte', file: 'App.svelte' },
+  { value: 'astro', label: 'Astro', icon: '/logos/astro.svg', lang: 'astro', file: 'index.astro' },
+  { value: 'react', label: 'React', icon: '/logos/react.svg', lang: 'tsx', file: 'App.tsx' },
+  { value: 'solid', label: 'Solid', icon: '/logos/solid.svg', lang: 'tsx', file: 'App.tsx' },
+  { value: 'qwik', label: 'Qwik', icon: '/logos/qwik.svg', lang: 'tsx', file: 'App.tsx' },
+] as const;
+---
+
+<section class="fw-showcase">
+  <div class="container">
+    <h2>Drops into your framework</h2>
+    <p class="fw-sub">
+      The same nmbl markup, native to each toolchain &mdash; a <code>&lt;template lang="nmbl"&gt;</code>
+      block or an <code>nmbl`…`</code> tagged template, compiled away at build time.
+    </p>
+
+    <div class="fw-tabs">
+      <div class="fw-tablist" role="tablist" aria-label="Framework">
+        {frameworks.map((fw, i) => (
+          <button class="fw-tab" data-fw={fw.value} role="tab" type="button" aria-selected={i === 0 ? 'true' : 'false'}>
+            <img src={fw.icon} alt="" width="20" height="20" />
+            <span>{fw.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div class="fw-panels">
+        {frameworks.map((fw, i) => (
+          <div class="fw-panel" data-fw={fw.value} hidden={i !== 0}>
+            <Code code={FRAMEWORK_INTEGRATIONS[fw.value]} lang={fw.lang} title={fw.file} frame="code" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.fw-tabs').forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('.fw-tab')];
+    const panels = [...root.querySelectorAll<HTMLElement>('.fw-panel')];
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const fw = tab.dataset.fw;
+        tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+        panels.forEach((p) => { p.hidden = p.dataset.fw !== fw; });
+      });
+    });
+  });
+</script>
+
+<style>
+  .fw-showcase {
+    padding: 4rem 0;
+  }
+
+  .fw-showcase h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .fw-sub {
+    text-align: center;
+    color: var(--color-text-muted);
+    max-width: 640px;
+    margin: 0 auto 2rem;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .fw-sub code {
+    background: rgba(124, 110, 246, 0.15);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--color-accent);
+  }
+
+  .fw-tabs {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .fw-tablist {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .fw-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+
+  .fw-tab img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .fw-tab:not([aria-selected='true']) img {
+    filter: grayscale(0.6);
+    opacity: 0.8;
+  }
+
+  .fw-tab:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  .fw-tab[aria-selected='true'] {
+    border-color: var(--color-accent);
+    background: rgba(124, 110, 246, 0.1);
+    color: var(--color-text);
+  }
+
+  .fw-panel[hidden] {
+    display: none;
+  }
+</style>

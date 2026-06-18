@@ -1,0 +1,74 @@
+---
+title: NMBL — write HTML the way you think
+description: An indentation-based template syntax that compiles to your framework.
+draft: false
+tags:
+  - intro
+  - demo
+---
+
+// A standalone .nmbl file. Structure-first markup that compiles to
+// Svelte / Vue / Astro / JSX — no closing tags, no <div> soup.
+//! This rendered comment becomes an HTML comment in the output.
+
+main#app.page.dark
+  //─ Header: id + class shorthand, bound attrs, a component ───────
+  header.hero(data-section="hero")
+    img.hero__avatar(:src :alt width=48)
+    h1.hero__title Welcome to {product.name}
+    p.hero__tagline
+      | {product.tagline}
+      Badge(text=`v${product.version}` color="green" rounded)
+
+  //─ Embedded markdown — built-in CommonMark + GFM ────────────────
+  section.prose:md
+    ## Why NMBL?
+
+    Author **structure first**. No closing tags, just indentation. Prose
+    like this lives in a `:md` block, so [links](/), `code`, and **bold**
+    all just work — and `{ interpolation }` still flows through.
+
+    - Compiles to your framework's native template
+    - Markdown where you want it, markup where you need it
+
+  //─ Control flow + the portable @each form ───────────────────────
+  section.features
+    h2 Features
+    @if(features.length)
+      ul.feature-list
+        @each(feature, i of features :key="feature.id")
+          li.feature
+            span.feature__num {i + 1}
+            a.feature__link(href={feature.url}) {feature.title}
+            @if(feature.isNew)
+              Badge(text="new" color="blue" outline)
+            @elseif(feature.deprecated)
+              Badge(text="old" color="red")
+    @else
+      p.empty Nothing to show yet.
+
+  //─ A form: void elements, block expansion, commented attr ───────
+  footer.signup
+    form(action="/subscribe" method="post")
+      label > input(type="email" name="email" placeholder="you@example.com" required)
+      button(
+        type="submit"
+        // disabled            ← comment out a single attribute
+        onClick={() => subscribe()}
+      ) Get updates
+
+  //─ Raw passthrough: an SVG icon is kept verbatim ────────────────
+  div.icon
+    <svg viewBox="0 0 24 24" width="20" height="20">
+    <path d="M12 2 2 7l10 5 10-5-10-5Z" fill="currentColor"/>
+    </svg>
+
+script:
+  // a glued `:` opens a raw content block — never parsed as NMBL
+  const product = getProduct();
+  if (1 < 2) console.log('plain JS, passed through untouched');
+
+style:
+  .page { max-width: 720px; margin: 0 auto; }
+  .hero__title { font-size: 2rem; }
+  .feature__num { opacity: 0.5; }

@@ -1,0 +1,16 @@
+{
+  "name": "example/prompts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run load.ts",
+    "dev": "bun run load.ts"
+  },
+  "dependencies": {
+    "@nmbl-lang/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "typescript": "catalog:"
+  }
+}

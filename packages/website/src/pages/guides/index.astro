@@ -6,53 +6,62 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 BaseLayout(title="Integration Guides")
   section.guides-hero
     .container
-      h1 Integration Guides
-      p.lead Learn how to use NMBL with your favorite framework
+      h1 Guides
+      p.lead Learn the syntax, then wire NMBL into your framework of choice
 
   section.guides-list
     .container
       .guides-grid
+        a.guide-card.guide-card-feature(href="/guides/syntax")
+          .guide-icon
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="8,9 11,12 8,15"/>
+            <polyline points="16,9 13,12 16,15"/>
+            <path d="M9 16.5 Q12 19 15 16.5"/>
+            </svg>
+          h3 Syntax Reference
+          p Everything the NMBL notation gives you — elements, attributes, comments, content blocks, and control flow — in one place.
         a.guide-card(href="/guides/vue")
           .guide-icon
             <img src="/logos/vue.svg" alt="Vue" width="48" height="48" />
           h3 Vue
           p Full intellisense support for NMBL templates in Vue Single File Components with Volar integration.
-          span.guide-status.stable Beta
-
         a.guide-card(href="/guides/svelte")
           .guide-icon
             <img src="/logos/svelte.svg" alt="Svelte" width="48" height="48" />
           h3 Svelte
           p Use NMBL's clean syntax in Svelte components via a preprocessor. Compiles to native Svelte blocks.
-          span.guide-status Beta
-
         a.guide-card(href="/guides/astro")
           .guide-icon
             <img src="/logos/astro.svg" alt="Astro" width="48" height="48" />
           h3 Astro
           p Use NMBL templates in Astro components and pages — with markdown blocks that run through Astro's own pipeline.
-          span.guide-status Beta
-
         a.guide-card(href="/guides/react")
           .guide-icon
             <img src="/logos/react.svg" alt="React" width="48" height="48" />
           h3 React
           p Write NMBL markup in React components with the nmbl tagged template. Compiles to JSX.
-          span.guide-status Beta
-
         a.guide-card(href="/guides/solid")
           .guide-icon
             <img src="/logos/solid.svg" alt="Solid" width="48" height="48" />
           h3 Solid
           p Write NMBL markup in Solid components with the nmbl tagged template. Signal-aware JSX output.
-          span.guide-status Beta
-
-        a.guide-card.coming-soon(href="/guides/vite")
+        a.guide-card(href="/guides/qwik")
+          .guide-icon
+            <img src="/logos/qwik.svg" alt="Qwik" width="48" height="48" />
+          h3 Qwik
+          p Write NMBL markup in Qwik components with the nmbl tagged template. Compiles to Qwik JSX.
+        a.guide-card(href="/guides/prompts")
+          .guide-icon
+            span.guide-emoji 🤖
+          h3 Prompts & Structured Data
+          p Use NMBL as a structure-first format for AI prompts and XML-like documents — markdown sections wrapped in light tags. One source, two outputs.
+        a.guide-card(href="/guides/vite")
           .guide-icon
             <img src="/logos/vite.svg" alt="Vite" width="48" height="48" />
           h3 Vite
-          p Transform NMBL files on the fly with Vite's blazing fast HMR and build pipeline.
-          span.guide-status Coming Soon
+          p Load standalone NMBL files as compiled HTML — the plugin that powers the framework integrations.
 
       .other-integrations
         h2 More Integrations
@@ -132,6 +141,12 @@ BaseLayout(title="Integration Guides")
     margin-bottom: 1rem;
   }
 
+  .guide-emoji {
+    display: block;
+    font-size: 40px;
+    line-height: 48px;
+  }
+
   .guide-card h3 {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
@@ -151,11 +166,6 @@ BaseLayout(title="Integration Guides")
     border-radius: 4px;
     background: var(--color-bg-subtle);
     color: var(--color-text-muted);
-  }
-
-  .guide-status.stable {
-    background: rgba(79, 192, 141, 0.1);
-    color: #4FC08D;
   }
 
   .other-integrations {

@@ -1,0 +1,415 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Syntax Reference")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Syntax
+      h1 Syntax Reference
+      p.lead Everything the NMBL notation gives you — elements, attributes, text, comments, content blocks, and control flow — in one place.
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#elements") Elements & nesting
+            a(href="#attributes") Attributes
+            a(href="#text-and-raw-html") Text & raw HTML
+            a(href="#block-expansion") Block expansion
+            a(href="#comments") Comments
+            a(href="#content-blocks") Content blocks
+            a(href="#markdown-sections") Markdown sections
+            a(href="#control-flow") Control flow
+            a(href="#interpolation") Interpolation
+            a(href="#pitfalls") Pitfalls
+
+        .prose
+          Fragment:md
+            ## Elements
+
+            NMBL is an indentation-based shorthand for HTML. Structure comes from
+            **indentation** (2 spaces per level) — there are no closing tags. A
+            tag name starts a line; children go on indented lines beneath it.
+
+            ```nmbl
+            nav
+              ul
+                li Home
+                li About
+            ```
+
+            ### id and class shorthand
+
+            Use CSS-selector shorthand glued directly to the tag: `#id` for the id,
+            `.class` for classes (repeat `.` for multiple). A selector with **no tag
+            name** implies a `div`.
+
+            ```nmbl
+            div#app.card.dark   → <div id="app" class="card dark">
+            .box                → <div class="box">
+            section.hero.full   → <section class="hero full">
+            ```
+
+            ### Components
+
+            A PascalCase name is treated as a component and passed through
+            untouched — your framework resolves it.
+
+            ```nmbl
+            Counter(client:visible initialCount={0})
+            ```
+
+            ## Attributes
+
+            Attributes go inside parens **glued** to the tag head, separated by
+            whitespace; the parens may span multiple lines (newlines inside them
+            aren't significant). Values can be quoted strings, bare values
+            (`colspan=2`), or a raw `{expression}` hole; a valueless name is a
+            boolean attribute.
+
+            ```nmbl
+            a.btn(href="/x" target="_blank") Go
+            input(type="email" required)
+            td(colspan=2) Cell
+            button(onClick={() => save()}) Save
+            input(
+              type="email"
+              name="email"
+              required
+            )
+            ```
+
+            ### Bindings
+
+            For **dynamic** values, bind with a leading `:` (or pass a `{expression}`
+            value). The binding compiles to each framework's native form, and a bare
+            `:name` is shorthand for `:name="name"`:
+
+            ```nmbl
+            img(:src=`/avatars/${user.id}.png`)
+            Avatar(:user)                          ← shorthand for :user="user"
+            ```
+
+            | Target | `img(:src=…)` | `Avatar(:user)` |
+            |---|---|---|
+            | vue | `:src="…"` | `:user="user"` |
+            | svelte / astro / jsx | `src={…}` | `user={user}` |
+
+            In Vue, the host's own attribute directives — `v-model`, `@click.stop`,
+            `:prop`, `#slot` — pass straight through untouched, so write them however
+            you like.
+
+            ### Class merging
+
+            A static class (`.card`) plus a dynamic `:class` merges into one binding
+            on Svelte / Astro / JSX, while Vue keeps them separate (it merges classes
+            itself):
+
+            ```nmbl
+            div.card(:class={active})
+            ```
+
+            - **svelte / astro** → <code>class={`card ${(active) ?? ''}`}</code>
+            - **jsx (React)** → <code>className={`card ${(active) ?? ''}`}</code>
+            - **vue** → `class="card" :class={active}`
+
+            ### React aliases
+
+            For the React JSX target, NMBL renames the attributes React expects:
+            `class` → `className` and `for` → `htmlFor`. Solid and Qwik keep the
+            native names.
+
+            ## Text and raw HTML
+
+            Text can follow the tag head on the same line. For standalone or
+            multi-line text, prefix the line with a **pipe** (`|`). Pipes also let
+            you mix text with inline child elements — each `|` line is a text node
+            sitting alongside its element siblings:
+
+            ```nmbl
+            p Inline text after the tag head
+
+            p
+              | Read the
+              a(href="/docs") docs
+              | to learn more.
+            ```
+
+            That compiles to one paragraph with the link inline:
+            `<p>Read the <a href="/docs">docs</a> to learn more.</p>`.
+
+            ### Pipe text vs. a content block
+
+            Two different jobs. Use `|` when text is **interleaved** with elements
+            (above). When you want the element's **entire** body treated as raw text
+            — no tags parsed at all — use a content block (a glued trailing `:`,
+            covered [below](#content-blocks)). Inside a content block, an
+            element-looking line stays literal text:
+
+            ```nmbl
+            p
+              | mix text and
+              em elements              ← <em>elements</em>
+
+            p:
+              text and em elements     ← all literal; <em> is NOT parsed
+            ```
+
+            ### Preserving whitespace
+
+            NMBL trims the whitespace around each text fragment, and editors strip
+            trailing spaces on save — so an intentional space *between* inline
+            siblings is easily lost. Type the space, then end the line with `\` to
+            shield it from the editor:
+
+            ```nmbl
+            p
+              | click \
+              a(href="/post/1") here \
+              | to see the details
+            ```
+
+            Each `\` keeps the space before the next sibling, so the words and the
+            link stay separated — `click here to see the details` — instead of
+            colliding into `clickhereto see…`. The `\` only **protects** the
+            whitespace you already typed and is itself dropped — it never invents a
+            space (a `\` with no space before it is a no-op), and it preserves the
+            spaces *verbatim*, count and all:
+
+            ```nmbl
+            span gap of three.   \   → <span>gap of three.   </span>
+            span no space.\          → <span>no space.</span>
+            ```
+
+            This works on **any** text, not just `|` lines — inline text after a tag
+            head, as above, included.
+
+            This round-trips: the decompiler (HTML → NMBL) emits the `\` back when a
+            text node carries a significant trailing space, so converting markup in
+            and out preserves the gap.
+
+            ### Raw HTML
+
+            Raw `<…>` tags pass through **verbatim** — both **inline** inside text
+            (a stray `<b>` or `<a>`) and as **full lines** (a pasted SVG, the
+            doctype). NMBL never escapes them, so you mix markup right where you need
+            it:
+
+            ```nmbl
+            p Built with <b>nmbl</b> — read the <a href="/docs">docs</a>.
+
+            button.copy(type="button" aria-label="Copy code")
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <rect x="9" y="9" width="11" height="11" rx="2"/>
+              <path d="M5 15V5a2 2 0 0 1 2-2h8"/>
+              </svg>
+              | Copy
+            ```
+
+            **Leave SVG (and other pasted markup) as raw HTML** rather than
+            translating it into NMBL nodes. Kept verbatim, it stays a clean copy you
+            can paste straight back into a `.svg` file or another template — and
+            hand-converting generated markup gains nothing while churning diffs. One
+            rule: every line of a raw block must sit at the **same** indentation (note
+            the `<svg>`, `<rect>`, `<path>`, and `</svg>` lines above are all flush); a
+            line indented deeper than the one above it is a parse error, so flatten
+            the block's internal indentation.
+
+            ## Block expansion
+
+            Nest a single child inline with `>` (spaces on both sides). Great for
+            link lists and wrappers.
+
+            ```nmbl
+            li > a(href="/") Home   → <li><a href="/">Home</a></li>
+            ```
+
+            The spaces matter: `li > a` is expansion, but a `>` elsewhere in inline
+            text passes through as a literal character.
+
+            ## Comments
+
+            Comments come in a **stripped** tier (dev notes — gone from the output)
+            and a **rendered** tier (kept as a real HTML comment). Add `!` to render.
+
+            At the element level, use line comments — `//` to strip, `//!` to
+            render:
+
+            ```nmbl
+            // stripped from output — never shipped
+            //! rendered as <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            For a multi-line rendered comment, the block form `/*! … */` works too:
+
+            ```nmbl
+            /*!
+              shipped as an HTML comment,
+              across several lines
+            */
+            ```
+
+            Inside a tag's parens, use the block form `/* … */` to comment an
+            attribute out without deleting it:
+
+            ```nmbl
+            button(
+              type="submit"
+              /* disabled */          ← toggle a prop while debugging
+            ) Save
+            ```
+
+            > Placement matters: line comments (`//`, `//!`) live at the element
+            > level, and the block form (`/* */`) lives inside parens. The rendered
+            > `/*! */` is the one block-level exception.
+
+            ## Content blocks
+
+            A **glued** trailing `:` (or `:mode`) turns every more-indented line into
+            **raw text** — not parsed as NMBL. Built-in uses are `script:` and
+            `style:`; a named mode like `article:md` runs the body through a
+            registered filter.
+
+            ```nmbl
+            script:
+              const x = 1 < 2;   // not parsed as NMBL
+            style:
+              .a { color: red }
+            ```
+
+            ## Markdown sections
+
+            Append `:md` to any element and its body becomes Markdown, rendered at
+            build time. It works in **every** integration — reach for it instead of
+            stacks of inline `<h3>` / `<p>` / `<code>` in prose-heavy sections.
+
+            ```nmbl
+            .prose:md
+              ### A heading
+
+              A paragraph with [links](/x), `code`, and **bold**. Blank lines
+              separate paragraphs, and raw inline HTML works too.
+            ```
+
+            - **Astro** routes it through your project's *own* Markdown pipeline — so
+              fenced code blocks with syntax highlighting (` ``` `), GFM tables, and any
+              remark/rehype plugins you've added (e.g. `:::aside` directives) all work
+              exactly as they do in a `.md` file.
+            - **Vue / Svelte / `.nmbl` files / JSX templates** use a built-in
+              CommonMark + GFM renderer; override it with a custom `md` filter.
+            - The rendered HTML is spliced back into the host template, so `{expr}` /
+              `{{ expr }}` interpolation and `<Component />` tags still work inside the
+              prose (MDX-like). Braces inside code spans/fences are auto-escaped.
+
+            ### Bare `:md`
+
+            With no tag in front, a `:md` block renders its Markdown straight into the
+            surrounding output — no wrapper element:
+
+            ```nmbl
+            :md
+              ## Standalone prose
+
+              Rendered directly into the page.
+            ```
+
+            The exception is the **JSX** target: there a `:md` body compiles to
+            `dangerouslySetInnerHTML`, which needs a host element — so attach it
+            (`div:md`). A bare `:md` is a compile error under `jsx`.
+
+            ## Control flow
+
+            One notation compiles to each host's **native** control flow — write it
+            once, get idiomatic output everywhere. Conditions and loop sources are
+            plain host-JS, passed through verbatim. In Vue the `@`-blocks are
+            entirely optional: `v-if` / `v-for` pass straight through, so reach for
+            them or the `@`-sugar, whichever you prefer.
+
+            ```nmbl
+            @if(loggedIn)
+              p Welcome back, {user.name}
+            @elseif(guest)
+              a(href="/signup") Sign up
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(item, i of items :key="item.id")
+                li {i + 1}. {item.label}
+            ```
+
+            The loop accepts a few forms — the index and `:key` are optional, and
+            Svelte's `as` form is recognized too (prefer the `of` form):
+
+            ```nmbl
+            @each(item of items)                        ← value only
+            @each(item, i of items)                     ← value + index
+            @each(item of items :key="item.id")         ← keyed
+            @each(items as item, i (item.id))           ← Svelte-style, also accepted
+            ```
+
+            Here is what each target emits:
+
+            | Target | Output |
+            |---|---|
+            | `svelte` | `{#if}…{:else}…{/if}`, `{#each items as item, i (key)}`; plus `@await` / `@key` / `@snippet` |
+            | `vue` | `<template v-if="…">`, `<template v-for="… of …" :key="…">` |
+            | `astro` / `jsx` | `{cond ? (…) : (…)}`, `{items.map((item, i) => (…))}`; jsx puts `key={…}` on the loop's single root |
+            | `html` | no `@`-blocks (compile error) |
+
+            > NMBL **errors loudly** rather than emitting something wrong: `@await` /
+            > `@key` / `@snippet` outside Svelte, `{@html}` in Vue (use a `v-html`
+            > attribute), or a multi-root `@each` body with `:key` in JSX are all hard
+            > compile errors with hints.
+
+            ## Interpolation
+
+            Interpolation is always the **host's** syntax — NMBL never parses it, it
+            just passes it through: `{{ msg }}` in Vue, `{expr}` in Svelte and Astro,
+            and inside `nmbl`…`` JSX literals either `${hole}` holes or plain `{expr}`
+            text.
+
+            ## Pitfalls
+
+            These cause real compile errors — NMBL reports them with exact source
+            positions, so trust the messages. The most common are **gluing**
+            mistakes: a stray space turns structure into plain text.
+
+            ```nmbl
+            a(href="/")      ✓  attribute list binds to the tag
+            a (href="/")     ✗  the space makes (href="/") literal text
+            div.card         ✓  selector glued to the tag
+            div .card        ✗  the space makes .card literal text
+            li > a           ✓  block expansion — spaces around > are required
+            ```
+
+            A few structural rules round it out:
+
+            - **A glued trailing `:` opens a content block** — a single word + `:` on
+              its own line captures the lines below it as raw text.
+            - **Text lines need a `|`** (or must start with `<`); a bare text line
+              raises a diagnostic.
+            - **Don't mix tabs and spaces** — pick 2-space indentation.
+
+            When in doubt, paste into the playground and watch it compile live.
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="/guides")
+                span Framework Guides
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+</template>

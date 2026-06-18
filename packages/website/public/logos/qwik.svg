@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="qwik-g" x1="12" y1="12" x2="116" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#18B6F6"/>
+      <stop offset="1" stop-color="#AC7EF4"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#qwik-g)"/>
+  <path d="M72 18 L40 70 L58 70 L52 110 L92 54 L70 54 Z" fill="#fff"/>
+</svg>

@@ -1,0 +1,157 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Vite Integration Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Vite
+      h1 Vite Integration
+      p.lead Load standalone .nmbl files as compiled HTML — the plugin that powers the framework integrations
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#vite-powers-most-integrations") Vite Powers Most Integrations
+            a(href="#installation") Installation
+            a(href="#configuration") Configuration
+            a(href="#loading-a-file") Loading a File
+            a(href="#frontmatter") Frontmatter
+            a(href="#markdown-blocks") Markdown Blocks
+            a(href="#typescript") TypeScript
+
+        .prose
+          Fragment:md
+            ## Vite Powers Most Integrations
+
+            You're probably already using NMBL through Vite. The **Vue**, **React**,
+            and **Solid** guides all add the NMBL Vite plugin to a standard Vite
+            config (before the framework plugin), and **Astro** runs on Vite too.
+            In those setups the plugin preprocesses framework templates.
+
+            This guide covers using `@nmbl-lang/vite-plugin` directly for the
+            generic case: loading **standalone `.nmbl` files** as compiled HTML,
+            with no framework involved — handy for static pages, partials, email
+            templates, or anywhere you just want markup.
+
+            ## Installation
+
+            ```bash
+            # npm
+            npm install --save-dev @nmbl-lang/vite-plugin
+
+            # bun
+            bun add -d @nmbl-lang/vite-plugin
+            ```
+
+            ## Configuration
+
+            Add the plugin to your Vite config. For standalone `.nmbl` files it
+            defaults to the `html` target (plain markup — no framework needed):
+
+            ```ts title="vite.config.ts"
+            import { defineConfig } from 'vite';
+            import nmbl from '@nmbl-lang/vite-plugin';
+
+            export default defineConfig({
+              plugins: [nmbl()],
+            });
+            ```
+
+            When you pair it with a framework, add `nmbl()` **before** that
+            framework's plugin so it preprocesses templates first — exactly what
+            the other guides do:
+
+            ```ts title="vite.config.ts"
+            plugins: [
+              nmbl({ jsx: { framework: 'react' } }), // before react()
+              react(),
+            ]
+            ```
+
+            ## Loading a File
+
+            Importing a `.nmbl` file gives you the compiled HTML string as the
+            default export:
+
+            ```nmbl title="card.nmbl"
+            section.card
+              h1 Hello from NMBL
+              p.muted Compiled to HTML at build time.
+            ```
+
+            ```ts title="main.ts"
+            import html from './card.nmbl';
+
+            document.querySelector('#app').innerHTML = html;
+            ```
+
+            Edit the `.nmbl` file and Vite's HMR updates the page instantly.
+
+            ## Frontmatter
+
+            A `.nmbl` file can carry YAML frontmatter, exported alongside the
+            markup as `frontmatter`:
+
+            ```nmbl title="page.nmbl"
+            ---
+            title: Welcome
+            description: A standalone NMBL page.
+            ---
+            article.card
+              h1 Welcome
+              p A page compiled from NMBL.
+            ```
+
+            ```ts title="main.ts"
+            import html, { frontmatter } from './page.nmbl';
+
+            document.title = frontmatter.title;
+            document.querySelector('#app').innerHTML = html;
+            ```
+
+            ## Markdown Blocks
+
+            The plugin registers the built-in CommonMark + GFM filter, so `:md`
+            content blocks work out of the box in standalone files:
+
+            ```nmbl title="docs.nmbl"
+            article.prose:md
+              ## Getting started
+
+              Prose with **bold**, `code`, and [links](/). Blank lines separate
+              paragraphs, and raw inline HTML works too.
+            ```
+
+            ## TypeScript
+
+            Tell TypeScript about the `.nmbl` import shape with an ambient
+            declaration somewhere in your project:
+
+            ```ts title="nmbl.d.ts"
+            declare module '*.nmbl' {
+              const html: string;
+              export default html;
+              export const frontmatter: Record<string, unknown>;
+            }
+            ```
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/guides/prompts")
+                span Prompts & Structured Data
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+</template>
