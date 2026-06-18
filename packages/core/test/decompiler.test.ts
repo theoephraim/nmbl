@@ -55,6 +55,18 @@ describe('Decompiler', () => {
       expect(nmbl.trim()).toBe('br');
     });
 
+    test('preserves a significant trailing space with a trailing backslash', () => {
+      // A deliberate space before a sibling must survive the round trip — emit
+      // the trailing-`\` escape rather than trimming it away.
+      const nmbl = decompile('<div><p>before</p>label <input><p>after</p></div>');
+      expect(nmbl).toContain('| label \\');
+    });
+
+    test('does not add a backslash for plain formatting whitespace', () => {
+      const nmbl = decompile('<div>\n  <p>a</p>\n  <p>b</p>\n</div>');
+      expect(nmbl).not.toContain('\\');
+    });
+
     test('void element with attributes', () => {
       const nmbl = decompile('<input type="text" disabled>');
       expect(nmbl.trim()).toBe('input(type="text" disabled)');

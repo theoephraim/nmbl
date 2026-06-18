@@ -516,6 +516,7 @@ function wrapIfNeeded(jsx: string): string {
 
 export interface CompileTemplateOptions {
   attributeAliases?: Record<string, string>;
+  jsxRawHtml?: 'react' | 'solid';
 }
 
 export type CompileTemplateResult =
@@ -536,9 +537,11 @@ export function compileTemplate(
   const compilerOpts: CompilerOptions = {
     framework: 'jsx',
     attributeAliases: opts.attributeAliases,
+    jsxRawHtml: opts.jsxRawHtml,
     // Default `md` filter so `:md` content blocks work in nmbl`…` templates too.
-    // The body lands in dangerouslySetInnerHTML (the compiler's jsx encoding for
-    // raw content-mode bodies), so the rendered HTML never parses as JSX.
+    // The body lands in a raw-HTML prop (the compiler's jsx encoding for raw
+    // content-mode bodies — innerHTML for Solid, dangerouslySetInnerHTML
+    // otherwise), so the rendered HTML never parses as JSX.
     filters: { md: mdFilter },
   };
 
@@ -575,6 +578,7 @@ export interface JsxOptions {
 export function taggedTemplatePlugin(jsxOpts: JsxOptions = {}): Plugin {
   const framework = jsxOpts.framework ?? 'react';
   const attributeAliases = framework === 'react' ? REACT_ALIASES : undefined;
+  const jsxRawHtml = framework === 'solid' ? 'solid' : 'react';
 
   return {
     name: 'nmbl:tagged-template',
@@ -597,7 +601,7 @@ export function taggedTemplatePlugin(jsxOpts: JsxOptions = {}): Plugin {
 
       for (const tmpl of templates) {
         const holeExprs = tmpl.holes.map(h => h.expr);
-        const result = compileTemplate(tmpl.content, holeExprs, { attributeAliases });
+        const result = compileTemplate(tmpl.content, holeExprs, { attributeAliases, jsxRawHtml });
         if (result.error) {
           this.error(`NMBL tagged template compilation failed:\n${result.error}`);
           return;

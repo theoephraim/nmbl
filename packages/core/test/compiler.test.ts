@@ -185,6 +185,13 @@ describe('Compiler', () => {
       const { html } = compile('Code(code={items.map(i => fn(i))})');
       expect(html.trim()).toBe('<Code code={items.map(i => fn(i))}></Code>');
     });
+
+    // Qwik suffixes event handlers with `$` (onClick$); the attribute name must
+    // accept `$`, including before an `{expr}` value.
+    test('attribute name with $ and expression value (Qwik)', () => {
+      const { html } = compile('button(onClick$={() => go()}) Hi', { framework: 'jsx' });
+      expect(html.trim()).toBe('<button onClick$={() => go()}>Hi</button>');
+    });
   });
 
   describe('class merging', () => {
@@ -390,6 +397,24 @@ describe('Compiler', () => {
       const { html } = compile('p Click <a href="/">here</a>');
       expect(html.trim()).toBe('<p>Click <a href="/">here</a></p>');
     });
+
+    // A trailing `\` preserves a trailing space (editors strip trailing
+    // whitespace, which would lose the intentional gap between inline siblings).
+    test('trailing backslash preserves a trailing space', () => {
+      const bs = '\\'; // a single backslash, unambiguously
+      const input = ['p', '  | click ' + bs, '  a(href="/x") here ' + bs, '  | to see the details'].join('\n');
+      const { html, errors } = compile(input);
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('click ');
+      expect(html).toContain('here </a>');
+    });
+
+    test('trailing backslash protects typed trailing spaces, but never invents any', () => {
+      // space(s) + `\` → kept verbatim, including the count; `\` alone → no-op
+      expect(compile('span Label \\').html.trim()).toBe('<span>Label </span>');
+      expect(compile('span Label   \\').html.trim()).toBe('<span>Label   </span>');
+      expect(compile('span Label\\').html.trim()).toBe('<span>Label</span>');
+    });
   });
 
   describe('block expansion', () => {
@@ -465,6 +490,21 @@ describe('Compiler', () => {
       expect(html).not.toContain('<h1>Hello</h1></div>');
     });
 
+    test('jsx: Solid dialect (jsxRawHtml) uses innerHTML, not dangerouslySetInnerHTML', () => {
+      const input = dedent`
+        div.prose:md
+          # Hello
+      `;
+      const { html, errors } = compile(input, {
+        framework: 'jsx',
+        jsxRawHtml: 'solid',
+        filters: { md: (body: string) => `<h1>${body.replace('# ', '')}</h1>` },
+      });
+      expect(errors).toHaveLength(0);
+      expect(html).toContain('innerHTML={"<h1>Hello</h1>"}');
+      expect(html).not.toContain('dangerouslySetInnerHTML');
+    });
+
     test('jsx: script content block also uses dangerouslySetInnerHTML', () => {
       const input = dedent`
         script:
@@ -531,6 +571,57 @@ describe('Compiler', () => {
 
     test('escapeCodeBraces leaves braces outside code elements alone', () => {
       expect(escapeCodeBraces('<p>{expr}</p><code>{x}</code>')).toBe('<p>{expr}</p><code>&#123;x&#125;</code>');
+    });
+  });
+
+  describe('framework - prompt (structured text for AI/XML)', () => {
+    test('arbitrary tags and attributes pass through', () => {
+      const { html, errors } = compile('task(id="x" priority="high")\n  step One', { framework: 'prompt' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe('<task id="x" priority="high">\n  <step>One</step>\n</task>');
+    });
+
+    test(':md body is emitted verbatim, not rendered — even with a md filter registered', () => {
+      const { html, errors } = compile('doc:md\n  # Title\n  **bold** and <enterprise> stay literal', {
+        framework: 'prompt',
+        filters: { md: () => '<RENDERED/>' },
+      });
+      expect(errors).toHaveLength(0);
+      expect(html).not.toContain('<RENDERED/>');
+      expect(html).toBe('<doc>\n  # Title\n  **bold** and <enterprise> stay literal\n</doc>');
+    });
+
+    test('a :md content block on an arbitrary tag keeps markdown as text', () => {
+      const { html, errors } = compile('system:md\n  You are helpful.', { framework: 'prompt' });
+      expect(errors).toHaveLength(0);
+      expect(html.trim()).toBe('<system>\n  You are helpful.\n</system>');
+    });
+
+    test('text sections are re-indented to nest under their tag, blank lines preserved', () => {
+      const input = dedent`
+        document(source="q3.pdf")
+          body:md
+            # Q3 Report
+
+            Revenue grew 20%.
+      `;
+      const { html, errors } = compile(input, { framework: 'prompt' });
+      expect(errors).toHaveLength(0);
+      expect(html).toBe(dedent`
+        <document source="q3.pdf">
+          <body>
+            # Q3 Report
+
+            Revenue grew 20%.
+          </body>
+        </document>
+      `);
+    });
+
+    test('control-flow @-blocks are a compile error', () => {
+      const { errors } = compile('x\n  @if(a)\n    p hi', { framework: 'prompt' });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain("not supported with framework 'prompt'");
     });
   });
 

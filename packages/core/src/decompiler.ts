@@ -54,7 +54,17 @@ function decompileNode(node: HNode, depth: number, indentSize: number): string[]
     if (!value.trim()) return null;
     const trimmed = value.trim();
     const textLines = trimmed.split('\n').filter((l: string) => l.trim());
-    return textLines.map((l: string) => `${indent}| ${l.trim()}`);
+    const out = textLines.map((l: string) => `${indent}| ${l.trim()}`);
+    // Preserve significant trailing spaces with the trailing-`\` escape, so a
+    // round trip keeps them (count included). "Significant" = real spaces the
+    // author placed before any formatting newline (`text  ` or `text  \n  `),
+    // not pure indentation (`text\n  `, whose trailing run starts with newline).
+    const trail = (value.match(/\s*$/) ?? [''])[0];
+    const sig = trail.split('\n')[0]; // spaces before any formatting newline
+    if (/[ \t]/.test(sig) && out.length > 0) {
+      out[out.length - 1] += sig + '\\';
+    }
+    return out;
   }
 
   if (node.type === 'tag' || node.type === 'script' || node.type === 'style') {

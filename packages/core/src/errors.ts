@@ -13,6 +13,7 @@ export enum ErrorCode {
 
   // Parser errors
   UnexpectedToken = 'UNEXPECTED_TOKEN',
+  InvalidFrontmatter = 'INVALID_FRONTMATTER',
   VoidElementWithChildren = 'VOID_ELEMENT_WITH_CHILDREN',
   DuplicateId = 'DUPLICATE_ID',
   ExpectedIndent = 'EXPECTED_INDENT',

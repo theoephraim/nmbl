@@ -336,12 +336,19 @@ class AdaptContext {
 
   // ── Text ──
   adaptText(soup: CstNode): AstNode | null {
-    const value = this.text(soup);
+    let value = this.text(soup);
     if (!value) return null;
     // A whole-line `{@directive expr}` is an inline directive node.
     const m = value.match(/^\{@([a-zA-Z]+)\s+([\s\S]+)\}$/);
     if (m) {
       return { type: 'InlineDirective', directiveType: m[1], expression: m[2].trim(), span: this.spanOf(soup) };
+    }
+    // A trailing `\` shields the whitespace typed before it from editors that
+    // strip trailing spaces on save. Drop just the marker — the spaces it
+    // protected stay in the value verbatim, so multiple spaces are preserved (it
+    // never normalizes or invents whitespace; a bare `\` just removes itself).
+    if (value.endsWith('\\')) {
+      value = value.slice(0, -1);
     }
     return { type: 'Text', value, preserveTrailingWhitespace: false, span: this.spanOf(soup) };
   }

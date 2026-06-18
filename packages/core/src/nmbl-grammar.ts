@@ -112,11 +112,12 @@ const TextChunk = token(plus(noneOf(whitespace, '(', ')', '>', '|')), {
 
 // ── Flow-context tokens (attributes & expressions) ──
 // An attribute name: may start with `@` / `:` / `#` (Vue event/bind/slot
-// shorthand) and contain `.` (modifiers) and `:` (namespaced names like
-// `client:load`). Only ever wins inside parens — every block-context
-// position is claimed by an earlier blockOnly token.
+// shorthand) and contain `.` (modifiers), `:` (namespaced names like
+// `client:load`), and `$` (Qwik's `$`-suffixed handlers like `onClick$`).
+// Only ever wins inside parens — every block-context position is claimed by
+// an earlier blockOnly token.
 const AttrName = token(
-  seq(oneOf(alpha, '@', ':', '#'), star(oneOf(nameChar, '.', ':', '@'))),
+  seq(oneOf(alpha, '@', ':', '#'), star(oneOf(nameChar, '.', ':', '@', '$'))),
   { identifier: true, scope: 'entity.other.attribute-name' },
 );
 // NOTE: deliberately NOT flagged `string: true` — that flag opts into YAML's

@@ -31,6 +31,10 @@
       "import": "./dist/markdown.mjs",
       "types": "./dist/markdown.d.mts"
     },
+    "./structured": {
+      "import": "./dist/structured.mjs",
+      "types": "./dist/structured.d.mts"
+    },
     "./monarch": "./generated/nmbl.monarch.json"
   },
   "scripts": {
@@ -43,7 +47,8 @@
   },
   "dependencies": {
     "htmlparser2": "catalog:",
-    "marked": "catalog:"
+    "marked": "catalog:",
+    "yaml": "catalog:"
   },
   "devDependencies": {
     "@types/node": "^25.0.0",

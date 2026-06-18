@@ -18,6 +18,16 @@
         "astro": "^6.0.0",
       },
     },
+    "examples/prompts": {
+      "name": "example/prompts",
+      "dependencies": {
+        "@nmbl-lang/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^25.0.0",
+        "typescript": "catalog:",
+      },
+    },
     "examples/react": {
       "name": "example/react",
       "dependencies": {
@@ -127,6 +137,7 @@
       "dependencies": {
         "htmlparser2": "catalog:",
         "marked": "catalog:",
+        "yaml": "catalog:",
       },
       "devDependencies": {
         "@types/node": "^25.0.0",
@@ -1027,6 +1038,8 @@
     "eventemitter3": ["eventemitter3@5.0.4", "", {}, "sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw=="],
 
     "example/astro": ["example/astro@workspace:examples/astro"],
+
+    "example/prompts": ["example/prompts@workspace:examples/prompts"],
 
     "example/react": ["example/react@workspace:examples/react"],
 

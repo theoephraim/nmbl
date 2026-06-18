@@ -23,17 +23,29 @@ export interface CompilerOptions {
    *             JSX key attribute on the iteration root, attribute aliasing
    *             (class→className)
    * - 'html':   @-blocks are a compile ERROR
+   * - 'prompt': like 'html' (arbitrary tags pass through, @-blocks/directives
+   *             are an ERROR), but content-mode bodies (`:md`, …) are emitted
+   *             VERBATIM rather than run through a filter — the markdown stays
+   *             as text. For authoring XML-ish structured documents (e.g. LLM
+   *             prompts) where you want light tag/attribute structure wrapped
+   *             around raw markdown sections.
    * @each accepts BOTH `item of items` and `items as item (key)` forms and
    * compiles each host's native syntax from the parsed structure.
    * Defaults to 'html' (plain markup; no control-flow blocks).
    */
-  framework?: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx';
+  framework?: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx' | 'prompt';
   /**
    * Attribute-name aliases applied at emission (jsx dialects): e.g.
    * { class: 'className', for: 'htmlFor' } for React. Applies to shorthand
    * selectors (`.btn` → className="btn") and explicit attributes alike.
    */
   attributeAliases?: Record<string, string>;
+  /**
+   * JSX dialect for raw-HTML content blocks (`div:md`, …). React/Qwik/Preact use
+   * `dangerouslySetInnerHTML={{ __html }}` (the default); Solid binds the DOM
+   * property directly via `innerHTML={…}`. Only affects the 'jsx' framework.
+   */
+  jsxRawHtml?: 'react' | 'solid';
   filters?: Record<string, (body: string) => string>;
 }
 
@@ -55,8 +67,9 @@ export interface CompileResult {
 export class Compiler {
   private indentSize: number;
   private xhtml: boolean;
-  private framework: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx';
+  private framework: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx' | 'prompt';
   private attributeAliases: Record<string, string>;
+  private jsxRawHtml: 'react' | 'solid';
   private filters: Record<string, (body: string) => string>;
 
   // Position tracking fields
@@ -72,6 +85,7 @@ export class Compiler {
     // JSX requires self-closing void elements (<br />)
     this.xhtml = options.xhtml ?? (this.framework === 'jsx');
     this.attributeAliases = options.attributeAliases ?? {};
+    this.jsxRawHtml = options.jsxRawHtml ?? 'react';
     this.filters = options.filters ?? {};
 
     // Initialize position tracking
@@ -110,6 +124,13 @@ export class Compiler {
     return this.attributeAliases[name] ?? name;
   }
 
+  /** The JSX prop that injects a raw-HTML body, per dialect (see `jsxRawHtml`). */
+  private jsxRawHtmlAttr(body: string): string {
+    return this.jsxRawHtml === 'solid'
+      ? `innerHTML={${JSON.stringify(body)}}`
+      : `dangerouslySetInnerHTML={{ __html: ${JSON.stringify(body)} }}`;
+  }
+
   /**
    * Frameworks that express a dynamic attribute value with JSX-style braces
    * (`name={expr}`). Vue keeps its own binding syntax (`:name="expr"`), and the
@@ -117,6 +138,16 @@ export class Compiler {
    */
   private usesBraceBinding(): boolean {
     return this.framework === 'astro' || this.framework === 'svelte' || this.framework === 'jsx';
+  }
+
+  /**
+   * The 'prompt' target emits content-mode bodies (`:md`, …) verbatim instead of
+   * running them through a registered filter, so markdown sections stay as text.
+   * Skips filter lookup regardless of which filters the caller registered, so the
+   * output is predictable independent of integration defaults.
+   */
+  private rawContentMode(): boolean {
+    return this.framework === 'prompt';
   }
 
   /**
@@ -332,10 +363,10 @@ export class Compiler {
 
     // JSX: a raw content-mode body (script:, style:, a :md filter's HTML) is not
     // JSX — its braces would parse as expressions and unclosed tags as elements.
-    // The only faithful encoding is dangerouslySetInnerHTML on the host element.
+    // The only faithful encoding is a raw-HTML prop on the host element.
     if (node.contentMode && this.framework === 'jsx') {
       const { body } = this.compileContentModeBody(node);
-      this.write(` dangerouslySetInnerHTML={{ __html: ${JSON.stringify(body)} }} />`);
+      this.write(` ${this.jsxRawHtmlAttr(body)} />`);
       return;
     }
 
@@ -344,12 +375,17 @@ export class Compiler {
 
     // Content mode: raw text body
     if (node.contentMode) {
-      const { body, filtered } = this.compileContentModeBody(node);
-      if (body && filtered) {
-        // Generated markup (e.g. :md → HTML): indent into the parent and put
-        // the body + closing tag on their own lines.
+      const { body, layout } = this.compileContentModeBody(node);
+      // 'html'/'text' bodies nest under the tag on their own lines; 'inline'
+      // (script:/style:) is appended verbatim after the tag.
+      const nested = body && layout !== 'inline'
+        ? layout === 'html'
+          ? this.indentContentBlock(body, this.getIndent(depth + 1))
+          : this.reindentText(body, this.getIndent(depth + 1))
+        : null;
+      if (nested !== null) {
         this.write('\n');
-        this.write(this.indentContentBlock(body, this.getIndent(depth + 1)), node.span, { nodeType: 'Element' });
+        this.write(nested, node.span, { nodeType: 'Element' });
         this.write('\n');
         if (indent) this.write(indent);
       } else if (body) {
@@ -434,18 +470,21 @@ export class Compiler {
 
     // Content mode: raw text body
     if (node.contentMode) {
-      const { body, filtered } = this.compileContentModeBody(node);
+      const { body, layout } = this.compileContentModeBody(node);
       // JSX: raw bodies aren't JSX (braces parse as expressions, unclosed tags as
-      // elements) — encode via dangerouslySetInnerHTML on the host element.
+      // elements) — encode via a raw-HTML prop on the host element.
       if (this.framework === 'jsx') {
-        return `${indent}<${tag}${attrStr} dangerouslySetInnerHTML={{ __html: ${JSON.stringify(body)} }} />`;
+        return `${indent}<${tag}${attrStr} ${this.jsxRawHtmlAttr(body)} />`;
       }
       if (!body) {
         return `${indent}<${tag}${attrStr}></${tag}>`;
       }
-      if (filtered) {
-        // Generated markup: indent into the parent, body + close on own lines.
-        const inner = this.indentContentBlock(body, this.getIndent(depth + 1));
+      if (layout !== 'inline') {
+        // Generated markup ('html') or raw text ('text'): nest under the parent,
+        // body + close on their own lines.
+        const inner = layout === 'html'
+          ? this.indentContentBlock(body, this.getIndent(depth + 1))
+          : this.reindentText(body, this.getIndent(depth + 1));
         return `${indent}<${tag}${attrStr}>\n${inner}\n${indent}</${tag}>`;
       }
       return `${indent}<${tag}${attrStr}>${body}</${tag}>`;
@@ -1014,7 +1053,7 @@ export class Compiler {
     }
     const indent = this.getIndent(depth);
     if (indent) this.write(indent);
-    const filter = this.filters[node.mode];
+    const filter = this.rawContentMode() ? null : this.filters[node.mode];
     const body = filter ? filter(node.body) : node.body;
     this.write(body, node.span, { nodeType: 'ContentBlock' });
   }
@@ -1025,7 +1064,7 @@ export class Compiler {
       return '';
     }
     const indent = this.getIndent(depth);
-    const filter = this.filters[node.mode];
+    const filter = this.rawContentMode() ? null : this.filters[node.mode];
     const body = filter ? filter(node.body) : node.body;
     return `${indent}${body}`;
   }
@@ -1036,11 +1075,25 @@ export class Compiler {
     if (textChildren.length === 0) return { body: '', filtered: false };
 
     const raw = textChildren.map(t => t.value).join('\n');
-    const filter = node.contentMode ? this.filters[node.contentMode] : null;
-    // Raw bodies (script:/style:) are emitted verbatim — their whitespace is the
-    // source text. Filtered bodies (:md → HTML) are generated markup, free to
-    // indent to match the surrounding structure.
-    return filter ? { body: filter(raw), filtered: true } : { body: raw, filtered: false };
+    const filter = node.contentMode && !this.rawContentMode() ? this.filters[node.contentMode] : null;
+    // - 'html':   filtered bodies (:md → HTML) are generated markup, pretty-printed
+    //             to nest under the parent.
+    // - 'text':   the 'prompt' target keeps content bodies as raw text but still
+    //             nests them under their tag, re-indented to match the structure.
+    // - 'inline': script:/style: are emitted verbatim — their whitespace is the
+    //             source text — appended on the tag's own line.
+    if (filter) return { body: filter(raw), layout: 'html' };
+    if (this.rawContentMode()) return { body: raw, layout: 'text' };
+    return { body: raw, layout: 'inline' };
+  }
+
+  /**
+   * Re-indent a raw text block so each line sits at `indent` — used to nest a
+   * 'prompt'-target content body under its tag. Blank lines stay empty (no
+   * trailing whitespace). The body arrives already dedented to column 0.
+   */
+  private reindentText(text: string, indent: string): string {
+    return text.split('\n').map(line => (line.length ? indent + line : line)).join('\n');
   }
 
   // Pretty-print a filtered content block (e.g. :md → HTML) so it nests inside
@@ -1619,7 +1672,7 @@ export class Compiler {
       this.compileInlineDirectiveAstroTracked(node, depth);
       return;
     }
-    if (this.framework === 'vue' || this.framework === 'html' || this.framework === 'jsx') {
+    if (this.framework === 'vue' || this.framework === 'html' || this.framework === 'jsx' || this.framework === 'prompt') {
       this.reportInlineDirectiveUnsupported(node);
       return;
     }
@@ -1661,7 +1714,7 @@ export class Compiler {
     if (this.framework === 'astro') {
       return this.compileInlineDirectiveAstro(node, depth);
     }
-    if (this.framework === 'vue' || this.framework === 'html' || this.framework === 'jsx') {
+    if (this.framework === 'vue' || this.framework === 'html' || this.framework === 'jsx' || this.framework === 'prompt') {
       this.reportInlineDirectiveUnsupported(node);
       return '';
     }
