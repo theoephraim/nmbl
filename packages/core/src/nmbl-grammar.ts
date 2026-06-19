@@ -259,9 +259,9 @@ const indent: IndentConfig = {
   // which lex as ordinary tokens and become structural nodes.
   comment: '//',
   commentExcept: '!',
-  // NMBL has `:attr` shorthand after values/parens — disable YAML's flow
-  // `"key":value` / `):value` colon-separator carve-out (engine patch).
-  flowColonSeparator: false,
+  // NMBL has `:attr` shorthand after values/parens. monogram's flow `:`
+  // key-separator carve-out is now opt-in (`flowSeparatorAfterTokens`), so
+  // simply NOT declaring it leaves `:attr` intact after values / `)`.
   // Raw content blocks (`script:`, `article:md`, bare `:md`) — engine patch:
   // a line-trailing `:mode` introducer captures the indented body verbatim.
   rawBlock: { token: 'RawContent' },
