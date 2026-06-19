@@ -15,6 +15,31 @@
 const INDENT_UNIT = 2;
 const RAMP = 6;
 
+/** Indent depth of a line, or null for a blank line. */
+function depthOf(text) {
+  if (!text || !text.trim()) return null;
+  const leading = (text.match(/^[ \t]*/) || [''])[0].length;
+  return Math.floor(leading / INDENT_UNIT);
+}
+
+/**
+ * Effective guide depth for line `i`. Blank lines carry the guides that span the
+ * gap — the min of the nearest non-blank lines above and below — so a level-1
+ * bar stays continuous through empty lines while a deeper bar that already
+ * closed doesn't reappear. A leading/trailing blank (no neighbour on one side)
+ * draws nothing.
+ */
+function effectiveDepth(texts, i) {
+  const own = depthOf(texts[i]);
+  if (own !== null) return own;
+  let prev = null;
+  for (let k = i - 1; k >= 0; k--) { const d = depthOf(texts[k]); if (d !== null) { prev = d; break; } }
+  let next = null;
+  for (let k = i + 1; k < texts.length; k++) { const d = depthOf(texts[k]); if (d !== null) { next = d; break; } }
+  if (prev === null || next === null) return 0;
+  return Math.min(prev, next);
+}
+
 /** Build the `--ir-*` custom properties that draw `depth` guide bars, or null. */
 function guideStyle(depth) {
   if (depth <= 0) return null;
@@ -38,9 +63,9 @@ export function pluginIndentRainbow() {
   return {
     name: 'indent-rainbow',
     hooks: {
-      postprocessRenderedLine: ({ line, renderData }) => {
-        const leading = (line.text.match(/^[ \t]*/) || [''])[0].length;
-        const style = guideStyle(Math.floor(leading / INDENT_UNIT));
+      postprocessRenderedLine: ({ codeBlock, lineIndex, renderData }) => {
+        const texts = codeBlock.getLines().map((l) => l.text);
+        const style = guideStyle(effectiveDepth(texts, lineIndex));
         if (!style) return;
         const props = renderData.lineAst.properties;
         props.style = props.style ? `${props.style};${style}` : style;
