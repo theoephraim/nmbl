@@ -7,7 +7,7 @@ BaseLayout(title="About")
   section.about-hero
     .container
       h1 About nmbl
-      p.lead <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage &mdash; a concise notation for HTML structure.
+      p.lead <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage &mdash; say it &ldquo;nimble&rdquo; 👂 &mdash; a concise notation for HTML structure.
 
   section.backstory
     .container
@@ -15,11 +15,11 @@ BaseLayout(title="About")
       .prose:md
         ### Jade/Pug had an idea
 
-        <a href="https://pugjs.org/" target="_blank">Pug</a> (originally known as Jade) explored the idea that indentation-based HTML templates could be easier to read and write. By using indentation to indicate nesting, and a few shorthands for the most common attributes (class/id), we can remove a ton of unnecessary noise, and along with it mental load.
+        <a href="https://pugjs.org/" target="_blank" rel="noopener">Pug</a> (originally known as Jade) explored the idea that indentation-based HTML templates could be easier to read and write. By using indentation to indicate nesting, and a few shorthands for the most common attributes (class/id), we can remove a ton of unnecessary noise, and along with it mental load.
 
         But Pug was built as a *complete templating engine* in an era before modern frameworks and web components. It handled everything itself — mixins, extends, includes, interpolation, conditionals, iteration, filters. That made sense in 2010 when you were rendering static HTML on the server with Express. It doesn't make sense now that we have powerful frameworks like Vue and Svelte, and the idea of components is well established.
 
-        Yet some continued to use Pug, ignoring half of its features. But it never gained wide adoption, and the project stopped evolving. It's effectively unmaintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.
+        Yet some continued to use Pug, ignoring half of its features. But it never gained wide adoption, and the project stopped evolving — it's barely maintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.
 
         ### Keep the good parts, fix the rough edges, drop the rest
 
@@ -42,7 +42,7 @@ BaseLayout(title="About")
         .principle:md
           ### Shorthand notation — not a template engine
 
-          No mixins, no extends, no expression language of its own. NMBL is simply a *shorthand notation* for HTML — it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.
+          No mixins, no extends, no expression language of its own — it compiles directly to markup and gets out of the way. Your framework owns the logic; NMBL owns the brevity.
         .principle:md
           ### Nothing to learn
 
@@ -50,7 +50,7 @@ BaseLayout(title="About")
         .principle:md
           ### AI-native
 
-          Simple, predictable syntax means fewer hallucinated tokens. Bidirectional conversion lets AI round-trip between HTML and NMBL freely. Models already have the intuition from Pug-like syntax in training data — they just need fewer rules to get it right.
+          Simple, predictable syntax means less for a model to get wrong, and fewer tokens to get there. Bidirectional conversion lets AI round-trip between HTML and NMBL freely. The Pug-family syntax is already familiar from training data — there are just fewer rules to trip on.
         .principle:md
           ### Fits your stack
 
