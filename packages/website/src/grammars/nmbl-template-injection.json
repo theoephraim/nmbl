@@ -1,0 +1,22 @@
+{
+  "comment": "Reusable injection patterns that embed the NMBL grammar inside `<template lang=\"nmbl\"> ... </template>` blocks of a code sample. astro.config registers this once per host grammar — Vue (`text.html.vue`), Svelte (`source.svelte`), and Astro (`source.astro`) — each with its own scopeName + `injectTo` + `L:` injectionSelector, so the template body is highlighted as `source.nmbl` instead of the host's default markup. Other `<template>` blocks (no `lang`, or a different `lang`) are untouched. NOTE: must be registered as three SEPARATE single-scope injections, not one multi-scope injection — a combined selector breaks Vue's special `<template>` handling.",
+  "patterns": [
+    {
+      "begin": "(?i)(<)(template)(\\s+[^>]*?\\blang\\s*=\\s*(['\"])nmbl\\4[^>]*?)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.template.html" },
+        "3": { "patterns": [{ "include": "text.html.basic#attribute" }] },
+        "5": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(</)(template)\\s*(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.template.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "contentName": "source.nmbl",
+      "patterns": [{ "include": "source.nmbl" }]
+    }
+  ]
+}

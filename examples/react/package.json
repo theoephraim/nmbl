@@ -1,0 +1,22 @@
+{
+  "name": "example/react",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@nmbl-lang/vite-plugin": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@nmbl-lang/typescript-plugin": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
+}

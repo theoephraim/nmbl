@@ -1,0 +1,42 @@
+{
+  "name": "@nmbl-lang/website",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/website"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "bun run build && varlock run -- wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.7.0",
+    "@astrojs/vue": "^6.0.1",
+    "@nmbl-lang/astro": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
+    "@nmbl-lang/vscode-extension": "workspace:*",
+    "astro": "catalog:",
+    "astro-expressive-code": "^0.43.1",
+    "varlock": "^1.6.1",
+    "vue": "catalog:",
+    "@nmbl-lang/codemirror": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/kv-asset-handler": "^0.5.0",
+    "@codemirror/lang-html": "^6.4.11",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
+    "codemirror": "^6.0.2",
+    "typescript": "catalog:",
+    "wrangler": "^4.100.0"
+  }
+}

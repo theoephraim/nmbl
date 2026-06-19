@@ -1,0 +1,32 @@
+{
+  "name": "markdown",
+  "scopeName": "text.html.markdown",
+  "comment": "Lightweight Markdown grammar for syntax-highlighting `:md` blocks shown inside NMBL code samples (the NMBL grammar embeds Markdown by including scope `text.html.markdown`). Why this exists and why it's shaped this way: in the website's Shiki, the Vue grammar pulls in Shiki's FULL markdown grammar as an embedded lang. That grammar (a) references `text.html.derivative` — the scope Vue uses for template bodies — and breaks the nmbl-in-vue injection, and (b) treats NMBL's indented `:md` body as an indented code block, so headings/lists render flat. We avoid loading it by registering THIS grammar under the same lang name (`markdown`) and scope (`text.html.markdown`); expressive-code loads its configured langs first, so when the Vue grammar later tries to pull in `markdown`, Shiki sees the name is already loaded and skips it — leaving this grammar in charge of the scope. Patterns tolerate leading whitespace because NMBL indents `:md` bodies. Note: this also becomes the highlighter for any ```md / ```markdown fences on the site (lightweight, which is fine here). Never touches real `:md` rendering, which goes through the markdown processor, not Shiki.",
+  "patterns": [
+    { "include": "#block" },
+    { "include": "#inline" }
+  ],
+  "repository": {
+    "block": {
+      "patterns": [
+        { "match": "^\\s*#{1,6}\\s.*$", "name": "markup.heading.markdown" },
+        { "match": "^\\s*>\\s?", "name": "markup.quote.markdown" },
+        { "match": "^\\s*([-*+]|\\d+[.)])\\s", "name": "punctuation.definition.list.begin.markdown" }
+      ]
+    },
+    "inline": {
+      "patterns": [
+        { "begin": "`", "end": "`", "name": "markup.inline.raw.string.markdown" },
+        {
+          "match": "(!?\\[)([^\\]]*)(\\])(\\()([^)]+)(\\))",
+          "captures": {
+            "2": { "name": "string.other.link.title.markdown" },
+            "5": { "name": "markup.underline.link.markdown" }
+          }
+        },
+        { "match": "(\\*\\*|__)(?=\\S)(.+?)(?<=\\S)(\\1)", "name": "markup.bold.markdown" },
+        { "match": "(\\*|_)(?=\\S)([^*_]+?)(?<=\\S)(\\1)", "name": "markup.italic.markdown" }
+      ]
+    }
+  }
+}

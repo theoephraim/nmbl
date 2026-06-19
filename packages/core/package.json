@@ -1,0 +1,57 @@
+{
+  "name": "@nmbl-lang/core",
+  "version": "0.1.0",
+  "description": "Lexer, parser, compiler, formatter, linter, and HTML\u2192NMBL decompiler for the NMBL templating language",
+  "keywords": [
+    "nmbl",
+    "template",
+    "templating",
+    "compiler",
+    "parser",
+    "formatter",
+    "linter"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./markdown": {
+      "import": "./dist/markdown.mjs",
+      "types": "./dist/markdown.d.mts"
+    },
+    "./monarch": "./generated/nmbl.monarch.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "gen": "bun scripts/gen-artifacts.ts",
+    "tbuild": "turbo run build",
+    "dev": "bun run build --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "htmlparser2": "catalog:",
+    "marked": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "monogram": "github:johnsoncodehk/monogram#e143b7cac916b36b381587af1c3c7d707c521bd4",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
+  }
+}

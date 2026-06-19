@@ -1,0 +1,189 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<template lang="nmbl">
+BaseLayout(title="About")
+  section.about-hero
+    .container
+      h1 About NMBL
+      p.lead <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage &mdash; a concise notation for HTML structure.
+
+  section.backstory
+    .container
+      h2 Why NMBL?
+      .prose:md
+        ### Jade/Pug had an idea
+
+        <a href="https://pugjs.org/" target="_blank">Pug</a> (originally known as Jade) explored the idea that indentation-based HTML templates could be easier to read and write. By using indentation to indicate nesting, and a few shorthands for the most common attributes (class/id), we can remove a ton of unnecessary noise, and along with it mental load.
+
+        But Pug was built as a *complete templating engine* in an era before modern frameworks and web components. It handled everything itself — mixins, extends, includes, interpolation, conditionals, iteration, filters. That made sense in 2010 when you were rendering static HTML on the server with Express. It doesn't make sense now that we have powerful frameworks like Vue and Svelte, and the idea of components is well established.
+
+        Yet some continued to use Pug, ignoring half of its features. But it never gained wide adoption, and the project stopped evolving. It's effectively unmaintained today. The ecosystem moved on, but nobody replaced what was interesting about it: the shorthand syntax.
+
+        ### Keep the good parts, fix the rough edges, drop the rest
+
+        NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.
+
+        Your framework keeps its own control flow — write `v-if` and `v-for` (or `{#each}`, or `.map()`) exactly the way you always have. They pass straight through. NMBL doesn't ask you to learn a new way to loop or branch; it just cleans up the markup around them. There's an optional canonical form (`@if`, `@each`) that compiles to each host's native syntax if you ever want a template to be portable across frameworks — but that's a nice-to-have, not the point. Most of the time you'll just do things the way your framework already does.
+
+        ### Prose and markup in the same file
+
+        Anywhere you want prose, append `:md` and write plain markdown. Need a component, a loop, or fine-grained markup? Drop back out and write NMBL. You toggle between the two line by line, in a single template.
+
+        This is the gap MDX leaves open. MDX is markdown-first — prose is effortless, but the moment you need real structure around it you're fighting the markdown/JSX boundary. Hand-written templates are the opposite: total structural control, but every prose section is `<p>`-and-`<a>` soup. NMBL flips the default — structure-first, with markdown one `:md` away — so you get frictionless prose exactly where you need it without giving up control of the markup. For content-heavy pages, that's a genuinely better trade than MDX. And because the rendered markdown is spliced back into the host template, your components and interpolation still work right inside the prose.
+
+        That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.
+
+  section.principles
+    .container
+      h2 Design principles
+      .principles-grid
+        .principle:md
+          ### Shorthand notation — not a template engine
+
+          No mixins, no extends, no expression language of its own. NMBL is simply a *shorthand notation* for HTML — it compiles directly to markup and gets out of the way. Your framework owns the logic. NMBL owns the brevity.
+        .principle:md
+          ### Nothing to learn
+
+          If you know CSS selectors and HTML attributes, you already know NMBL. One syntax for everything. No `=` vs `!=` vs `#{...}` interpolation modes. No unbuffered code blocks. Just tags, selectors, and indentation.
+        .principle:md
+          ### AI-native
+
+          Simple, predictable syntax means fewer hallucinated tokens. Bidirectional conversion lets AI round-trip between HTML and NMBL freely. Models already have the intuition from Pug-like syntax in training data — they just need fewer rules to get it right.
+        .principle:md
+          ### Fits your stack
+
+          Use `<template lang="nmbl">` in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use ``nmbl`…`` tagged templates in React, Solid, and Qwik. NMBL is a compile step, not a runtime — it produces standard HTML that any framework already understands.
+</template>
+
+<style>
+  .about-hero {
+    padding: 4rem 0 2rem;
+    text-align: center;
+  }
+
+  .about-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+  }
+
+  .lead {
+    font-size: 1.2rem;
+    color: var(--color-text-muted);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .lead strong {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .backstory {
+    padding: 3rem 0;
+  }
+
+  .backstory h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .prose {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .prose h3 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-family: var(--font-mono);
+  }
+
+  .prose p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.8;
+  }
+
+  .prose p + p {
+    margin-top: 0.75rem;
+  }
+
+  .prose em {
+    color: var(--color-text);
+    font-style: italic;
+  }
+
+  .prose code {
+    background: rgba(124, 110, 246, 0.15);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    color: var(--color-accent);
+  }
+
+  .principles {
+    padding: 4rem 0;
+  }
+
+  .principles h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .principles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .principle {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .principle h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+  }
+
+  .principle p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+
+  .principle code {
+    background: rgba(124, 110, 246, 0.15);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    color: var(--color-accent);
+  }
+
+  .principle em {
+    color: var(--color-text);
+    font-style: italic;
+  }
+
+  @media (max-width: 768px) {
+    .about-hero h1 {
+      font-size: 2rem;
+    }
+
+    .principles-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,8 @@
+{
+  // "svelte.plugin.svelte.defaultScriptLanguage": "ts",
+  "emmet.showExpandedAbbreviation": "never",
+
+  "[svelte]": {
+    // "editor.bracketPairColorization.enabled": false
+  }
+}

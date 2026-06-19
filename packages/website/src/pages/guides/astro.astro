@@ -1,0 +1,216 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Astro Integration Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Astro
+      h1 Astro Integration
+      p.lead Use NMBL templates in Astro components and pages
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#installation") Installation
+            a(href="#configuration") Configuration
+            a(href="#basic-usage") Basic Usage
+            a(href="#control-flow") Control Flow
+            a(href="#markdown-blocks") Markdown Blocks
+            a(href="#comments") Comments
+            a(href="#editor-support") Editor Support
+            a(href="#troubleshooting") Troubleshooting
+
+        .prose
+          Fragment:md
+            ## Installation
+
+            NMBL integrates with Astro through an official integration:
+
+            ```bash
+            # Using npm
+            npm install @nmbl-lang/astro
+
+            # Using bun
+            bun add @nmbl-lang/astro
+
+            # Using pnpm
+            pnpm add @nmbl-lang/astro
+            ```
+
+            ## Configuration
+
+            Add the integration to your `astro.config.mjs`:
+
+            ```js title="astro.config.mjs"
+            import { defineConfig } from 'astro/config';
+            import nmbl from '@nmbl-lang/astro';
+
+            export default defineConfig({
+              integrations: [nmbl()],
+            });
+            ```
+
+            That's the entire setup — no Vite or TypeScript config changes are needed.
+
+            ## Basic Usage
+
+            Add a `<template lang="nmbl">` block to any `.astro` page or component, then write
+            the markup as NMBL. Variables from the component frontmatter (the `---` fence) are
+            available with Astro's `{expr}` interpolation:
+
+            ```astro title="src/pages/index.astro"
+            ---
+            const title = 'My Site';
+            const items = ['Apple', 'Banana', 'Cherry'];
+            ---
+
+            <template lang="nmbl">
+            html(lang="en")
+              head
+                meta(charset="utf-8")
+                title {title}
+              body
+                div#app
+                  h1 {title}
+                  ul
+                    @each(item, i of items)
+                      li {i + 1}. {item}
+            </template>
+            ```
+
+            Interpolation uses Astro's `{expr}` syntax. Frontmatter variables and `Astro.*`
+            globals are accessible, and regular Astro/JSX-style attributes pass straight through.
+
+            ## Control Flow
+
+            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX-style
+            expressions Astro uses:
+
+            ```nmbl
+            @if(user)
+              p Welcome back, {user.name}
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(item, i of items)
+                li {i + 1}. {item}
+            ```
+
+            `@if(cond)` compiles to `{cond ? (…) : (…)}` and `@each(item of items)` compiles
+            to `{items.map((item, i) => (…))}`. One Astro/JSX-specific rule worth knowing: when
+            you use `:key`, the loop body must have a single root element (the key goes on it) —
+            a multi-root `@each` body with `:key` is a compile error. Conditions and loop
+            expressions pass straight through, so you write them exactly as you would in Astro.
+
+            ## Markdown Blocks
+
+            The `@nmbl-lang/astro` integration renders `:md` content blocks through your
+            project's own Astro Markdown pipeline — the same remark/rehype plugins and syntax
+            highlighting that `.md` files get. Drop prose-heavy content inline with
+            `div.prose:md` (or `Fragment:md`):
+
+            ```nmbl
+            article.prose:md
+              ## Getting Started
+
+              Write **markdown** with [links](/docs), lists, and fenced code —
+              it renders with the same pipeline your `.md` files use.
+
+              - point one
+              - point two
+            ```
+
+            `{expr}` interpolation works in `:md` prose text too, but components don't (the
+            markdown layer can't represent them) — drop to NMBL siblings for components.
+
+            ## Comments
+
+            `//` comments are stripped from the output (dev notes); `//!` comments are rendered
+            as real HTML comments:
+
+            ```nmbl
+            // dev note — never shipped
+            //! becomes <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            You can also comment out individual props inside a tag's parens — handy while
+            debugging:
+
+            ```nmbl
+            button(
+              type="submit"
+              // disabled
+              /* aria-label="Save" */
+            ) Save
+            ```
+
+            ## Editor Support
+
+            Astro editor support comes from `@nmbl-lang/language-server` (a Volar 2.4 server)
+            wired through the NMBL VS Code extension. It activates only on `.astro` files that
+            contain a `<template lang="nmbl">` block — other files are left untouched.
+
+          .features-grid
+            .feature
+              h4 🎨 Syntax Highlighting
+              p NMBL syntax is highlighted inside template lang="nmbl" blocks
+            .feature
+              h4 💡 HTML Completions
+              p Tag names, attribute names, and values are suggested via the embedded HTML language service
+            .feature
+              h4 🔗 Go to Definition
+              p Tokens map back to your NMBL source, so navigation works on the original file
+            .feature
+              h4 ❗ Syntax Diagnostics
+              p NMBL syntax errors and unsupported control-flow blocks are surfaced inline
+
+          Fragment:md
+            > **Note:** Deep, framework-type-aware checking of expressions inside `@if` / `@each`
+            > is not yet available for Astro — the Astro Language Server has no plugin hook for
+            > injecting a second virtual language service, so expressions compile correctly but
+            > aren't type-checked. For the fullest type intellisense today, Vue is the most
+            > complete via its dedicated Volar plugin.
+
+            ## Troubleshooting
+
+          .troubleshooting:md
+            ### Template not rendering
+
+            Make sure `nmbl()` is in the `integrations` array of your `astro.config.mjs`, and
+            restart the dev server after editing the config.
+
+            ### Syntax errors with indentation
+
+            NMBL uses indentation for structure. Your root element must start at column 0 with
+            no leading whitespace, and use consistent 2-space indentation (no tabs).
+
+            ### Markdown block not highlighting code
+
+            Fenced code inside `:md` blocks uses your Astro Markdown highlighter (e.g. Shiki or
+            expressive-code). Make sure your highlighter is configured as usual in
+            `astro.config.mjs` — `:md` reuses it automatically.
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="https://github.com/theoephraim/nmbl/tree/main/examples/astro" target="_blank")
+                span View Example Project
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+</template>

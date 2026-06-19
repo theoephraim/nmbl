@@ -1,0 +1,51 @@
+---
+title: Highlighting example
+draft: false
+tags:
+  - demo
+  - syntax
+---
+// silent comment — not rendered to output
+//! rendered comment — becomes an HTML comment
+
+/* silent block comment */
+/*! rendered block comment */
+
+div#id.class1.class2(attr1="val1")
+div(
+  multi-line
+  :binding
+  // comment inside attr list
+  foo=`template${var}`
+) text
+
+#implicit-id-div.with-class
+
+CustomComponent
+  | using the bar to extend text
+  | more pipe text here
+
+ul
+  li > a(href="/") Home
+  li > a(href="/about") About
+  li > a(href="/contact") Contact
+
+@if(someCondition)
+  p This is shown when true
+@else
+  p This is the fallback
+
+script:
+  const greeting = 'hello'
+  console.log(greeting)
+
+style:
+  body { color: red; }
+  .container { max-width: 1200px; }
+
+article:md
+  # title
+  This is embedded [markdown](https://example.com)
+
+div
+  span Hello world

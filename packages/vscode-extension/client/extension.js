@@ -1,0 +1,64 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.activate = activate;
+exports.deactivate = deactivate;
+const vscode_1 = require("vscode");
+const node_1 = require("vscode-languageclient/node");
+const embedded_forwarding_1 = require("./embedded-forwarding");
+const convert_1 = require("./convert");
+const format_1 = require("./format");
+const diagnostics_1 = require("./diagnostics");
+let client;
+function activate(context) {
+    // Resolve the language server module from the installed @nmbl-lang/language-server package.
+    // The server is a standalone Node.js module that communicates via IPC.
+    const serverModule = require.resolve('@nmbl-lang/language-server');
+    const serverOptions = {
+        run: {
+            module: serverModule,
+            transport: node_1.TransportKind.ipc,
+        },
+        debug: {
+            module: serverModule,
+            transport: node_1.TransportKind.ipc,
+            options: {
+                execArgv: ['--nolazy', '--inspect=6009'],
+            },
+        },
+    };
+    const clientOptions = {
+        // Activate for:
+        //  - standalone .nmbl files
+        //  - .svelte files (may contain <template lang="nmbl">)
+        //  - .astro files (may contain <template lang="nmbl">)
+        // NOT .vue — full Vue support is provided by the separate
+        // @nmbl-lang/vue-language-plugin Volar plugin; duplicating here would
+        // cause double-reported diagnostics.
+        documentSelector: [
+            { language: 'nmbl' },
+            { language: 'svelte' },
+            { language: 'astro' },
+        ],
+        synchronize: {
+            fileEvents: vscode_1.workspace.createFileSystemWatcher('**/*.{nmbl,svelte,astro}'),
+        },
+    };
+    client = new node_1.LanguageClient('nmbl-language-server', 'NMBL Language Server', serverOptions, clientOptions);
+    client.start();
+    // Register provider forwarding for component names inside <template lang="nmbl">
+    // regions of .svelte/.astro files.
+    (0, embedded_forwarding_1.registerEmbeddedForwarding)(context);
+    // Register paste-HTML-as-NMBL provider + conversion commands.
+    (0, convert_1.registerConversions)(context);
+    // Register the document formatter (.nmbl) + format-document command.
+    (0, format_1.registerFormatting)(context);
+    // Publish NMBL compile errors + lint for <template lang="nmbl"> in .vue files,
+    // under our own collection so they read `source: 'nmbl'` (the Vue plugin's
+    // channel forces `source: 'vue'`).
+    (0, diagnostics_1.registerNmblDiagnostics)(context);
+}
+function deactivate() {
+    if (!client)
+        return undefined;
+    return client.stop();
+}

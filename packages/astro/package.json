@@ -1,0 +1,47 @@
+{
+  "name": "@nmbl-lang/astro",
+  "version": "0.1.0",
+  "description": "Astro integration for the NMBL templating language",
+  "keywords": [
+    "nmbl",
+    "template",
+    "astro",
+    "astro-integration"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/astro"
+  },
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "tbuild": "turbo run build",
+    "dev": "bun run build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^6.3.10",
+    "@nmbl-lang/vite-plugin": "workspace:*",
+    "@nmbl-lang/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "astro": ">=4.0.0"
+  },
+  "devDependencies": {
+    "astro": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

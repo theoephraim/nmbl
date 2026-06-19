@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "vue.nmbl",
+  "injectionSelector": "text.html.vue - (meta.embedded | source)",
+  "patterns": [
+    {
+      "begin": "(?<=<template\\s+lang=\"nmbl\"\\s*>)",
+      "end": "(?=</template>)",
+      "name": "meta.embedded.block.nmbl",
+      "contentName": "source.nmbl",
+      "patterns": [
+        { "include": "source.nmbl" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@nmbl-lang/prettier-plugin",
+  "version": "0.1.0",
+  "description": "Prettier plugin for formatting NMBL templates",
+  "keywords": [
+    "nmbl",
+    "template",
+    "prettier",
+    "prettier-plugin",
+    "formatter"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/prettier-plugin"
+  },
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "tbuild": "turbo run build",
+    "dev": "bun run build --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nmbl-lang/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "prettier": ">=3.0.0"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "prettier": "^3.4.2",
+    "@types/node": "^25.0.0"
+  }
+}

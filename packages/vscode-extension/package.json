@@ -1,0 +1,200 @@
+{
+  "name": "@nmbl-lang/vscode-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NMBL language support — syntax highlighting for .nmbl, .astro, .svelte, and .vue files",
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/vscode-extension"
+  },
+  "main": "./client/extension.js",
+  "exports": {
+    "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json"
+  },
+  "scripts": {
+    "install-local": "node scripts/install-local.mjs",
+    "verify": "node scripts/verify-grammar.mjs",
+    "build": "tsc -p client/tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nmbl-lang/language-server": "workspace:*",
+    "@nmbl-lang/core": "workspace:*",
+    "vscode-html-languageservice": "^5.6.2",
+    "vscode-languageclient": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "@types/vscode": "^1.96.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vscode-textmate": "^9.3.2",
+    "vscode-oniguruma": "^2.0.1"
+  },
+  "displayName": "NMBL",
+  "publisher": "nmbl",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "activationEvents": [
+    "onLanguage:nmbl",
+    "onLanguage:svelte",
+    "onLanguage:astro",
+    "onLanguage:vue"
+  ],
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "nmbl.convertHtmlToNmbl",
+        "title": "NMBL: Convert Selection from HTML"
+      },
+      {
+        "command": "nmbl.convertNmblToHtml",
+        "title": "NMBL: Convert Selection to HTML"
+      },
+      {
+        "command": "nmbl.formatDocument",
+        "title": "NMBL: Format Document"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "nmbl.convertHtmlToNmbl",
+          "when": "editorHasSelection && resourceExtname =~ /\\.(nmbl|vue|svelte|astro)$/",
+          "group": "nmbl"
+        },
+        {
+          "command": "nmbl.convertNmblToHtml",
+          "when": "editorHasSelection && resourceExtname =~ /\\.(nmbl|vue|svelte|astro)$/",
+          "group": "nmbl"
+        },
+        {
+          "command": "nmbl.formatDocument",
+          "when": "resourceExtname =~ /\\.(nmbl|vue|svelte|astro|jsx|tsx)$/",
+          "group": "nmbl"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "nmbl",
+        "aliases": [
+          "NMBL",
+          "nmbl"
+        ],
+        "extensions": [
+          ".nmbl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nmbl",
+        "scopeName": "source.nmbl",
+        "path": "./syntaxes/nmbl.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "svelte.nmbl",
+        "path": "./syntaxes/svelte-nmbl.tmLanguage.json",
+        "injectTo": [
+          "source.svelte"
+        ],
+        "embeddedLanguages": {
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "vue.nmbl",
+        "path": "./syntaxes/vue-nmbl.tmLanguage.json",
+        "injectTo": [
+          "source.vue",
+          "text.html.vue"
+        ],
+        "embeddedLanguages": {
+          "source.nmbl": "nmbl",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "astro.nmbl",
+        "path": "./syntaxes/astro-nmbl.tmLanguage.json",
+        "injectTo": [
+          "source.astro"
+        ],
+        "embeddedLanguages": {
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "text.html.markdown": "markdown",
+          "source.css": "css",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.json": "json",
+          "text.html.basic": "html",
+          "source.css.scss": "scss",
+          "source.shell": "shellscript",
+          "source.python": "python",
+          "source.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "jsx.nmbl",
+        "injectTo": [
+          "source.ts",
+          "source.tsx",
+          "source.js",
+          "source.js.jsx"
+        ],
+        "path": "./syntaxes/jsx-nmbl.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.nmbl": "nmbl",
+          "meta.embedded.expression.nmbl": "typescript"
+        }
+      }
+    ]
+  }
+}

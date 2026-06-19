@@ -1,0 +1,21 @@
+{
+  "name": "example/vue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@nmbl-lang/vite-plugin": "workspace:*",
+    "@nmbl-lang/vue-language-plugin": "workspace:*",
+    "vue": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@vue/language-core": "^3.3.4",
+    "@vue/language-plugin-pug": "^3.3.4",
+    "typescript": "catalog:"
+  }
+}

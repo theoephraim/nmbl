@@ -1,0 +1,672 @@
+{
+  "defaultToken": "invalid",
+  "tokenPostfix": ".nmbl",
+  "ignoreCase": false,
+  "brackets": [],
+  "tokenizer": {
+    "comment_slashstar": [
+      [
+        "[^*]+",
+        "comment"
+      ],
+      [
+        "\\*/",
+        {
+          "token": "comment",
+          "next": "@pop"
+        }
+      ],
+      [
+        ".",
+        "comment"
+      ]
+    ],
+    "string_dquote_body": [
+      [
+        "\\\\[\\s\\S]",
+        "string.escape"
+      ],
+      [
+        "[^\"\\\\]+",
+        "string"
+      ],
+      [
+        "\\\\.",
+        "string.escape"
+      ]
+    ],
+    "string_dquote": [
+      {
+        "include": "@string_dquote_body"
+      },
+      [
+        "\"",
+        {
+          "token": "string",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "string_dquoteN": [
+      {
+        "include": "@string_dquote_body"
+      },
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "string_squote_body": [
+      [
+        "\\\\[\\s\\S]",
+        "string.escape"
+      ],
+      [
+        "[^'\\\\]+",
+        "string"
+      ],
+      [
+        "\\\\.",
+        "string.escape"
+      ]
+    ],
+    "string_squote": [
+      {
+        "include": "@string_squote_body"
+      },
+      [
+        "'",
+        {
+          "token": "string",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "string_squoteN": [
+      {
+        "include": "@string_squote_body"
+      },
+      [
+        "'",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "template_body": [
+      [
+        "\\$\\{",
+        {
+          "token": "delimiter.bracket",
+          "next": "@templateInterp"
+        }
+      ],
+      [
+        "[^`\\\\$]+",
+        "string"
+      ]
+    ],
+    "template": [
+      {
+        "include": "@template_body"
+      },
+      [
+        "`",
+        {
+          "token": "string",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        ".",
+        "string"
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "templateN": [
+      {
+        "include": "@template_body"
+      },
+      [
+        "`",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ],
+      [
+        ".",
+        "string"
+      ]
+    ],
+    "templateInterp": [
+      [
+        "[ \\t\\r\\n]+",
+        "white"
+      ],
+      [
+        "//.*$",
+        "comment"
+      ],
+      [
+        "/\\*",
+        {
+          "token": "comment",
+          "next": "@comment_slashstar"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@string_dquoteN"
+        }
+      ],
+      [
+        "'",
+        {
+          "token": "string",
+          "next": "@string_squoteN"
+        }
+      ],
+      [
+        "`",
+        {
+          "token": "string",
+          "next": "@templateN"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter.bracket",
+          "next": "@bracketCounting"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter.bracket",
+          "next": "@pop"
+        }
+      ],
+      {
+        "include": "@interpExprBody"
+      }
+    ],
+    "bracketCounting": [
+      [
+        "[ \\t\\r\\n]+",
+        "white"
+      ],
+      [
+        "//.*$",
+        "comment"
+      ],
+      [
+        "/\\*",
+        {
+          "token": "comment",
+          "next": "@comment_slashstar"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@string_dquoteN"
+        }
+      ],
+      [
+        "'",
+        {
+          "token": "string",
+          "next": "@string_squoteN"
+        }
+      ],
+      [
+        "`",
+        {
+          "token": "string",
+          "next": "@templateN"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter.bracket",
+          "next": "@bracketCounting"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter.bracket",
+          "next": "@pop"
+        }
+      ],
+      {
+        "include": "@interpExprBody"
+      }
+    ],
+    "exprBody": [
+      [
+        "[ \\t\\r\\n]+",
+        "white"
+      ],
+      [
+        "//.*$",
+        "comment"
+      ],
+      [
+        "/\\*",
+        {
+          "token": "comment",
+          "next": "@comment_slashstar"
+        }
+      ],
+      [
+        "\"(?:\\\\.|[^\"\\\\])*\"",
+        "string"
+      ],
+      [
+        "'(?:\\\\.|[^'\\\\])*'",
+        "string"
+      ],
+      [
+        "`",
+        {
+          "token": "string",
+          "switchTo": "@template"
+        }
+      ],
+      [
+        "(?!)",
+        {
+          "token": "variable",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "(?!)",
+        {
+          "token": "variable",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "(?!)",
+        {
+          "token": "variable",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "(?!)",
+        {
+          "token": "identifier",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        {
+          "token": "identifier",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        {
+          "token": "identifier",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "@[a-zA-Z]+",
+        {
+          "token": "keyword",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "[a-z][a-zA-Z0-9\\-_]*",
+        {
+          "token": "identifier",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "/\\*!(?:(?!\\*/)[\\s\\S])*?\\*/",
+        {
+          "token": "comment",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "//![^\\n]*",
+        {
+          "token": "comment",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "[^ \\t\\n\\r()>|]+",
+        {
+          "token": "identifier",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        {
+          "token": "identifier",
+          "switchTo": "@value"
+        }
+      ],
+      [
+        "[A-Z][a-zA-Z0-9\\-_]*",
+        {
+          "cases": {
+            "@default": {
+              "token": "identifier",
+              "switchTo": "@value"
+            }
+          }
+        }
+      ],
+      [
+        "=|>|\\||,|\\(|\\)|\\{|\\}",
+        {
+          "token": "delimiter",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "[a-z][a-zA-Z0-9\\-_]*",
+        {
+          "token": "tag",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "[A-Z][a-zA-Z0-9\\-_]*",
+        {
+          "token": "tag",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        {
+          "token": "attribute.name",
+          "next": "@adj_taghead"
+        }
+      ],
+      [
+        "(?=.)",
+        {
+          "token": "",
+          "next": "@adj_linebody"
+        }
+      ]
+    ],
+    "value": [
+      {
+        "include": "@exprBody"
+      },
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "interpExprBody": [
+      [
+        "(?!)",
+        "variable"
+      ],
+      [
+        "(?!)",
+        "variable"
+      ],
+      [
+        "(?!)",
+        "variable"
+      ],
+      [
+        "(?!)",
+        "identifier"
+      ],
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        "identifier"
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        "identifier"
+      ],
+      [
+        "@[a-zA-Z]+",
+        "keyword"
+      ],
+      [
+        "[a-z][a-zA-Z0-9\\-_]*",
+        "identifier"
+      ],
+      [
+        "/\\*!(?:(?!\\*/)[\\s\\S])*?\\*/",
+        "comment"
+      ],
+      [
+        "//![^\\n]*",
+        "comment"
+      ],
+      [
+        "[^ \\t\\n\\r()>|]+",
+        "identifier"
+      ],
+      [
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        "identifier"
+      ],
+      [
+        "[A-Z][a-zA-Z0-9\\-_]*",
+        {
+          "cases": {
+            "@default": "identifier"
+          }
+        }
+      ],
+      [
+        "=|>|\\||,|\\(|\\)|\\{|\\}",
+        "delimiter"
+      ]
+    ],
+    "adj_attrlist": [
+      [
+        "`",
+        {
+          "token": "string",
+          "next": "@templateN"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter.bracket",
+          "next": "@bracketCounting"
+        }
+      ],
+      [
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        "attribute.name"
+      ],
+      [
+        "\"(?:\\\\[\"\\\\]|[^\"\\\\])*\"",
+        "string"
+      ],
+      [
+        "'(?:\\\\['\\\\]|[^'\\\\])*'",
+        "string"
+      ],
+      [
+        "`(?:[^`\\\\$]|\\\\[`\\\\$]|\\$(?!\\{))*`",
+        "string"
+      ],
+      [
+        "[^ \\t\\n\\r(){}\"'`=>|,]+",
+        "string"
+      ],
+      [
+        "=",
+        "delimiter"
+      ],
+      [
+        ">",
+        "delimiter"
+      ],
+      [
+        "\\|",
+        "delimiter"
+      ],
+      [
+        ",",
+        "delimiter"
+      ],
+      [
+        "[ \\t]+",
+        "white"
+      ],
+      [
+        "\\)",
+        {
+          "token": "delimiter.parenthesis",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "adj_taghead": [
+      [
+        "#[a-zA-Z0-9\\-_]+",
+        "attribute.name"
+      ],
+      [
+        "\\.[a-zA-Z0-9\\-_]+",
+        "attribute.name"
+      ],
+      [
+        "\\(",
+        {
+          "token": "delimiter.parenthesis",
+          "next": "@adj_attrlist"
+        }
+      ],
+      [
+        "[ \\t]+",
+        {
+          "token": "white",
+          "next": "@adj_tagbody"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ],
+      [
+        ".",
+        {
+          "token": "",
+          "next": "@adj_tagbody"
+        }
+      ]
+    ],
+    "adj_tagbody": [
+      [
+        "[^\\n]+",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ],
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ],
+    "adj_linebody": [
+      {
+        "include": "@exprBody"
+      },
+      [
+        "$",
+        {
+          "token": "",
+          "next": "@popall"
+        }
+      ]
+    ]
+  }
+}

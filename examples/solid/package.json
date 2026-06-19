@@ -1,0 +1,19 @@
+{
+  "name": "example/solid",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@nmbl-lang/vite-plugin": "workspace:*",
+    "solid-js": "catalog:",
+    "vite-plugin-solid": "catalog:",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@nmbl-lang/typescript-plugin": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

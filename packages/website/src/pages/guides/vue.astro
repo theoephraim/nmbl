@@ -1,0 +1,223 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Vue Integration Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Vue
+      h1 Vue Integration
+      p.lead Use NMBL templates with Vue.js
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#installation") Installation
+            a(href="#configuration") Configuration
+            a(href="#basic-usage") Basic Usage
+            a(href="#control-flow") Control Flow
+            a(href="#comments") Comments
+            a(href="#intellisense-features") Intellisense Features
+            a(href="#troubleshooting") Troubleshooting
+
+        .prose
+          Fragment:md
+            ## Installation
+
+            To use NMBL in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
+
+            ```bash
+            # Using npm
+            npm install --save-dev @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
+
+            # Using bun
+            bun add -d @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
+
+            # Using pnpm
+            pnpm add -D @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
+            ```
+
+            ## Configuration
+
+            ### Vite Config
+
+            Add the NMBL plugin to your `vite.config.ts`. It must be listed **before** the Vue plugin:
+
+            ```ts title="vite.config.ts"
+            import { defineConfig } from 'vite';
+            import vue from '@vitejs/plugin-vue';
+            import nmbl from '@nmbl-lang/vite-plugin';
+
+            export default defineConfig({
+              plugins: [
+                nmbl(),  // must be before vue()
+                vue(),
+              ],
+            });
+            ```
+
+            ### TypeScript Config
+
+            Add the NMBL plugin to your `tsconfig.json` to enable intellisense:
+
+            ```json title="tsconfig.json"
+            {
+              "compilerOptions": {
+                // ... your existing options
+              },
+              "vueCompilerOptions": {
+                "plugins": ["@nmbl-lang/vue-language-plugin"],
+                "strictTemplates": true
+              }
+            }
+            ```
+
+            `strictTemplates` is optional but recommended: it makes Vue flag unknown components and **unknown props** (not just wrong-typed ones) in your NMBL templates, exactly as it would in a plain `<template>`.
+
+            ### VS Code Setup
+
+            The NMBL VS Code extension provides syntax highlighting (not yet on the marketplace — install it from the repo). Vue intellisense works through the Vue - Official extension (Volar).
+
+            ## Basic Usage
+
+            Add `lang="nmbl"` to your Vue template block, then write the markup as NMBL:
+
+            ```vue title="App.vue"
+            <script setup lang="ts">...</script>
+
+            <template lang="nmbl">
+            div#app
+              header.site-header
+                h1 {{ title }}
+                nav
+                  a(href="/home") Home
+                  a(href="/about") About
+
+              main.content
+                article(v-for="post in posts" :key="post.id")
+                  h2 {{ post.title }}
+                  p {{ post.excerpt }}
+                  button(@click="viewPost(post.id)") Read More
+
+              // embedded markdown!
+              .prose:md
+                ## some title
+
+                - list item1 with [link](https)
+                - **bold** list item
+
+              footer
+                p © 2024 My Site
+            </template>
+
+            <style scoped>...</style>
+            ```
+
+            ## Control Flow
+
+            NMBL has `@if` / `@elseif` / `@else` and `@each` blocks that compile to Vue's native `v-if` and `v-for`:
+
+            ```nmbl
+            @if(user)
+              p Welcome back, {{ user.name }}
+            @elseif(guest)
+              p Hello, guest
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(post of posts :key="post.id")
+                li {{ post.title }}
+            ```
+
+            `@if` becomes `<template v-if="…">` and `@each` becomes `<template v-for="… of …" :key="…">`. The conditions and loop expressions are passed straight through, so you write them exactly as you would in a Vue template. Plain `v-if` / `v-for` directives still work too — the `@`-blocks are just optional sugar.
+
+            ## Comments
+
+            `//` comments are stripped from the output (use them for dev notes); `//!` comments are rendered as real HTML comments:
+
+            ```nmbl
+            // dev note — never shipped
+            //! becomes <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            You can also comment out individual props inside a tag's parens — handy while debugging:
+
+            ```nmbl
+            button(
+              type="submit"
+              // disabled
+              /* aria-label="Save" */
+            ) Save
+            ```
+
+            ## Intellisense Features
+
+            With the Vue language plugin installed, you get full intellisense support:
+
+          .features-grid
+            .feature
+              h4 🔍 Go to Definition
+              p Click on variables, methods, or components to jump to their definitions
+            .feature
+              h4 💡 Auto-completion
+              p Get suggestions for props, events, directives, and component names
+            .feature
+              h4 🔗 CSS Class Linking
+              p Ctrl/Cmd+click on classes to jump to their CSS definitions (scoped styles only)
+            .feature
+              h4 ❗ Error Highlighting
+              p See TypeScript and Vue compiler errors directly in your template
+            .feature
+              h4 📝 Hover Information
+              p Hover over variables and components to see type information
+            .feature
+              h4 ♻️ Refactoring
+              p Rename variables and have them update across template and script
+
+          Fragment:md
+            ## Troubleshooting
+
+          .troubleshooting:md
+            ### Variables marked as unused
+
+            Make sure the Vue language plugin is properly configured in your `tsconfig.json` and restart your IDE.
+
+            ### No component / tag completion
+
+            Component name, HTML tag, attribute, event, and directive completion (plus auto-import on accept) are provided by the NMBL VS Code extension. Make sure it's installed and reload the window. Note: a component's **own props/emits** aren't suggested yet — type them and rely on type-checking to validate.
+
+            ### CSS classes not linking to styles
+
+            This only works with `<style scoped>` blocks. This is a Vue/Volar limitation that applies to all template languages, not just NMBL.
+
+            ### Syntax errors with indentation
+
+            Ensure your template starts at column 0 with no leading whitespace. NMBL uses indentation for structure, so the root element must not be indented.
+
+            ### Template not compiling
+
+            Check that you have `@nmbl-lang/vite-plugin` installed and listed **before** `@vitejs/plugin-vue` in your Vite config.
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="https://github.com/theoephraim/nmbl/tree/main/examples/vue" target="_blank")
+                span View Example Project
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+</template>

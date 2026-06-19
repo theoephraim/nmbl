@@ -1,0 +1,209 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<template lang="nmbl">
+BaseLayout(title="Integration Guides")
+  section.guides-hero
+    .container
+      h1 Integration Guides
+      p.lead Learn how to use NMBL with your favorite framework
+
+  section.guides-list
+    .container
+      .guides-grid
+        a.guide-card(href="/guides/vue")
+          .guide-icon
+            <img src="/logos/vue.svg" alt="Vue" width="48" height="48" />
+          h3 Vue
+          p Full intellisense support for NMBL templates in Vue Single File Components with Volar integration.
+          span.guide-status.stable Beta
+
+        a.guide-card(href="/guides/svelte")
+          .guide-icon
+            <img src="/logos/svelte.svg" alt="Svelte" width="48" height="48" />
+          h3 Svelte
+          p Use NMBL's clean syntax in Svelte components via a preprocessor. Compiles to native Svelte blocks.
+          span.guide-status Beta
+
+        a.guide-card(href="/guides/astro")
+          .guide-icon
+            <img src="/logos/astro.svg" alt="Astro" width="48" height="48" />
+          h3 Astro
+          p Use NMBL templates in Astro components and pages — with markdown blocks that run through Astro's own pipeline.
+          span.guide-status Beta
+
+        a.guide-card(href="/guides/react")
+          .guide-icon
+            <img src="/logos/react.svg" alt="React" width="48" height="48" />
+          h3 React
+          p Write NMBL markup in React components with the nmbl tagged template. Compiles to JSX.
+          span.guide-status Beta
+
+        a.guide-card(href="/guides/solid")
+          .guide-icon
+            <img src="/logos/solid.svg" alt="Solid" width="48" height="48" />
+          h3 Solid
+          p Write NMBL markup in Solid components with the nmbl tagged template. Signal-aware JSX output.
+          span.guide-status Beta
+
+        a.guide-card.coming-soon(href="/guides/vite")
+          .guide-icon
+            <img src="/logos/vite.svg" alt="Vite" width="48" height="48" />
+          h3 Vite
+          p Transform NMBL files on the fly with Vite's blazing fast HMR and build pipeline.
+          span.guide-status Coming Soon
+
+      .other-integrations
+        h2 More Integrations
+        p NMBL can work with any tool that processes HTML. The core compiler outputs standard HTML, making it compatible with any modern web framework or build tool.
+
+        .integration-links
+          a.integration-link(href="https://github.com/theoephraim/nmbl#compiler-api" target="_blank")
+            span Compiler API
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          a.integration-link(href="https://github.com/theoephraim/nmbl/tree/main/packages/vscode-extension" target="_blank")
+            span VS Code Extension
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+</template>
+
+<style>
+  .guides-hero {
+    padding: 4rem 0;
+    background: linear-gradient(to bottom, var(--color-bg-subtle), transparent);
+  }
+
+  .guides-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    color: var(--color-text-muted);
+  }
+
+  .guides-list {
+    padding: 4rem 0;
+  }
+
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .guide-card {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+
+  .guide-card:hover:not(.coming-soon) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-accent);
+  }
+
+  .guide-card.coming-soon {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .guide-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+  }
+
+  .guide-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .guide-card p {
+    color: var(--color-text-muted);
+    flex: 1;
+    margin-bottom: 1rem;
+  }
+
+  .guide-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 4px;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-muted);
+  }
+
+  .guide-status.stable {
+    background: rgba(79, 192, 141, 0.1);
+    color: #4FC08D;
+  }
+
+  .other-integrations {
+    padding: 3rem;
+    background: var(--color-bg-subtle);
+    border-radius: 12px;
+  }
+
+  .other-integrations h2 {
+    margin-bottom: 1rem;
+  }
+
+  .other-integrations p {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .integration-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .integration-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .integration-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 768px) {
+    .guides-hero h1 {
+      font-size: 2rem;
+    }
+
+    .guides-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

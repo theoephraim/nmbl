@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Playground from '../components/Playground.vue';
+---
+
+<template lang="nmbl">
+BaseLayout(title="Playground")
+  section.playground-section
+    .container
+      h1 Playground
+      p.subtitle Write NMBL on the left, see HTML on the right. Or paste HTML to convert it to NMBL.
+      Playground(client:only="vue")
+</template>
+
+<style>
+  .playground-section {
+    padding: 2rem 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .playground-section .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .playground-section h1 {
+    font-size: 2rem;
+    font-family: var(--font-mono);
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+  }
+</style>

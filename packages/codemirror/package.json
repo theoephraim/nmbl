@@ -1,0 +1,48 @@
+{
+  "name": "@nmbl-lang/codemirror",
+  "version": "0.1.0",
+  "description": "CodeMirror 6 language support for NMBL, driven by the generated Monarch tokenizer",
+  "keywords": [
+    "nmbl",
+    "template",
+    "codemirror",
+    "syntax-highlighting"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/codemirror"
+  },
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "tbuild": "turbo run build",
+    "dev": "bun run build --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nmbl-lang/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@codemirror/language": "^6.0.0"
+  },
+  "devDependencies": {
+    "@codemirror/language": "^6.12.3",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "@lezer/highlight": "^1.2.0"
+  }
+}

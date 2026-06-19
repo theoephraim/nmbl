@@ -1,0 +1,96 @@
+---
+import Badge from '../components/Badge.astro';
+
+// A single page that exercises every NMBL feature, so the compiler output
+// and the IDE (highlighting / intellisense) can be verified at a glance.
+const title = 'NMBL + Astro — Full Feature Tour';
+const show = true;
+const fruits = ['Apple', 'Banana', 'Cherry'];
+---
+
+<template lang="nmbl">
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    link(rel="icon" type="image/svg+xml" href="/favicon.svg")
+    meta(name="viewport" content="width=device-width")
+    title {title}
+  body
+    section.full-example
+      //! ── vars within content + a custom component ──────────────
+      h1.fe-title
+        | {title}
+        Badge(text="Astro" color="green")
+
+      p.fe-sub There are {fruits.length} fruits.
+
+      //! ── embedded markdown (rendered through Astro's own pipeline) ─
+      div.fe-prose:md
+        ## About this example
+
+        This page exercises **every** NMBL feature: control flow, two loop
+        styles, `{ }` interpolation, embedded markdown, and a
+        [custom component](https://nmbl.tools).
+
+        ```ts
+        const greeting = 'hello from a fenced code block';
+        ```
+
+      //! ── idiomatic loop: of-form @each compiles to items.map() ───
+      @if(show)
+        div.fe-idiomatic
+          h2 Idiomatic @each (of-form)
+          ul.fe-list
+            @each(fruit, i of fruits :key="fruit")
+              li
+                span.fe-num {i + 1}.
+                span.fe-name {fruit}
+                Badge(text={fruit} color="blue")
+      @else
+        p.fe-empty The list is hidden.
+
+      //! ── non-idiomatic / portable: Svelte-style as-form ─────────
+      div.fe-portable
+        h2 Portable @each (as-form)
+        ul.fe-list
+          @each(fruits as fruit, i (fruit))
+            li
+              span.fe-num {i + 1}.
+              span.fe-name {fruit}
+</template>
+
+<style>
+  .full-example {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    border-top: 4px solid #ff5d01;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .fe-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .fe-sub {
+    color: #666;
+  }
+  .fe-prose {
+    background: #f6f8fa;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+  }
+  .fe-list {
+    list-style: none;
+    padding: 0;
+  }
+  .fe-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+  }
+  .fe-num {
+    color: #999;
+  }
+</style>

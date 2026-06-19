@@ -1,0 +1,53 @@
+{
+  "name": "@nmbl-lang/language-server",
+  "version": "0.1.0",
+  "description": "Language Server Protocol implementation for NMBL templates",
+  "keywords": [
+    "nmbl",
+    "template",
+    "lsp",
+    "language-server"
+  ],
+  "license": "MIT",
+  "author": "Theo Ephraim",
+  "homepage": "https://nmbl.tools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theoephraim/nmbl.git",
+    "directory": "packages/language-server"
+  },
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "tbuild": "turbo run build",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nmbl-lang/core": "workspace:*",
+    "@volar/language-core": "~2.4.0",
+    "@volar/language-server": "~2.4.0",
+    "@volar/language-service": "~2.4.0",
+    "volar-service-html": "latest",
+    "vscode-html-languageservice": "^5.6.2",
+    "vscode-uri": "^3.1.0"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

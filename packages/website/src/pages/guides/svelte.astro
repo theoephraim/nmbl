@@ -1,0 +1,186 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Svelte Integration Guide")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Svelte
+      h1 Svelte Integration
+      p.lead Use NMBL templates in Svelte components
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#installation") Installation
+            a(href="#configuration") Configuration
+            a(href="#basic-usage") Basic Usage
+            a(href="#control-flow") Control Flow
+            a(href="#comments") Comments
+            a(href="#editor-support") Editor Support
+            a(href="#troubleshooting") Troubleshooting
+
+        .prose
+          Fragment:md
+            ## Installation
+
+            NMBL integrates with Svelte through a preprocessor. Install it as a dev dependency:
+
+            ```bash
+            # Using npm
+            npm install --save-dev @nmbl-lang/svelte
+
+            # Using bun
+            bun add -d @nmbl-lang/svelte
+
+            # Using pnpm
+            pnpm add -D @nmbl-lang/svelte
+            ```
+
+            ## Configuration
+
+            Add the NMBL preprocessor to your `svelte.config.js`:
+
+            ```js title="svelte.config.js"
+            import { nmblPreprocess } from '@nmbl-lang/svelte';
+
+            export default {
+              preprocess: [
+                nmblPreprocess(),
+              ],
+            };
+            ```
+
+            Your `vite.config.ts` needs no NMBL-specific changes — the standard Svelte plugin is all that's required; the preprocessor handles NMBL:
+
+            ```ts title="vite.config.ts"
+            import { defineConfig } from 'vite';
+            import { svelte } from '@sveltejs/vite-plugin-svelte';
+
+            export default defineConfig({
+              plugins: [svelte()],
+            });
+            ```
+
+            ## Basic Usage
+
+            Add `lang="nmbl"` to a `<template>` block in your `.svelte` component, then write the markup as NMBL. Everything else (script with Svelte 5 runes, styles) stays the same:
+
+            ```svelte title="App.svelte"
+            <script lang="ts">
+              let count = $state(0);
+              let items = $state(['Apple', 'Banana', 'Cherry']);
+            </script>
+
+            <template lang="nmbl">
+            div#app
+              h1 NMBL + Svelte
+              button(onclick={() => count++}) Clicked {count} times
+              ul
+                @each(item, i of items :key="item")
+                  li {i + 1}. {item}
+            </template>
+
+            <style>
+              #app { font-family: sans-serif; }
+            </style>
+            ```
+
+            Interpolation uses Svelte's single-brace `{expr}` syntax. Svelte directives like `bind:value`, `onclick`, and `class:active` all pass straight through.
+
+            ## Control Flow
+
+            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to Svelte's native `{#if}` and `{#each}` blocks:
+
+            ```nmbl
+            @if(loggedIn)
+              p Welcome back, {user.name}
+            @else
+              a(href="/login") Log in
+
+            ul
+              @each(item, i of items :key="item")
+                li {i + 1}. {item}
+            ```
+
+            `@if` becomes `{#if …}…{/if}`, and `@each(item, i of items :key="item")` becomes `{#each items as item, i (item)}`. Conditions and loop expressions pass straight through, so you write them exactly as in Svelte. Svelte also gets a few extras that map to its block syntax: `@await`, `@key`, and `@snippet`, plus `{@html …}` for raw HTML. Plain Svelte blocks still work too if you prefer them.
+
+            ## Comments
+
+            `//` comments are stripped from the output (dev notes); `//!` comments are rendered as real HTML comments:
+
+            ```nmbl
+            // dev note — never shipped
+            //! becomes <!-- an HTML comment -->
+            p Visible text
+            ```
+
+            You can also comment out individual props inside a tag's parens — handy while debugging:
+
+            ```nmbl
+            button(
+              type="submit"
+              // disabled
+              /* aria-label="Save" */
+            ) Save
+            ```
+
+            ## Editor Support
+
+            > **⚠️ Editor support is still catching up — but nothing is wrong with your code.** NMBL templates compile and run as native Svelte, with no build or runtime caveats whatsoever. The gap is purely *in-editor type-checking*: Svelte's language tooling type-checks `.svelte` files **before** preprocessors run ([sveltejs/language-tools#339](https://github.com/sveltejs/language-tools/issues/339)), so it analyzes the raw NMBL template instead of the compiled Svelte output. In practice you may see **false red squiggles** on `@each` loop variables (`item`, `i`) and props aren't type-checked inside templates. These are editor-only false positives — your code builds and runs correctly. We're actively working on closing this gap.
+
+            Svelte editor support comes from `@nmbl-lang/language-server` (a Volar 2.4 server) wired through the NMBL VS Code extension. It activates only on `.svelte` files that contain a `<template lang="nmbl">` block — other Svelte files are left untouched.
+
+          .features-grid
+            .feature
+              h4 🎨 Syntax Highlighting
+              p NMBL syntax is highlighted inside template lang="nmbl" blocks
+            .feature
+              h4 💡 HTML Completions
+              p Tag names, attribute names, and values are suggested via the embedded HTML language service
+            .feature
+              h4 🔗 Go to Definition
+              p Tokens map back to your NMBL source, so navigation works on the original file
+            .feature
+              h4 ❗ Syntax Diagnostics
+              p NMBL syntax errors and unsupported control-flow blocks are surfaced inline
+
+          Fragment:md
+            > **Want the fullest type intellisense today?** Vue is the most complete target — its dedicated Volar plugin runs the NMBL template through a real type-checker, so expression and prop types are fully validated.
+
+            ## Troubleshooting
+
+          .troubleshooting:md
+            ### Template not transforming
+
+            Make sure `nmblPreprocess()` is listed in your `svelte.config.js` `preprocess` array, and restart the dev server after editing the config.
+
+            ### Syntax errors with indentation
+
+            NMBL uses indentation for structure. Your root element must start at column 0 with no leading whitespace, and use consistent 2-space indentation (no tabs).
+
+            ### Editor shows no highlighting
+
+            Install the NMBL VS Code extension (syntax highlighting + language server). It activates only on `.svelte` files that contain a `<template lang="nmbl">` block.
+
+          .next-steps
+            h2 Next Steps
+            .next-links
+              a.next-link(href="/playground")
+                span Try the Playground
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              a.next-link(href="https://github.com/theoephraim/nmbl/tree/main/examples/svelte" target="_blank")
+                span View Example Project
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+</template>

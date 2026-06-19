@@ -1,0 +1,6 @@
+env = false
+
+# Socket.dev supply-chain scanner — vets packages during `bun install`
+# (malware, typosquats, install scripts); fatal findings block the install.
+[install.security]
+scanner = "@socketsecurity/bun-security-scanner"
