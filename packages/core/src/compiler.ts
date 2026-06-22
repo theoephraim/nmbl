@@ -556,7 +556,27 @@ export class Compiler {
     return parts.join('\n');
   }
 
+  /**
+   * Vue has no JSX-style `{…}` binding. An unbound `attr={expr}` would emit a
+   * literal `{expr}` string attribute — never what the author meant, and a
+   * silent footgun. Flag it loudly (Vue can't tell a prop from a handler, so we
+   * can't safely auto-convert it: a prop wants `:name="…"`, a handler `@event`).
+   */
+  private checkVueExpressionAttrs(node: ElementNode): void {
+    if (this.framework !== 'vue') return;
+    for (const attr of node.attributes) {
+      if (attr.expression && !attr.bound) {
+        this.errors.push(createError(
+          ErrorCode.UnexpectedToken,
+          `\`${attr.name}={…}\` is a JSX-style binding, which Vue treats as the literal string "{…}". Use \`:${attr.name}="…"\` for a prop binding, or \`@event\` for a handler.`,
+          attr.span,
+        ));
+      }
+    }
+  }
+
   private compileAttributesTracked(node: ElementNode): void {
+    this.checkVueExpressionAttrs(node);
     // Merge classes: CSS shorthand classes + static class attribute
     const allClasses = [...node.classes];
     let dynamicClass: AttributeNode | null = null;
@@ -898,6 +918,7 @@ export class Compiler {
   }
 
   private compileAttributes(node: ElementNode): string {
+    this.checkVueExpressionAttrs(node);
     const parts: string[] = [];
 
     // Merge classes: CSS shorthand classes + static class attribute

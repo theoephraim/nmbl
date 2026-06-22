@@ -216,6 +216,25 @@ describe('Compiler', () => {
       expect(compile('a(:href="url")', { framework: 'vue' }).html.trim()).toBe('<a :href="url"></a>');
     });
 
+    // An unbound JSX-style `attr={expr}` has no valid meaning in Vue (it becomes
+    // a literal `{expr}` string), so the Vue target errors rather than emit it.
+    test('vue errors on an unbound expression attribute', () => {
+      const { errors } = compile('img(src={avatar})', { framework: 'vue' });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain(':src="');
+    });
+
+    test('vue accepts the same expression when bound (:src) or as an event', () => {
+      expect(compile('img(:src="avatar")', { framework: 'vue' }).errors).toHaveLength(0);
+      expect(compile('button(@click="go")', { framework: 'vue' }).errors).toHaveLength(0);
+    });
+
+    test('jsx-family keep the unbound expression attribute (native form)', () => {
+      for (const framework of ['astro', 'svelte', 'jsx'] as const) {
+        expect(compile('img(src={avatar})', { framework }).errors).toHaveLength(0);
+      }
+    });
+
     for (const framework of ['astro', 'svelte', 'jsx'] as const) {
       describe(framework, () => {
         const out = (src: string) => compile(src, { framework }).html.trim();
