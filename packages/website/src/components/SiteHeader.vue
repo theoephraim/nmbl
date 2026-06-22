@@ -44,9 +44,9 @@ header.site-header
   font-family: var(--font-mono);
   color: var(--color-accent);
   display: flex;
-  /* baseline-align so the mark sits on the wordmark's baseline; its height is
-     tuned to the lowercase ink height (~0.59em) so it reads exactly as tall as
-     the "n". */
+  /* baseline-align so the mark's bottom sits on the wordmark's baseline; the
+     mark is taller than the text and rises above it, but stays anchored to the
+     baseline like a letter. */
   align-items: baseline;
   gap: 0.4rem;
 }
@@ -54,7 +54,7 @@ header.site-header
 .logo-mark {
   display: block;
   flex-shrink: 0;
-  height: 0.59em;
+  height: 1.15em;
   width: auto;
 }
 
