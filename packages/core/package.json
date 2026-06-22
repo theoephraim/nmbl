@@ -55,6 +55,7 @@
     "monogram": "github:johnsoncodehk/monogram#e143b7cac916b36b381587af1c3c7d707c521bd4",
     "tsdown": "catalog:",
     "typescript": "catalog:",
+    "unrun": "^0.2.27",
     "vitest": "catalog:",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
