@@ -7,15 +7,19 @@
   --color-border: #2a2d3a;
   --color-text: #e1e4ed;
   --color-text-muted: #8b8fa3;
-  --color-accent: #7c6ef6;
-  --color-accent-hover: #9486ff;
+  --color-accent: #ff6b5e;
+  --color-accent-hover: #ff8a7d;
+  /* Accent as raw RGB channels so translucent tints can share one source:
+     rgba(var(--color-accent-rgb), 0.15). Keep in sync with --color-accent. */
+  --color-accent-rgb: 255, 107, 94;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Canonical NMBL rainbow ramp — depth-as-colour. The brand's one piece of
-     colour beyond purple: indent guides, the mascot trail, loaders, dividers.
-     Same six hues everywhere so the motif reads as intentional, not decoration.
-     Cycle by indent depth: level N uses --rainbow-(N mod 6). */
+  /* Canonical nmbl rainbow ramp — depth-as-colour, and the brand's core motif:
+     indent guides, the mascot trail, loaders, dividers. The coral accent above
+     is drawn from this ramp's warm end (near rainbow-0/1), so the UI and the
+     motif read as one palette. Same six hues everywhere so it stays intentional,
+     not decoration. Cycle by indent depth: level N uses --rainbow-(N mod 6). */
   --rainbow-0: #ff595e;
   --rainbow-1: #ff924c;
   --rainbow-2: #ffca3a;
@@ -28,6 +32,13 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* The rehype-indent-sections plugin wraps every `:md` heading's body in a
+   `.md-indent` div. By default it's a transparent no-op (children flow as if it
+   weren't there); only guide prose opts into the indented-tree styling. */
+.md-indent {
+  display: contents;
 }
 
 /* Rainbow indent guides on static code samples (see src/ec-indent-rainbow.mjs).

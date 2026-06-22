@@ -15,24 +15,24 @@
         img.fw-logo(:src="fw.icon" alt="" width="26" height="26")
         span.fw-name {{ fw.label }}
     button.direction-toggle(v-if="canReverse" @click="toggleDirection" :title="directionTitle")
-      span.direction-side {{ direction === 'nmbl-to-html' ? 'NMBL' : 'HTML' }}
+      span.direction-side {{ direction === 'nmbl-to-html' ? 'nmbl' : 'HTML' }}
       span.direction-arrow →
-      span.direction-side {{ direction === 'nmbl-to-html' ? 'HTML' : 'NMBL' }}
+      span.direction-side {{ direction === 'nmbl-to-html' ? 'HTML' : 'nmbl' }}
       span.swap-icon ⇄
     a.guide-link(:href="guide.href") {{ guide.label }} →
   .playground-warning(v-if="lossWarning.length")
-    span ⚠️ Editing the HTML will regenerate the NMBL — {{ lossWarning.join(' and ') }} can't be recovered and will be dropped. Switch back now to keep them.
+    span ⚠️ Editing the HTML will regenerate the nmbl — {{ lossWarning.join(' and ') }} can't be recovered and will be dropped. Switch back now to keep them.
     button.warning-dismiss(@click="lossWarning = []" title="Dismiss") ×
   .playground-editors
     .editor-pane(:class="{ 'pane-output': direction === 'html-to-nmbl' }" :style="{ order: direction === 'html-to-nmbl' ? 2 : 1 }")
       .pane-header
-        span NMBL
+        span nmbl
           span.pane-tag(v-if="direction === 'html-to-nmbl'") generated
         span.pane-stats {{ nmblStats }}
       Editor(
         v-model="nmblSource"
         language="nmbl"
-        placeholder="Write NMBL here..."
+        placeholder="Write nmbl here..."
         :readonly="direction === 'html-to-nmbl'"
         :highlight="nmblHighlight"
         @cursor="onNmblCursor"
@@ -100,9 +100,9 @@ const htmlStats = computed(() => {
   return `${lines} lines, ${chars} chars`;
 });
 // Which pane is the SOURCE. The other pane is generated (read-only) — an
-// explicit direction instead of focus-driven sync, because HTML → NMBL is
+// explicit direction instead of focus-driven sync, because HTML → nmbl is
 // LOSSY (dev comments and :md blocks don't survive a round trip) and should
-// never silently overwrite handwritten NMBL.
+// never silently overwrite handwritten nmbl.
 const direction = ref<'nmbl-to-html' | 'html-to-nmbl'>('nmbl-to-html');
 const error = ref('');
 
@@ -110,13 +110,13 @@ const error = ref('');
 // guide is published yet; the rest point at the guides index until they ship.
 const GUIDES: Record<PlaygroundFramework, { href: string; label: string }> = {
   html: { href: '/guides', label: 'Integration guides' },
-  vue: { href: '/guides/vue', label: 'Using NMBL with Vue' },
-  svelte: { href: '/guides/svelte', label: 'Using NMBL with Svelte' },
-  astro: { href: '/guides/astro', label: 'Using NMBL with Astro' },
-  react: { href: '/guides/react', label: 'Using NMBL with React' },
-  solid: { href: '/guides/solid', label: 'Using NMBL with Solid' },
-  qwik: { href: '/guides/qwik', label: 'Using NMBL with Qwik' },
-  prompt: { href: '/guides/prompts', label: 'NMBL for prompts' },
+  vue: { href: '/guides/vue', label: 'Using nmbl with Vue' },
+  svelte: { href: '/guides/svelte', label: 'Using nmbl with Svelte' },
+  astro: { href: '/guides/astro', label: 'Using nmbl with Astro' },
+  react: { href: '/guides/react', label: 'Using nmbl with React' },
+  solid: { href: '/guides/solid', label: 'Using nmbl with Solid' },
+  qwik: { href: '/guides/qwik', label: 'Using nmbl with Qwik' },
+  prompt: { href: '/guides/prompts', label: 'nmbl for prompts' },
 };
 const guide = computed(() => GUIDES[framework.value]);
 
@@ -140,17 +140,17 @@ function compileOptionsFor(fw: PlaygroundFramework) {
   return { framework: fw };
 }
 
-// HTML → NMBL only makes sense for the html target — the decompiler turns plain
-// HTML back into NMBL, and framework output ({#each}, <template v-for>, client:
+// HTML → nmbl only makes sense for the html target — the decompiler turns plain
+// HTML back into nmbl, and framework output ({#each}, <template v-for>, client:
 // directives, …) wouldn't round-trip.
 const canReverse = computed(() => framework.value === 'html');
 
 const directionTitle = computed(() =>
   !canReverse.value
-    ? 'HTML → NMBL conversion is only available for the html target'
+    ? 'HTML → nmbl conversion is only available for the html target'
     : direction.value === 'nmbl-to-html'
-      ? 'Switch to converting HTML into NMBL'
-      : 'Switch back to authoring NMBL');
+      ? 'Switch to converting HTML into nmbl'
+      : 'Switch back to authoring nmbl');
 
 /** Constructs the decompiler cannot reproduce from HTML. */
 function lossyConstructs(nmbl: string): string[] {
@@ -165,7 +165,7 @@ function lossyConstructs(nmbl: string): string[] {
 const lossWarning = ref<string[]>([]);
 
 // Toggling is NON-destructive: the panes swap sides and the HTML becomes the
-// source, but the handwritten NMBL stays untouched until the HTML is actually
+// source, but the handwritten nmbl stays untouched until the HTML is actually
 // edited (the htmlSource watch runs the first decompile). Switching back
 // before editing loses nothing — the warning is informational, not a gate.
 function toggleDirection() {
@@ -182,7 +182,7 @@ function toggleDirection() {
 }
 
 // ── cursor sync: the compiler's source↔generated mappings drive a highlight
-// in the opposite pane. Only meaningful in NMBL → HTML mode (the decompiler
+// in the opposite pane. Only meaningful in nmbl → HTML mode (the decompiler
 // has no mappings, and hand-edited HTML wouldn't match compiled offsets).
 let mappings: SourceMapping[] = [];
 const htmlHighlight = ref<{ from: number; to: number } | null>(null);
@@ -216,7 +216,7 @@ function onHtmlCursor(offset: number) {
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-// Initialize HTML from default NMBL
+// Initialize HTML from default nmbl
 compileNmbl(nmblSource.value);
 
 function compileNmbl(source: string) {
@@ -252,7 +252,7 @@ watch(nmblSource, (value) => {
 });
 
 watch(framework, (next) => {
-  // Leaving html while reverse-converting: snap back to authoring NMBL (the
+  // Leaving html while reverse-converting: snap back to authoring nmbl (the
   // reverse direction isn't available for framework targets).
   if (next !== 'html' && direction.value === 'html-to-nmbl') {
     direction.value = 'nmbl-to-html';
@@ -260,7 +260,7 @@ watch(framework, (next) => {
   }
   if (direction.value !== 'nmbl-to-html') return;
   // Swap in the new framework's idiomatic example, but only if the editor still
-  // holds the example we loaded (never overwrite the user's own NMBL).
+  // holds the example we loaded (never overwrite the user's own nmbl).
   if (nmblSource.value === loadedExample) {
     loadedExample = PLAYGROUND_EXAMPLES[next];
     nmblSource.value = loadedExample;
@@ -319,7 +319,7 @@ watch(htmlSource, (value) => {
 
 .fw-btn.active {
   border-color: var(--color-accent);
-  background: rgba(124, 110, 246, 0.1);
+  background: rgba(var(--color-accent-rgb), 0.1);
   color: var(--color-text);
 }
 
@@ -395,7 +395,7 @@ watch(htmlSource, (value) => {
   margin-left: 0.5rem;
   padding: 0.05rem 0.4rem;
   border-radius: 3px;
-  background: var(--color-bg-subtle, rgba(124, 110, 246, 0.12));
+  background: var(--color-bg-subtle, rgba(var(--color-accent-rgb), 0.12));
   font-size: 0.65rem;
   font-weight: 400;
   text-transform: lowercase;

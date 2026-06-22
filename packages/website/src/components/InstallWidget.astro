@@ -1,0 +1,119 @@
+---
+import { Code } from 'astro-expressive-code/components';
+
+// Install command, switchable by package manager. The choice syncs across every
+// InstallWidget on the page and persists (localStorage), like Starlight's
+// synced tabs — so picking "pnpm" once sticks everywhere.
+interface Props {
+  /** Package(s) to install — a string or list. */
+  packages: string | string[];
+  /** Install as a dev dependency. */
+  dev?: boolean;
+}
+
+const { packages, dev = false } = Astro.props;
+const pkgs = Array.isArray(packages) ? packages.join(' ') : packages;
+
+const managers = [
+  { id: 'npm', cmd: `npm install ${dev ? '--save-dev ' : ''}${pkgs}` },
+  { id: 'pnpm', cmd: `pnpm add ${dev ? '-D ' : ''}${pkgs}` },
+  { id: 'yarn', cmd: `yarn add ${dev ? '-D ' : ''}${pkgs}` },
+  { id: 'bun', cmd: `bun add ${dev ? '-d ' : ''}${pkgs}` },
+];
+---
+
+<div class="install-widget">
+  <div class="pm-tabs" role="tablist" aria-label="Package manager">
+    {managers.map((m, i) => (
+      <button class="pm-tab" data-pm={m.id} role="tab" type="button" aria-selected={i === 0 ? 'true' : 'false'}>
+        {m.id}
+      </button>
+    ))}
+  </div>
+  <div class="pm-panels">
+    {managers.map((m, i) => (
+      <div class="pm-panel" data-pm={m.id} hidden={i !== 0}>
+        <Code code={m.cmd} lang="bash" frame="none" />
+      </div>
+    ))}
+  </div>
+</div>
+
+<script>
+  const KEY = 'nmbl:pm';
+  const VALID = ['npm', 'pnpm', 'yarn', 'bun'];
+
+  const apply = (pm: string) => {
+    document.querySelectorAll<HTMLElement>('.install-widget').forEach((w) => {
+      w.querySelectorAll<HTMLElement>('.pm-tab').forEach((t) =>
+        t.setAttribute('aria-selected', String(t.dataset.pm === pm)),
+      );
+      w.querySelectorAll<HTMLElement>('.pm-panel').forEach((p) => {
+        p.hidden = p.dataset.pm !== pm;
+      });
+    });
+  };
+
+  const stored = localStorage.getItem(KEY);
+  apply(VALID.includes(stored ?? '') ? (stored as string) : 'npm');
+
+  document.querySelectorAll<HTMLElement>('.install-widget .pm-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const pm = tab.dataset.pm!;
+      localStorage.setItem(KEY, pm);
+      apply(pm);
+    });
+  });
+</script>
+
+<style>
+  .install-widget {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1rem 0 1.5rem;
+    background: var(--color-bg-code, #0a0c10);
+  }
+
+  .pm-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.4rem 0.4rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .pm-tab {
+    padding: 0.4rem 0.85rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .pm-tab:hover {
+    color: var(--color-text);
+  }
+
+  .pm-tab[aria-selected='true'] {
+    color: var(--color-text);
+    background: var(--color-bg-subtle, rgba(var(--color-accent-rgb), 0.12));
+  }
+
+  .pm-panel[hidden] {
+    display: none;
+  }
+
+  .pm-panel :global(.expressive-code) {
+    margin: 0;
+  }
+
+  .pm-panel :global(.expressive-code pre) {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+</style>

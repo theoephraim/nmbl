@@ -13,7 +13,7 @@ function nmblToPrompt(nmbl: string): string {
   return html.trimEnd();
 }
 
-/** Homepage prompt section: NMBL source and its compiled structured prompt. */
+/** Homepage prompt section: nmbl source and its compiled structured prompt. */
 export const SHOWCASE_PROMPT = `// scratch notes — stripped, never sent to the model
 system:md
   You are a precise assistant. Never invent facts.
@@ -115,7 +115,7 @@ export type PlaygroundFramework = 'html' | 'vue' | 'svelte' | 'astro' | 'react' 
 // native loops/conditionals, and `{ }` / `{{ }}` var interpolation. Swapped when
 // you change the framework selector (unless you've edited).
 export const PLAYGROUND_EXAMPLES: Record<PlaygroundFramework, string> = {
-  html: `//! NMBL → plain HTML. No build step, no runtime.
+  html: `//! nmbl → plain HTML. No build step, no runtime.
 // dev notes like this are stripped from the output
 nav.main-nav
   ul

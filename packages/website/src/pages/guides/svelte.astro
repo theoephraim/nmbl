@@ -1,5 +1,7 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
+import InstallWidget from '../../components/InstallWidget.astro';
 ---
 
 <template lang="nmbl">
@@ -9,7 +11,7 @@ GuideLayout(title="Svelte Integration Guide")
       .breadcrumb
         | <a href="/guides">Guides</a> / Svelte
       h1 Svelte Integration
-      p.lead Use NMBL templates in Svelte components
+      p.lead Use nmbl templates in Svelte components
 
   section.guide-content
     .container
@@ -26,25 +28,18 @@ GuideLayout(title="Svelte Integration Guide")
             a(href="#troubleshooting") Troubleshooting
 
         .prose
+          EditorSupportCallout
           Fragment:md
             ## Installation
 
-            NMBL integrates with Svelte through a preprocessor. Install it as a dev dependency:
+            nmbl integrates with Svelte through a preprocessor. Install it as a dev dependency:
 
-            ```bash
-            # Using npm
-            npm install --save-dev @nmbl-lang/svelte
-
-            # Using bun
-            bun add -d @nmbl-lang/svelte
-
-            # Using pnpm
-            pnpm add -D @nmbl-lang/svelte
-            ```
-
+          .md-indent
+            InstallWidget(packages="@nmbl-lang/svelte" dev={true})
+          Fragment:md
             ## Configuration
 
-            Add the NMBL preprocessor to your `svelte.config.js`:
+            Add the nmbl preprocessor to your `svelte.config.js`:
 
             ```js title="svelte.config.js"
             import { nmblPreprocess } from '@nmbl-lang/svelte';
@@ -56,7 +51,7 @@ GuideLayout(title="Svelte Integration Guide")
             };
             ```
 
-            Your `vite.config.ts` needs no NMBL-specific changes — the standard Svelte plugin is all that's required; the preprocessor handles NMBL:
+            Your `vite.config.ts` needs no nmbl-specific changes — the standard Svelte plugin is all that's required; the preprocessor handles nmbl:
 
             ```ts title="vite.config.ts"
             import { defineConfig } from 'vite';
@@ -69,7 +64,7 @@ GuideLayout(title="Svelte Integration Guide")
 
             ## Basic Usage
 
-            Add `lang="nmbl"` to a `<template>` block in your `.svelte` component, then write the markup as NMBL. Everything else (script with Svelte 5 runes, styles) stays the same:
+            Add `lang="nmbl"` to a `<template>` block in your `.svelte` component, then write the markup as nmbl. Everything else (script with Svelte 5 runes, styles) stays the same:
 
             ```svelte title="App.svelte"
             <script lang="ts">
@@ -79,7 +74,7 @@ GuideLayout(title="Svelte Integration Guide")
 
             <template lang="nmbl">
             div#app
-              h1 NMBL + Svelte
+              h1 nmbl + Svelte
               button(onclick={() => count++}) Clicked {count} times
               ul
                 @each(item, i of items :key="item")
@@ -95,7 +90,7 @@ GuideLayout(title="Svelte Integration Guide")
 
             ## Control Flow
 
-            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to Svelte's native `{#if}` and `{#each}` blocks:
+            nmbl's `@if` / `@elseif` / `@else` and `@each` blocks compile to Svelte's native `{#if}` and `{#each}` blocks:
 
             ```nmbl
             @if(loggedIn)
@@ -132,26 +127,26 @@ GuideLayout(title="Svelte Integration Guide")
 
             ## Editor Support
 
-            > **⚠️ Editor support is still catching up — but nothing is wrong with your code.** NMBL templates compile and run as native Svelte, with no build or runtime caveats whatsoever. The gap is purely *in-editor type-checking*: Svelte's language tooling type-checks `.svelte` files **before** preprocessors run ([sveltejs/language-tools#339](https://github.com/sveltejs/language-tools/issues/339)), so it analyzes the raw NMBL template instead of the compiled Svelte output. In practice you may see **false red squiggles** on `@each` loop variables (`item`, `i`) and props aren't type-checked inside templates. These are editor-only false positives — your code builds and runs correctly. We're actively working on closing this gap.
+            > **⚠️ Editor support is still catching up — but nothing is wrong with your code.** nmbl templates compile and run as native Svelte, with no build or runtime caveats whatsoever. The gap is purely *in-editor type-checking*: Svelte's language tooling type-checks `.svelte` files **before** preprocessors run ([sveltejs/language-tools#339](https://github.com/sveltejs/language-tools/issues/339)), so it analyzes the raw nmbl template instead of the compiled Svelte output. In practice you may see **false red squiggles** on `@each` loop variables (`item`, `i`) and props aren't type-checked inside templates. These are editor-only false positives — your code builds and runs correctly. We're actively working on closing this gap.
 
-            Svelte editor support comes from `@nmbl-lang/language-server` (a Volar 2.4 server) wired through the NMBL VS Code extension. It activates only on `.svelte` files that contain a `<template lang="nmbl">` block — other Svelte files are left untouched.
+            Svelte editor support comes from `@nmbl-lang/language-server` (a Volar 2.4 server) wired through the nmbl VS Code extension. It activates only on `.svelte` files that contain a `<template lang="nmbl">` block — other Svelte files are left untouched.
 
           .features-grid
             .feature
               h4 🎨 Syntax Highlighting
-              p NMBL syntax is highlighted inside template lang="nmbl" blocks
+              p nmbl syntax is highlighted inside template lang="nmbl" blocks
             .feature
               h4 💡 HTML Completions
               p Tag names, attribute names, and values are suggested via the embedded HTML language service
             .feature
               h4 🔗 Go to Definition
-              p Tokens map back to your NMBL source, so navigation works on the original file
+              p Tokens map back to your nmbl source, so navigation works on the original file
             .feature
               h4 ❗ Syntax Diagnostics
-              p NMBL syntax errors and unsupported control-flow blocks are surfaced inline
+              p nmbl syntax errors and unsupported control-flow blocks are surfaced inline
 
           Fragment:md
-            > **Want the fullest type intellisense today?** Vue is the most complete target — its dedicated Volar plugin runs the NMBL template through a real type-checker, so expression and prop types are fully validated.
+            > **Want the fullest type intellisense today?** Vue is the most complete target — its dedicated Volar plugin runs the nmbl template through a real type-checker, so expression and prop types are fully validated.
 
             ## Troubleshooting
 
@@ -162,11 +157,11 @@ GuideLayout(title="Svelte Integration Guide")
 
             ### Syntax errors with indentation
 
-            NMBL uses indentation for structure. Your root element must start at column 0 with no leading whitespace, and use consistent 2-space indentation (no tabs).
+            nmbl uses indentation for structure. Your root element must start at column 0 with no leading whitespace, and use consistent 2-space indentation (no tabs).
 
             ### Editor shows no highlighting
 
-            Install the NMBL VS Code extension (syntax highlighting + language server). It activates only on `.svelte` files that contain a `<template lang="nmbl">` block.
+            Install the nmbl VS Code extension (syntax highlighting + language server). It activates only on `.svelte` files that contain a `<template lang="nmbl">` block.
 
           .next-steps
             h2 Next Steps

@@ -1,5 +1,6 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
 ---
 
 <template lang="nmbl">
@@ -9,7 +10,7 @@ GuideLayout(title="Syntax Reference")
       .breadcrumb
         | <a href="/guides">Guides</a> / Syntax
       h1 Syntax Reference
-      p.lead Everything the NMBL notation gives you — elements, attributes, text, comments, content blocks, and control flow — in one place.
+      p.lead Everything the nmbl notation gives you — elements, attributes, text, comments, content blocks, and control flow — in one place.
 
   section.guide-content
     .container
@@ -17,7 +18,7 @@ GuideLayout(title="Syntax Reference")
         aside.toc
           h3 Contents
           nav
-            a(href="#elements") Elements & nesting
+            a(href="#basics") The basics
             a(href="#attributes") Attributes
             a(href="#text-and-raw-html") Text & raw HTML
             a(href="#block-expansion") Block expansion
@@ -29,11 +30,12 @@ GuideLayout(title="Syntax Reference")
             a(href="#pitfalls") Pitfalls
 
         .prose
+          EditorSupportCallout
           Fragment:md
-            ## Elements
+            ## Basics
 
-            NMBL is an indentation-based shorthand for HTML. Structure comes from
-            **indentation** (2 spaces per level) — there are no closing tags. A
+            nmbl is an **indentation-based** shorthand for HTML -
+            indentation level determines nesting — there are no closing tags. A
             tag name starts a line; children go on indented lines beneath it.
 
             ```nmbl
@@ -43,25 +45,25 @@ GuideLayout(title="Syntax Reference")
                 li About
             ```
 
-            ### id and class shorthand
+            ### `#id` and `.class` shorthand
 
             Use CSS-selector shorthand glued directly to the tag: `#id` for the id,
-            `.class` for classes (repeat `.` for multiple). A selector with **no tag
+            `.class` for classes (repeat `.` for multiple classes). A selector with **no tag
             name** implies a `div`.
 
             ```nmbl
-            div#app.card.dark   → <div id="app" class="card dark">
-            .box                → <div class="box">
-            section.hero.full   → <section class="hero full">
+            nav#main-nav.sticky   → <nav id="main-nav" class="sticky">
+            .foo.bar              → <div class="foo bar">
             ```
 
-            ### Components
+            ### HTML Tag / Components
 
-            A PascalCase name is treated as a component and passed through
-            untouched — your framework resolves it.
+            Tag is passed through directly, whether it's a standard HTML tag or a component.
+            It is passed through untouched — your framework resolves it.
 
             ```nmbl
-            Counter(client:visible initialCount={0})
+            button         // standard HTML tag
+            MyFancyButton  // custom component
             ```
 
             ## Attributes
@@ -86,19 +88,28 @@ GuideLayout(title="Syntax Reference")
 
             ### Bindings
 
-            For **dynamic** values, bind with a leading `:` (or pass a `{expression}`
-            value). The binding compiles to each framework's native form, and a bare
-            `:name` is shorthand for `:name="name"`:
+            Most of the time you just write what's **native** to your framework —
+            Vue's `:src="…"` and `v-if`, or the `{expression}` holes Svelte, Astro,
+            and JSX use — and nmbl passes it straight through. The only bit of
+            standardization is the bound `:` shorthand: it compiles to each host's
+            native binding (`:attr="…"` on Vue/HTML, `attr={…}` on the JSX-likes), so
+            the same markup works across every target:
 
-            ```nmbl
-            img(:src=`/avatars/${user.id}.png`)
-            Avatar(:user)                          ← shorthand for :user="user"
+            ```
+            :src="avatar"      →  :src="avatar"        ·  src={avatar}
+            :src=`/a/${id}`    →  :src="`/a/${id}`"    ·  src={`/a/${id}`}
             ```
 
-            | Target | `img(:src=…)` | `Avatar(:user)` |
-            |---|---|---|
-            | vue | `:src="…"` | `:user="user"` |
-            | svelte / astro / jsx | `src={…}` | `user={user}` |
+            Everything else is left as-is rather than rewritten:
+
+            - A raw `{expression}` hole is native to **Svelte / Astro / JSX** and
+              passes straight through. In **Vue** it isn't a binding — `src={avatar}`
+              would become the literal string `{avatar}` — so the Vue target raises a
+              compile error pointing you to `:src="…"` (a prop) or `@event` (a
+              handler) rather than emit something broken.
+            - A bare ``attr=`…` `` (no `:`) is a **literal** string; its backticks
+              aren't evaluated. Bind it (``:attr=`…` ``) to make it dynamic.
+            - A valueless `:name` is shorthand for `:name="name"`.
 
             In Vue, the host's own attribute directives — `v-model`, `@click.stop`,
             `:prop`, `#slot` — pass straight through untouched, so write them however
@@ -120,7 +131,7 @@ GuideLayout(title="Syntax Reference")
 
             ### React aliases
 
-            For the React JSX target, NMBL renames the attributes React expects:
+            For the React JSX target, nmbl renames the attributes React expects:
             `class` → `className` and `for` → `htmlFor`. Solid and Qwik keep the
             native names.
 
@@ -162,7 +173,7 @@ GuideLayout(title="Syntax Reference")
 
             ### Preserving whitespace
 
-            NMBL trims the whitespace around each text fragment, and editors strip
+            nmbl trims the whitespace around each text fragment, and editors strip
             trailing spaces on save — so an intentional space *between* inline
             siblings is easily lost. Type the space, then end the line with `\` to
             shield it from the editor:
@@ -189,7 +200,7 @@ GuideLayout(title="Syntax Reference")
             This works on **any** text, not just `|` lines — inline text after a tag
             head, as above, included.
 
-            This round-trips: the decompiler (HTML → NMBL) emits the `\` back when a
+            This round-trips: the decompiler (HTML → nmbl) emits the `\` back when a
             text node carries a significant trailing space, so converting markup in
             and out preserves the gap.
 
@@ -197,7 +208,7 @@ GuideLayout(title="Syntax Reference")
 
             Raw `<…>` tags pass through **verbatim** — both **inline** inside text
             (a stray `<b>` or `<a>`) and as **full lines** (a pasted SVG, the
-            doctype). NMBL never escapes them, so you mix markup right where you need
+            doctype). nmbl never escapes them, so you mix markup right where you need
             it:
 
             ```nmbl
@@ -212,7 +223,7 @@ GuideLayout(title="Syntax Reference")
             ```
 
             **Leave SVG (and other pasted markup) as raw HTML** rather than
-            translating it into NMBL nodes. Kept verbatim, it stays a clean copy you
+            translating it into nmbl nodes. Kept verbatim, it stays a clean copy you
             can paste straight back into a `.svg` file or another template — and
             hand-converting generated markup gains nothing while churning diffs. One
             rule: every line of a raw block must sit at the **same** indentation (note
@@ -272,13 +283,13 @@ GuideLayout(title="Syntax Reference")
             ## Content blocks
 
             A **glued** trailing `:` (or `:mode`) turns every more-indented line into
-            **raw text** — not parsed as NMBL. Built-in uses are `script:` and
+            **raw text** — not parsed as nmbl. Built-in uses are `script:` and
             `style:`; a named mode like `article:md` runs the body through a
             registered filter.
 
             ```nmbl
             script:
-              const x = 1 < 2;   // not parsed as NMBL
+              const x = 1 < 2;   // not parsed as nmbl
             style:
               .a { color: red }
             ```
@@ -363,21 +374,21 @@ GuideLayout(title="Syntax Reference")
             | `astro` / `jsx` | `{cond ? (…) : (…)}`, `{items.map((item, i) => (…))}`; jsx puts `key={…}` on the loop's single root |
             | `html` | no `@`-blocks (compile error) |
 
-            > NMBL **errors loudly** rather than emitting something wrong: `@await` /
+            > nmbl **errors loudly** rather than emitting something wrong: `@await` /
             > `@key` / `@snippet` outside Svelte, `{@html}` in Vue (use a `v-html`
             > attribute), or a multi-root `@each` body with `:key` in JSX are all hard
             > compile errors with hints.
 
             ## Interpolation
 
-            Interpolation is always the **host's** syntax — NMBL never parses it, it
+            Interpolation is always the **host's** syntax — nmbl never parses it, it
             just passes it through: `{{ msg }}` in Vue, `{expr}` in Svelte and Astro,
             and inside `nmbl`…`` JSX literals either `${hole}` holes or plain `{expr}`
             text.
 
             ## Pitfalls
 
-            These cause real compile errors — NMBL reports them with exact source
+            These cause real compile errors — nmbl reports them with exact source
             positions, so trust the messages. The most common are **gluing**
             mistakes: a stray space turns structure into plain text.
 

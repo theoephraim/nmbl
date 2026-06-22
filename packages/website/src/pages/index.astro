@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Code } from 'astro-expressive-code/components';
 import FrameworkShowcase from '../components/FrameworkShowcase.astro';
+import { EDITOR_PAGE } from '../links';
 import {
   SHOWCASE_BASICS, SHOWCASE_COMMENTS, SHOWCASE_MARKDOWN,
   SHOWCASE_PROMPT, SHOWCASE_PROMPT_OUTPUT,
@@ -13,19 +14,20 @@ BaseLayout(title="Home")
   section.hero
     .container
       h1
-        <svg class="hero-mark" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="8,9 11,12 8,15"/>
-        <polyline points="16,9 13,12 16,15"/>
-        <path d="M9 16.5 Q12 19 15 16.5"/>
+        <svg class="hero-mark" width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="2" y="3" width="2.6" height="18" rx="1.3" fill="var(--rainbow-0)"/>
+        <rect x="6.35" y="5.5" width="2.6" height="15.5" rx="1.3" fill="var(--rainbow-1)"/>
+        <rect x="10.7" y="8" width="2.6" height="13" rx="1.3" fill="var(--rainbow-2)"/>
+        <rect x="15.05" y="10.5" width="2.6" height="10.5" rx="1.3" fill="var(--rainbow-3)"/>
+        <rect x="19.4" y="13" width="2.6" height="8" rx="1.3" fill="var(--rainbow-4)"/>
         </svg>
         span.hero-word nmbl
       p.acronym <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage
       p.tagline Write HTML without the noise.
       p.tagline-sub An indentation-based shorthand that compiles to clean HTML for Vue, Svelte, Astro, React &amp; Solid &mdash; fewer tags, fewer tokens for you and your AI.
       .hero-actions
-        a.btn.btn-primary(href="/playground") Try the Playground
-        a.btn.btn-secondary(href="/guides") Read the Guides
+        a.btn.btn-primary(href="/get-started") Get Started
+        a.btn.btn-secondary(href="/playground") Try the Playground
         a.btn.btn-ghost(href="https://github.com/theoephraim/nmbl" target="_blank" rel="noopener") GitHub
 
   section.showcase
@@ -47,7 +49,7 @@ BaseLayout(title="Home")
         .feature-text:md
           ### Comments that actually work
 
-          No more leaving dev comments in output or awkward `{/* ... */}`. NMBL lets you control whether comments are stripped or preserved, and even comment out attributes without breaking your layout.
+          No more leaving dev comments in output or awkward `{/* ... */}`. nmbl lets you control whether comments are stripped or preserved, and even comment out attributes without breaking your layout.
 
       .feature-row
         .showcase-code
@@ -71,9 +73,10 @@ BaseLayout(title="Home")
         .benefit
           h3 Real editor support
           p IntelliSense in Vue SFCs via a Volar plugin &mdash; hover, go-to-definition, error squiggles. Highlighting everywhere, generated from a single grammar definition so it can never drift from what the parser accepts.
+          a.benefit-link(href={EDITOR_PAGE}) Editor support →
         .benefit
           h3 Bidirectional
-          p Convert HTML to NMBL and back. The decompiler produces clean, idiomatic output from any HTML input &mdash; drop in an existing page and start editing immediately.
+          p Convert HTML to nmbl and back. The decompiler produces clean, idiomatic output from any HTML input &mdash; drop in an existing page and start editing immediately.
 
   FrameworkShowcase
 
@@ -83,7 +86,7 @@ BaseLayout(title="Home")
       p.section-subtitle When a prompt needs real structure &mdash; roles, tasks, nested context &mdash; the same notation compiles to clean, XML-tagged prompts. Your markdown stays markdown (with editor highlighting), and the same file can be parsed into a structured object for validation and transformation.
       .prompt-grid
         .prompt-col
-          .prompt-label NMBL
+          .prompt-label nmbl
           .showcase-code
             Code(code={SHOWCASE_PROMPT} lang="nmbl" frame="none")
         .prompt-arrow
@@ -97,7 +100,7 @@ BaseLayout(title="Home")
   section.playground-cta
     .container
       h2 See it all together
-      p.section-subtitle A full, runnable example &mdash; switch frameworks and watch NMBL compile to each one&rsquo;s native output, live.
+      p.section-subtitle A full, runnable example &mdash; switch frameworks and watch nmbl compile to each one&rsquo;s native output, live.
       a.btn.btn-primary(href="/playground") Open the Playground
 </template>
 
@@ -123,34 +126,6 @@ BaseLayout(title="Home")
     width: 4rem;
     height: 4rem;
     flex-shrink: 0;
-  }
-
-  /* Lowercase wordmark ("nimble"), underlined by a stepped rainbow rule — the
-     same depth-as-colour ramp as the indent guides, as a brand accent. */
-  .hero-word {
-    position: relative;
-  }
-
-  .hero-word::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -0.55rem;
-    height: 5px;
-    border-radius: 2px;
-    background: linear-gradient(
-      90deg,
-      var(--rainbow-0) 0 17%,
-      transparent 17% 20.75%,
-      var(--rainbow-1) 20.75% 37.75%,
-      transparent 37.75% 41.5%,
-      var(--rainbow-2) 41.5% 58.5%,
-      transparent 58.5% 62.25%,
-      var(--rainbow-3) 62.25% 79.25%,
-      transparent 79.25% 83%,
-      var(--rainbow-4) 83% 100%
-    );
   }
 
   .acronym {
@@ -258,7 +233,7 @@ BaseLayout(title="Home")
   }
 
   .feature-text code {
-    background: rgba(124, 110, 246, 0.15);
+    background: rgba(var(--color-accent-rgb), 0.15);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-size: 0.875rem;
@@ -330,11 +305,23 @@ BaseLayout(title="Home")
   }
 
   .benefit code {
-    background: rgba(124, 110, 246, 0.15);
+    background: rgba(var(--color-accent-rgb), 0.15);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-size: 0.8125rem;
     color: var(--color-accent);
+  }
+
+  .benefit-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .benefit-link:hover {
+    color: var(--color-accent-hover);
   }
 
   .playground-cta {
@@ -366,7 +353,7 @@ BaseLayout(title="Home")
   }
 
   .prompt-showcase .section-subtitle code {
-    background: rgba(124, 110, 246, 0.15);
+    background: rgba(var(--color-accent-rgb), 0.15);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-size: 0.85em;

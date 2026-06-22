@@ -55,16 +55,17 @@
   .toc nav {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    /* no gap — per-link left borders sit flush into one continuous rail */
   }
 
   .toc a {
     color: var(--color-text-muted);
     text-decoration: none;
-    padding: 0.25rem 0;
-    border-left: 2px solid transparent;
-    padding-left: 1rem;
-    transition: all 0.2s;
+    padding: 0.4rem 0 0.4rem 1rem;
+    /* dim rail down the whole TOC; the active (or hovered) link brightens its
+       own segment to the accent */
+    border-left: 2px solid var(--color-border);
+    transition: color 0.2s, border-color 0.2s;
   }
 
   .toc a:hover {
@@ -72,15 +73,66 @@
     border-left-color: var(--color-accent);
   }
 
+  /* Scroll-spy: the link for the section currently under the sticky header.
+     Set from GuideLayout's IntersectionObserver-free scroll handler. */
+  .toc a.active {
+    color: var(--color-text);
+    border-left-color: var(--color-accent);
+  }
+
   .prose {
     max-width: 65ch;
+    /* height of a stuck h2 (line + padding-bottom) — h3 stacks right below it */
+    --sticky-h2: 3.7rem;
+  }
+
+  /* Indented prose: each heading's body is wrapped in a `.md-indent` block (by
+     the rehype-indent-sections plugin), so copy nests one level under its
+     heading and a deeper heading nests again — mirroring nmbl's own structure.
+     The guide bar starts below the heading because the heading is a sibling
+     BEFORE the block, and each nesting level steps through the canonical
+     --rainbow-* ramp (same source as the code indent guides), so depth reads as
+     colour. Deeper selectors win by specificity, cycling levels 1–6. */
+  .prose .md-indent {
+    display: block;
+    padding-left: 1.2rem;
+    /* depth colour from the canonical ramp, softened in one place (--bar holds
+       the level's hue; the mix sets how loud it reads) */
+    --bar: var(--rainbow-0);
+    border-left: 2px solid color-mix(in srgb, var(--bar) 38%, transparent);
+  }
+  .prose .md-indent .md-indent { --bar: var(--rainbow-1); }
+  .prose .md-indent .md-indent .md-indent { --bar: var(--rainbow-2); }
+  .prose .md-indent .md-indent .md-indent .md-indent { --bar: var(--rainbow-3); }
+  .prose .md-indent .md-indent .md-indent .md-indent .md-indent { --bar: var(--rainbow-4); }
+  .prose .md-indent .md-indent .md-indent .md-indent .md-indent .md-indent { --bar: var(--rainbow-5); }
+
+  /* An install widget lives in its own `.md-indent` right after the section's
+     intro paragraph, whose bottom margin would leave a barless seam. Pull the
+     block up to meet the previous bar (continuous rail), keeping a little space
+     above the widget INSIDE the bar via padding. */
+  .prose .md-indent:has(> .install-widget) {
+    margin-top: -1rem;
+    padding-top: 0.5rem;
+  }
+  .prose .md-indent > .install-widget {
+    margin-top: 0;
   }
 
   .prose h2 {
     font-size: 2rem;
-    margin-top: 3rem;
+    /* section spacing via margin (not padding) so the STUCK box height is
+       consistent — h3 stacks right below it at --sticky-h2 */
+    margin-top: 4rem;
     margin-bottom: 1rem;
-    padding-top: 1rem;
+    /* Sticky section headers: each h2 pins to the top while its section is in
+       view; the page-bg fill lets the content scroll cleanly beneath it. h3
+       sub-headings stack just below it (see below). */
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding-bottom: 0.5rem;
+    background: var(--color-bg);
   }
 
   .prose h2:first-child {
@@ -92,6 +144,13 @@
     font-size: 1.5rem;
     margin-top: 2rem;
     margin-bottom: 1rem;
+    /* Stacks just beneath the stuck h2 while its subsection is in view; bounded
+       to its own .md-indent block, so it scrolls away with the subsection. */
+    position: sticky;
+    top: var(--sticky-h2);
+    z-index: 2;
+    padding-bottom: 0.4rem;
+    background: var(--color-bg);
   }
 
   .prose h4 {
@@ -143,6 +202,13 @@
     padding: 0;
     font-size: 0.875rem;
     line-height: 1.5;
+  }
+
+  /* Expressive Code samples (the highlighted fenced blocks) need vertical
+     breathing room from the surrounding prose. The install widget zeroes this
+     out for its own embedded code (higher specificity, in InstallWidget). */
+  .prose .expressive-code {
+    margin: 1.5rem 0;
   }
 
   .prose table {

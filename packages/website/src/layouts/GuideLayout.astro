@@ -14,3 +14,76 @@ const { title } = Astro.props;
 <BaseLayout title={title}>
   <slot />
 </BaseLayout>
+
+<script>
+  // Scroll-spy: highlight the TOC link for the section currently under the
+  // sticky header. Sticky h2 siblings PILE at top:0 (all report the same
+  // rendered position), so we compare scroll position against each heading's
+  // NATURAL document offset (offsetTop chain, which sticky doesn't change).
+  const links = new Map(
+    [...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [
+      decodeURIComponent((a as HTMLAnchorElement).hash.slice(1)),
+      a,
+    ]),
+  );
+  // Only track headings that have a TOC entry, so an unlinked subsection keeps
+  // its parent section highlighted instead of clearing the highlight.
+  const headings = [...document.querySelectorAll('.prose :is(h2, h3)[id]')].filter((h) =>
+    links.has(h.id),
+  );
+
+  if (headings.length && links.size) {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    let tops: { id: string; y: number }[] = [];
+    let active: string | null = null;
+
+    const measure = () => {
+      tops = headings.map((h) => {
+        let y = 0;
+        let el: HTMLElement | null = h as HTMLElement;
+        while (el) {
+          y += el.offsetTop;
+          el = el.offsetParent as HTMLElement | null;
+        }
+        return { id: h.id, y };
+      });
+    };
+
+    const update = () => {
+      const pos = window.scrollY + rem * 5; // activation line just below the top
+      let current = tops[0].id;
+      for (const t of tops) {
+        if (t.y <= pos) current = t.id;
+        else break;
+      }
+      if (current === active) return;
+      active = current;
+      links.forEach((l) => l.classList.remove('active'));
+      links.get(active)?.classList.add('active');
+    };
+
+    let ticking = false;
+    addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          update();
+          ticking = false;
+        });
+      },
+      { passive: true },
+    );
+    addEventListener('resize', () => {
+      measure();
+      update();
+    });
+    addEventListener('load', () => {
+      measure();
+      update();
+    });
+    measure();
+    update();
+  }
+</script>

@@ -1,0 +1,103 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+import { VSCODE_EXTENSION_URL, GITHUB_URL } from '../../links';
+---
+
+<template lang="nmbl">
+GuideLayout(title="Editor Support")
+  section.guide-hero
+    .container
+      .breadcrumb
+        | <a href="/guides">Guides</a> / Editor Support
+      h1 Editor Support
+      p.lead Syntax highlighting and IntelliSense for nmbl — wherever you write it.
+
+  section.guide-content
+    .container
+      .content-grid
+        aside.toc
+          h3 Contents
+          nav
+            a(href="#vs-code") VS Code
+            a(href="#what-you-get") What you get
+            a(href="#other-editors") Other editors
+
+        .prose
+          Fragment:md
+            ## VS Code
+
+            The nmbl extension highlights `.nmbl` files, `<template lang="nmbl">`
+            blocks in Vue / Svelte / Astro, and ``nmbl`…` `` tagged templates in
+            `.ts` / `.tsx` / `.js` / `.jsx`, plus IntelliSense (completions,
+            hover, go-to-definition, diagnostics) through a Volar language server.
+          .editor-cta-row
+            a.ext-cta(href={VSCODE_EXTENSION_URL} target="_blank" rel="noopener")
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              | Install from the Marketplace
+          Fragment:md
+            ## What you get
+
+            Highlighting works everywhere nmbl does. The depth of IntelliSense
+            depends on the target — Vue is the most complete today:
+
+            | Framework | Highlighting | IntelliSense |
+            |---|---|---|
+            | Vue | ✓ | Full type-checking via the dedicated Volar plugin |
+            | Svelte / Astro | ✓ | Completions, hover, go-to-def via the nmbl language server (in `<template lang="nmbl">` blocks) |
+            | React / Solid / Qwik | ✓ | Highlighting in ``nmbl`…` `` templates; richest tooling by factoring shared markup into a `.nmbl` file |
+            | Standalone `.nmbl` | ✓ | Completions, hover, diagnostics |
+
+            > A component's **own** props/emits aren't suggested yet in the
+            > template — type them and rely on type-checking to validate.
+
+            ## Other editors
+
+            The language is defined **once** as a grammar (generating the
+            TextMate and tree-sitter grammars) and the tooling is a standard Volar
+            language server — both editor-agnostic. So support beyond VS Code is a
+            matter of packaging, not new internals.
+
+            Zed, JetBrains, and Neovim are on the roadmap. Want one prioritized, or
+            running it elsewhere already?
+          .editor-cta-row
+            a.ext-cta.ext-cta-ghost(href={GITHUB_URL} target="_blank" rel="noopener")
+              | Open an issue on GitHub →
+</template>
+
+<style>
+  .editor-cta-row {
+    margin: 0 0 2.5rem;
+  }
+
+  .ext-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .ext-cta:hover {
+    background: var(--color-accent-hover);
+  }
+
+  .ext-cta-ghost {
+    background: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+  }
+
+  .ext-cta-ghost:hover {
+    background: transparent;
+    border-color: var(--color-accent);
+  }
+</style>

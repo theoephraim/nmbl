@@ -1,5 +1,6 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
 ---
 
 <template lang="nmbl">
@@ -26,11 +27,12 @@ GuideLayout(title="Vite Integration Guide")
             a(href="#typescript") TypeScript
 
         .prose
+          EditorSupportCallout
           Fragment:md
             ## Vite Powers Most Integrations
 
-            You're probably already using NMBL through Vite. The **Vue**, **React**,
-            and **Solid** guides all add the NMBL Vite plugin to a standard Vite
+            You're probably already using nmbl through Vite. The **Vue**, **React**,
+            and **Solid** guides all add the nmbl Vite plugin to a standard Vite
             config (before the framework plugin), and **Astro** runs on Vite too.
             In those setups the plugin preprocesses framework templates.
 
@@ -81,7 +83,7 @@ GuideLayout(title="Vite Integration Guide")
 
             ```nmbl title="card.nmbl"
             section.card
-              h1 Hello from NMBL
+              h1 Hello from nmbl
               p.muted Compiled to HTML at build time.
             ```
 
@@ -101,11 +103,11 @@ GuideLayout(title="Vite Integration Guide")
             ```nmbl title="page.nmbl"
             ---
             title: Welcome
-            description: A standalone NMBL page.
+            description: A standalone nmbl page.
             ---
             article.card
               h1 Welcome
-              p A page compiled from NMBL.
+              p A page compiled from nmbl.
             ```
 
             ```ts title="main.ts"

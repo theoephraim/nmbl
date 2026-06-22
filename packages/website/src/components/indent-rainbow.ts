@@ -2,12 +2,12 @@ import { ViewPlugin, Decoration, EditorView } from '@codemirror/view';
 import type { DecorationSet, ViewUpdate } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 
-// Rainbow indent guides — NMBL's signature motif. Each level of leading
+// Rainbow indent guides — nmbl's signature motif. Each level of leading
 // indentation gets a thin coloured guide, cycling through the canonical
 // --rainbow-* ramp so structure reads as colour. Purely decorative: the marks
 // only paint a box-shadow, so they never shift the text or affect offsets.
 
-// One indent level = this many columns of leading whitespace. NMBL (and the
+// One indent level = this many columns of leading whitespace. nmbl (and the
 // playground examples) use a 2-space step; a tab counts as one column.
 const INDENT_UNIT = 2;
 const RAMP = 6;

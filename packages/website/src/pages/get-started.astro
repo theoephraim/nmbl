@@ -1,0 +1,312 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Code } from 'astro-expressive-code/components';
+import { EDITOR_PAGE } from '../links';
+import { SHOWCASE_BASICS } from '../examples';
+
+const FRAMEWORKS = [
+  { slug: 'vue', name: 'Vue' },
+  { slug: 'svelte', name: 'Svelte' },
+  { slug: 'astro', name: 'Astro' },
+  { slug: 'react', name: 'React' },
+  { slug: 'solid', name: 'Solid' },
+  { slug: 'qwik', name: 'Qwik' },
+];
+---
+
+<template lang="nmbl">
+BaseLayout(title="Get Started")
+  section.start-hero
+    .container
+      h1 Get Started
+      p.lead Three steps to nmbl in your project — see the syntax, install for your framework, then turn on editor support.
+
+  section.start-body
+    .container
+      ol.steps
+
+        li.step
+          .step-head
+            span.step-num 1
+            h2 See the syntax
+          .step-content
+            p.step-lead nmbl is indentation-based shorthand for HTML — no closing tags, no bracket soup. If you've seen Pug it'll feel familiar, and the basics take about five minutes.
+            .code-card
+              Code(code={SHOWCASE_BASICS} lang="nmbl" frame="none")
+            p.step-more
+              a(href="/guides/syntax") Read the full syntax reference →
+
+        li.step
+          .step-head
+            span.step-num 2
+            h2 Install for your framework
+          .step-content
+            p.step-lead Setup differs a little per framework — a Vite plugin here, a preprocessor there. Pick yours and follow its guide:
+            .fw-grid
+              a.fw-card(href="/guides/vue")
+                img.fw-logo(src="/logos/vue.svg" alt="" width="32" height="32")
+                span Vue
+              a.fw-card(href="/guides/svelte")
+                img.fw-logo(src="/logos/svelte.svg" alt="" width="32" height="32")
+                span Svelte
+              a.fw-card(href="/guides/astro")
+                img.fw-logo(src="/logos/astro.svg" alt="" width="32" height="32")
+                span Astro
+              a.fw-card(href="/guides/react")
+                img.fw-logo(src="/logos/react.svg" alt="" width="32" height="32")
+                span React
+              a.fw-card(href="/guides/solid")
+                img.fw-logo(src="/logos/solid.svg" alt="" width="32" height="32")
+                span Solid
+              a.fw-card(href="/guides/qwik")
+                img.fw-logo(src="/logos/qwik.svg" alt="" width="32" height="32")
+                span Qwik
+            p.step-more
+              a(href="/guides") See all integrations →
+
+        li.step
+          .step-head
+            span.step-num 3
+            h2 Turn on editor support
+          .step-content
+            p.step-lead Install the nmbl extension for syntax highlighting everywhere and full IntelliSense in Vue SFCs — hover, go-to-definition, and error squiggles as you write.
+            a.ext-cta(href={EDITOR_PAGE})
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+              </svg>
+              | Set up editor support
+
+  section.start-next
+    .container
+      h2 Next steps
+      .next-links
+        a.next-link(href="/playground")
+          span Try the Playground
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        a.next-link(href="/guides/syntax")
+          span Syntax Reference
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        a.next-link(href="/guides/prompts")
+          span Prompts &amp; Structured Data
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+</template>
+
+<style>
+  .start-hero {
+    padding: 4rem 0 2rem;
+    background: linear-gradient(to bottom, var(--color-bg-subtle), transparent);
+  }
+
+  .start-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    color: var(--color-text-muted);
+    max-width: 640px;
+  }
+
+  .start-body {
+    padding: 2rem 0 4rem;
+  }
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 760px;
+  }
+
+  /* Each step's number is the anchor for a rainbow rail that runs down the left
+     of its content, echoing the indent-guide motif used across the site. */
+  .step {
+    position: relative;
+    padding-bottom: 3rem;
+  }
+
+  .step-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .step-num {
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    color: var(--color-accent);
+    font-weight: 600;
+    font-size: 1.0625rem;
+  }
+
+  .step-head h2 {
+    font-size: 1.75rem;
+    margin: 0;
+  }
+
+  /* Indent the body to line up under the heading text (number width + gap), with
+     a soft rainbow rail tying the step together. */
+  .step-content {
+    margin-left: 1.125rem;
+    padding-left: 2.125rem;
+    border-left: 2px solid color-mix(in srgb, var(--rail) 38%, transparent);
+  }
+
+  .step:nth-child(1) .step-content { --rail: var(--rainbow-0); }
+  .step:nth-child(2) .step-content { --rail: var(--rainbow-2); }
+  .step:nth-child(3) .step-content { --rail: var(--rainbow-4); }
+
+  .step-lead {
+    color: var(--color-text-muted);
+    line-height: 1.7;
+    margin: 0 0 1.25rem;
+  }
+
+  .code-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    --ecIndent: 0;
+  }
+
+  .code-card :global(.expressive-code) {
+    margin: 0;
+  }
+
+  .code-card :global(.expressive-code figure) {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+  }
+
+  .code-card :global(.expressive-code pre) {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border: none;
+    border-radius: 0;
+  }
+
+  .code-card :global(.expressive-code pre > code) {
+    padding: 0 !important;
+  }
+
+  .step-more {
+    margin: 1.25rem 0 0;
+  }
+
+  .step-more a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375rem;
+  }
+
+  .step-more a:hover {
+    text-decoration: underline;
+  }
+
+  .fw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .fw-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .fw-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+
+  .fw-logo {
+    width: 32px;
+    height: 32px;
+    flex: none;
+  }
+
+  .ext-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .ext-cta:hover {
+    background: var(--color-accent-hover);
+  }
+
+  .start-next {
+    padding: 0 0 5rem;
+  }
+
+  .start-next h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .next-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .next-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .next-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 768px) {
+    .start-hero h1 {
+      font-size: 2rem;
+    }
+  }
+</style>

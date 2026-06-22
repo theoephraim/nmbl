@@ -1,0 +1,58 @@
+---
+import { EDITOR_PAGE } from '../links';
+---
+
+<a class="editor-callout" href={EDITOR_PAGE}>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <polyline points="16 18 22 12 16 6"></polyline>
+    <polyline points="8 6 2 12 8 18"></polyline>
+  </svg>
+  <span><strong>Editor support</strong> — install the nmbl extension for syntax highlighting and IntelliSense as you write.</span>
+  <span class="editor-callout-go">Set up →</span>
+</a>
+
+<style>
+  .editor-callout {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 2.5rem;
+    background: rgba(var(--color-accent-rgb), 0.08);
+    border: 1px solid rgba(var(--color-accent-rgb), 0.25);
+    border-radius: 8px;
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .editor-callout:hover {
+    border-color: var(--color-accent);
+    background: rgba(var(--color-accent-rgb), 0.13);
+  }
+
+  .editor-callout svg {
+    flex-shrink: 0;
+    color: var(--color-accent);
+  }
+
+  .editor-callout strong {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .editor-callout-go {
+    margin-left: auto;
+    white-space: nowrap;
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  @media (max-width: 600px) {
+    .editor-callout-go {
+      display: none;
+    }
+  }
+</style>

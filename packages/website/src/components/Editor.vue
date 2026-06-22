@@ -78,20 +78,20 @@ const theme = EditorView.theme({
     color: 'var(--color-text-muted)',
   },
   '.cm-activeLine': {
-    backgroundColor: 'rgba(124, 110, 246, 0.05)',
+    backgroundColor: 'rgba(var(--color-accent-rgb), 0.05)',
   },
   '.cm-selectionBackground': {
-    backgroundColor: 'rgba(124, 110, 246, 0.2) !important',
+    backgroundColor: 'rgba(var(--color-accent-rgb), 0.2) !important',
   },
   '&.cm-focused .cm-selectionBackground': {
-    backgroundColor: 'rgba(124, 110, 246, 0.3) !important',
+    backgroundColor: 'rgba(var(--color-accent-rgb), 0.3) !important',
   },
   '.cm-cursor': {
     borderLeftColor: 'var(--color-accent)',
   },
   '.cm-sync-highlight': {
-    backgroundColor: 'rgba(124, 110, 246, 0.22)',
-    outline: '1px solid rgba(124, 110, 246, 0.45)',
+    backgroundColor: 'rgba(var(--color-accent-rgb), 0.22)',
+    outline: '1px solid rgba(var(--color-accent-rgb), 0.45)',
     borderRadius: '2px',
   },
   // Rainbow indent guides (see indent-rainbow.ts) — a thin coloured bar at the

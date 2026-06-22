@@ -5,7 +5,7 @@
 //
 // Rather than touch the rendered text, we paint thin vertical guides as stacked
 // background gradients: one 1.5px bar per indent level, positioned at 0ch, 2ch,
-// 4ch, … (NMBL's 2-space step). The bars live in the leading whitespace and
+// 4ch, … (nmbl's 2-space step). The bars live in the leading whitespace and
 // never overlap the code.
 //
 // The gradients are emitted as `--ir-*` custom properties on each line; a global

@@ -1,5 +1,7 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
+import InstallWidget from '../../components/InstallWidget.astro';
 ---
 
 <template lang="nmbl">
@@ -9,7 +11,7 @@ GuideLayout(title="Vue Integration Guide")
       .breadcrumb
         | <a href="/guides">Guides</a> / Vue
       h1 Vue Integration
-      p.lead Use NMBL templates with Vue.js
+      p.lead Use nmbl templates with Vue.js
 
   section.guide-content
     .container
@@ -26,27 +28,20 @@ GuideLayout(title="Vue Integration Guide")
             a(href="#troubleshooting") Troubleshooting
 
         .prose
+          EditorSupportCallout
           Fragment:md
             ## Installation
 
-            To use NMBL in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
+            To use nmbl in Vue projects, you need the Vite plugin (for compilation) and the Vue language plugin (for IDE intellisense):
 
-            ```bash
-            # Using npm
-            npm install --save-dev @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
-
-            # Using bun
-            bun add -d @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
-
-            # Using pnpm
-            pnpm add -D @nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin
-            ```
-
+          .md-indent
+            InstallWidget(packages="@nmbl-lang/vite-plugin @nmbl-lang/vue-language-plugin" dev={true})
+          Fragment:md
             ## Configuration
 
             ### Vite Config
 
-            Add the NMBL plugin to your `vite.config.ts`. It must be listed **before** the Vue plugin:
+            Add the nmbl plugin to your `vite.config.ts`. It must be listed **before** the Vue plugin:
 
             ```ts title="vite.config.ts"
             import { defineConfig } from 'vite';
@@ -63,7 +58,7 @@ GuideLayout(title="Vue Integration Guide")
 
             ### TypeScript Config
 
-            Add the NMBL plugin to your `tsconfig.json` to enable intellisense:
+            Add the nmbl plugin to your `tsconfig.json` to enable intellisense:
 
             ```json title="tsconfig.json"
             {
@@ -77,15 +72,15 @@ GuideLayout(title="Vue Integration Guide")
             }
             ```
 
-            `strictTemplates` is optional but recommended: it makes Vue flag unknown components and **unknown props** (not just wrong-typed ones) in your NMBL templates, exactly as it would in a plain `<template>`.
+            `strictTemplates` is optional but recommended: it makes Vue flag unknown components and **unknown props** (not just wrong-typed ones) in your nmbl templates, exactly as it would in a plain `<template>`.
 
             ### VS Code Setup
 
-            The NMBL VS Code extension provides syntax highlighting (not yet on the marketplace — install it from the repo). Vue intellisense works through the Vue - Official extension (Volar).
+            The nmbl VS Code extension provides syntax highlighting — [install it from the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nmbl.nmbl). Vue intellisense works through the Vue - Official extension (Volar).
 
             ## Basic Usage
 
-            Add `lang="nmbl"` to your Vue template block, then write the markup as NMBL:
+            Add `lang="nmbl"` to your Vue template block, then write the markup as nmbl:
 
             ```vue title="App.vue"
             <script setup lang="ts">...</script>
@@ -120,7 +115,7 @@ GuideLayout(title="Vue Integration Guide")
 
             ## Control Flow
 
-            NMBL has `@if` / `@elseif` / `@else` and `@each` blocks that compile to Vue's native `v-if` and `v-for`:
+            nmbl has `@if` / `@elseif` / `@else` and `@each` blocks that compile to Vue's native `v-if` and `v-for`:
 
             ```nmbl
             @if(user)
@@ -191,15 +186,15 @@ GuideLayout(title="Vue Integration Guide")
 
             ### No component / tag completion
 
-            Component name, HTML tag, attribute, event, and directive completion (plus auto-import on accept) are provided by the NMBL VS Code extension. Make sure it's installed and reload the window. Note: a component's **own props/emits** aren't suggested yet — type them and rely on type-checking to validate.
+            Component name, HTML tag, attribute, event, and directive completion (plus auto-import on accept) are provided by the nmbl VS Code extension. Make sure it's installed and reload the window. Note: a component's **own props/emits** aren't suggested yet — type them and rely on type-checking to validate.
 
             ### CSS classes not linking to styles
 
-            This only works with `<style scoped>` blocks. This is a Vue/Volar limitation that applies to all template languages, not just NMBL.
+            This only works with `<style scoped>` blocks. This is a Vue/Volar limitation that applies to all template languages, not just nmbl.
 
             ### Syntax errors with indentation
 
-            Ensure your template starts at column 0 with no leading whitespace. NMBL uses indentation for structure, so the root element must not be indented.
+            Ensure your template starts at column 0 with no leading whitespace. nmbl uses indentation for structure, so the root element must not be indented.
 
             ### Template not compiling
 

@@ -1,71 +1,81 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { EDITOR_PAGE } from '../../links';
 ---
 
 <template lang="nmbl">
-BaseLayout(title="Integration Guides")
+BaseLayout(title="Guides")
   section.guides-hero
     .container
       h1 Guides
-      p.lead Learn the syntax, then wire NMBL into your framework of choice
+      p.lead Pick your framework below to install nmbl, drop it into a template, and you're going. Grab the editor extension for highlighting and IntelliSense as you write.
 
   section.guides-list
     .container
       .guides-grid
         a.guide-card.guide-card-feature(href="/guides/syntax")
           .guide-icon
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="8,9 11,12 8,15"/>
-            <polyline points="16,9 13,12 16,15"/>
-            <path d="M9 16.5 Q12 19 15 16.5"/>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="2" y="3" width="2.6" height="18" rx="1.3" fill="var(--rainbow-0)"/>
+            <rect x="6.35" y="5.5" width="2.6" height="15.5" rx="1.3" fill="var(--rainbow-1)"/>
+            <rect x="10.7" y="8" width="2.6" height="13" rx="1.3" fill="var(--rainbow-2)"/>
+            <rect x="15.05" y="10.5" width="2.6" height="10.5" rx="1.3" fill="var(--rainbow-3)"/>
+            <rect x="19.4" y="13" width="2.6" height="8" rx="1.3" fill="var(--rainbow-4)"/>
             </svg>
           h3 Syntax Reference
-          p Everything the NMBL notation gives you — elements, attributes, comments, content blocks, and control flow — in one place.
+          p Everything the nmbl notation gives you — elements, attributes, comments, content blocks, and control flow — in one place.
+        a.guide-card(href="/guides/editor")
+          .guide-icon
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          h3 Editor Support
+          p Syntax highlighting and IntelliSense for nmbl in VS Code — with more editors on the way.
         a.guide-card(href="/guides/vue")
           .guide-icon
             <img src="/logos/vue.svg" alt="Vue" width="48" height="48" />
           h3 Vue
-          p Full intellisense support for NMBL templates in Vue Single File Components with Volar integration.
+          p Full intellisense support for nmbl templates in Vue Single File Components with Volar integration.
         a.guide-card(href="/guides/svelte")
           .guide-icon
             <img src="/logos/svelte.svg" alt="Svelte" width="48" height="48" />
           h3 Svelte
-          p Use NMBL's clean syntax in Svelte components via a preprocessor. Compiles to native Svelte blocks.
+          p Use nmbl's clean syntax in Svelte components via a preprocessor. Compiles to native Svelte blocks.
         a.guide-card(href="/guides/astro")
           .guide-icon
             <img src="/logos/astro.svg" alt="Astro" width="48" height="48" />
           h3 Astro
-          p Use NMBL templates in Astro components and pages — with markdown blocks that run through Astro's own pipeline.
+          p Use nmbl templates in Astro components and pages — with markdown blocks that run through Astro's own pipeline.
         a.guide-card(href="/guides/react")
           .guide-icon
             <img src="/logos/react.svg" alt="React" width="48" height="48" />
           h3 React
-          p Write NMBL markup in React components with the nmbl tagged template. Compiles to JSX.
+          p Write nmbl markup in React components with the nmbl tagged template. Compiles to JSX.
         a.guide-card(href="/guides/solid")
           .guide-icon
             <img src="/logos/solid.svg" alt="Solid" width="48" height="48" />
           h3 Solid
-          p Write NMBL markup in Solid components with the nmbl tagged template. Signal-aware JSX output.
+          p Write nmbl markup in Solid components with the nmbl tagged template. Signal-aware JSX output.
         a.guide-card(href="/guides/qwik")
           .guide-icon
             <img src="/logos/qwik.svg" alt="Qwik" width="48" height="48" />
           h3 Qwik
-          p Write NMBL markup in Qwik components with the nmbl tagged template. Compiles to Qwik JSX.
+          p Write nmbl markup in Qwik components with the nmbl tagged template. Compiles to Qwik JSX.
         a.guide-card(href="/guides/prompts")
           .guide-icon
             span.guide-emoji 🤖
           h3 Prompts & Structured Data
-          p Use NMBL as a structure-first format for AI prompts and XML-like documents — markdown sections wrapped in light tags. One source, two outputs.
+          p Use nmbl as a structure-first format for AI prompts and XML-like documents — markdown sections wrapped in light tags. One source, two outputs.
         a.guide-card(href="/guides/vite")
           .guide-icon
             <img src="/logos/vite.svg" alt="Vite" width="48" height="48" />
           h3 Vite
-          p Load standalone NMBL files as compiled HTML — the plugin that powers the framework integrations.
+          p Load standalone nmbl files as compiled HTML — the plugin that powers the framework integrations.
 
       .other-integrations
         h2 More Integrations
-        p NMBL can work with any tool that processes HTML. The core compiler outputs standard HTML, making it compatible with any modern web framework or build tool.
+        p nmbl can work with any tool that processes HTML. The core compiler outputs standard HTML, making it compatible with any modern web framework or build tool.
 
         .integration-links
           a.integration-link(href="https://github.com/theoephraim/nmbl#compiler-api" target="_blank")
@@ -75,8 +85,8 @@ BaseLayout(title="Integration Guides")
             <polyline points="15 3 21 3 21 9"></polyline>
             <line x1="10" y1="14" x2="21" y2="3"></line>
             </svg>
-          a.integration-link(href="https://github.com/theoephraim/nmbl/tree/main/packages/vscode-extension" target="_blank")
-            span VS Code Extension
+          a.integration-link(href={EDITOR_PAGE})
+            span Editor Support
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
             <polyline points="15 3 21 3 21 9"></polyline>
@@ -98,6 +108,42 @@ BaseLayout(title="Integration Guides")
   .lead {
     font-size: 1.25rem;
     color: var(--color-text-muted);
+    max-width: 640px;
+  }
+
+  .guides-hero .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-top: 1.75rem;
+  }
+
+  .ext-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .ext-cta:hover {
+    background: var(--color-accent-hover);
+  }
+
+  .syntax-link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 0.9375rem;
+  }
+
+  .syntax-link:hover {
+    color: var(--color-accent);
   }
 
   .guides-list {

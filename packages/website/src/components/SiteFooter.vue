@@ -1,7 +1,7 @@
 <template lang="nmbl">
 footer.site-footer
   .container
-    p &copy; 2026 NMBL. A concise template language.
+    p &copy; 2026 nmbl. A concise template language.
 </template>
 
 <script setup lang="ts">

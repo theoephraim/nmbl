@@ -1,5 +1,7 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
+import InstallWidget from '../../components/InstallWidget.astro';
 ---
 
 <template lang="nmbl">
@@ -9,7 +11,7 @@ GuideLayout(title="Astro Integration Guide")
       .breadcrumb
         | <a href="/guides">Guides</a> / Astro
       h1 Astro Integration
-      p.lead Use NMBL templates in Astro components and pages
+      p.lead Use nmbl templates in Astro components and pages
 
   section.guide-content
     .container
@@ -27,22 +29,15 @@ GuideLayout(title="Astro Integration Guide")
             a(href="#troubleshooting") Troubleshooting
 
         .prose
+          EditorSupportCallout
           Fragment:md
             ## Installation
 
-            NMBL integrates with Astro through an official integration:
+            nmbl integrates with Astro through an official integration:
 
-            ```bash
-            # Using npm
-            npm install @nmbl-lang/astro
-
-            # Using bun
-            bun add @nmbl-lang/astro
-
-            # Using pnpm
-            pnpm add @nmbl-lang/astro
-            ```
-
+          
+          InstallWidget(packages="@nmbl-lang/astro")
+          Fragment:md
             ## Configuration
 
             Add the integration to your `astro.config.mjs`:
@@ -61,7 +56,7 @@ GuideLayout(title="Astro Integration Guide")
             ## Basic Usage
 
             Add a `<template lang="nmbl">` block to any `.astro` page or component, then write
-            the markup as NMBL. Variables from the component frontmatter (the `---` fence) are
+            the markup as nmbl. Variables from the component frontmatter (the `---` fence) are
             available with Astro's `{expr}` interpolation:
 
             ```astro title="src/pages/index.astro"
@@ -89,7 +84,7 @@ GuideLayout(title="Astro Integration Guide")
 
             ## Control Flow
 
-            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX-style
+            nmbl's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX-style
             expressions Astro uses:
 
             ```nmbl
@@ -128,7 +123,7 @@ GuideLayout(title="Astro Integration Guide")
             ```
 
             `{expr}` interpolation works in `:md` prose text too, but components don't (the
-            markdown layer can't represent them) — drop to NMBL siblings for components.
+            markdown layer can't represent them) — drop to nmbl siblings for components.
 
             ## Comments
 
@@ -155,22 +150,22 @@ GuideLayout(title="Astro Integration Guide")
             ## Editor Support
 
             Astro editor support comes from `@nmbl-lang/language-server` (a Volar 2.4 server)
-            wired through the NMBL VS Code extension. It activates only on `.astro` files that
+            wired through the nmbl VS Code extension. It activates only on `.astro` files that
             contain a `<template lang="nmbl">` block — other files are left untouched.
 
           .features-grid
             .feature
               h4 🎨 Syntax Highlighting
-              p NMBL syntax is highlighted inside template lang="nmbl" blocks
+              p nmbl syntax is highlighted inside template lang="nmbl" blocks
             .feature
               h4 💡 HTML Completions
               p Tag names, attribute names, and values are suggested via the embedded HTML language service
             .feature
               h4 🔗 Go to Definition
-              p Tokens map back to your NMBL source, so navigation works on the original file
+              p Tokens map back to your nmbl source, so navigation works on the original file
             .feature
               h4 ❗ Syntax Diagnostics
-              p NMBL syntax errors and unsupported control-flow blocks are surfaced inline
+              p nmbl syntax errors and unsupported control-flow blocks are surfaced inline
 
           Fragment:md
             > **Note:** Deep, framework-type-aware checking of expressions inside `@if` / `@each`
@@ -189,7 +184,7 @@ GuideLayout(title="Astro Integration Guide")
 
             ### Syntax errors with indentation
 
-            NMBL uses indentation for structure. Your root element must start at column 0 with
+            nmbl uses indentation for structure. Your root element must start at column 0 with
             no leading whitespace, and use consistent 2-space indentation (no tabs).
 
             ### Markdown block not highlighting code

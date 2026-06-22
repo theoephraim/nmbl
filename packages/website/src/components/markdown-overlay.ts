@@ -1,7 +1,7 @@
 /**
- * Markdown highlighting for `:md` content blocks in the NMBL editor.
+ * Markdown highlighting for `:md` content blocks in the nmbl editor.
  *
- * The playground's NMBL tokenizer is the generated Monarch grammar, which only
+ * The playground's nmbl tokenizer is the generated Monarch grammar, which only
  * knows structural tokens (tag/attribute/comment/…) — it treats a `:md` body as
  * plain text. This overlay finds those bodies and decorates the markdown inside
  * them (headings, bold, inline code, links, list markers) so the playground
@@ -70,7 +70,7 @@ function buildDecorations(state: EditorState): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
-/** Highlight markdown inside `:md` content blocks. Add to the NMBL editor only. */
+/** Highlight markdown inside `:md` content blocks. Add to the nmbl editor only. */
 export const markdownOverlay: Extension = StateField.define<DecorationSet>({
   create: buildDecorations,
   update: (deco, tr) => (tr.docChanged ? buildDecorations(tr.state) : deco),

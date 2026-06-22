@@ -1,5 +1,6 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
 ---
 
 <template lang="nmbl">
@@ -9,7 +10,7 @@ GuideLayout(title="Prompts & Structured Data Guide")
       .breadcrumb
         | <a href="/guides">Guides</a> / Prompts & Structured Data
       h1 Prompts & Structured Data
-      p.lead Use NMBL as a structure-first format for AI prompts and XML-like documents
+      p.lead Use nmbl as a structure-first format for AI prompts and XML-like documents
 
   section.guide-content
     .container
@@ -25,12 +26,13 @@ GuideLayout(title="Prompts & Structured Data Guide")
             a(href="#when-to-reach-for-this") When to Reach for This
 
         .prose
+          EditorSupportCallout
           Fragment:md
             ## The Idea
 
-            NMBL's structure-first syntax isn't only for HTML. The same
+            nmbl's structure-first syntax isn't only for HTML. The same
             indentation-based tags compile to an XML-ish string, and large
-            markdown sections can stay as raw text — which makes NMBL a
+            markdown sections can stay as raw text — which makes nmbl a
             comfortable way to author **AI prompts** (Anthropic recommends XML
             tags to delimit prompt sections) or any structured document: light
             tags and attributes wrapped around prose.
@@ -146,7 +148,7 @@ GuideLayout(title="Prompts & Structured Data Guide")
 
             This shines when prompts have real nested structure or attributes and
             you manage many of them programmatically. For a single flat prompt,
-            plain markdown with frontmatter is often enough — reach for NMBL here
+            plain markdown with frontmatter is often enough — reach for nmbl here
             when the structure (and the one-source-two-outputs property) actually
             earns its keep.
 

@@ -7,7 +7,10 @@ BaseLayout(title="About")
   section.about-hero
     .container
       h1 About nmbl
-      p.lead <strong>N</strong>o <strong>M</strong>ore <strong>B</strong>rackets <strong>L</strong>anguage &mdash; say it &ldquo;nimble&rdquo; 👂 &mdash; a concise notation for HTML structure.
+      p.lead
+        | <strong>n</strong>o <strong>m</strong>ore <strong>b</strong>rackets <strong>l</strong>anguage (👂 nimble)
+        br
+        | a concise notation for HTML structure.
 
   section.backstory
     .container
@@ -23,17 +26,17 @@ BaseLayout(title="About")
 
         ### Keep the good parts, fix the rough edges, drop the rest
 
-        NMBL takes the ideas that work and strips away everything that modern frameworks already handle better.
+        nmbl takes the ideas that work and strips away everything that modern frameworks already handle better.
 
-        Your framework keeps its own control flow — write `v-if` and `v-for` (or `{#each}`, or `.map()`) exactly the way you always have. They pass straight through. NMBL doesn't ask you to learn a new way to loop or branch; it just cleans up the markup around them. There's an optional canonical form (`@if`, `@each`) that compiles to each host's native syntax if you ever want a template to be portable across frameworks — but that's a nice-to-have, not the point. Most of the time you'll just do things the way your framework already does.
+        Your framework owns the control flow and templating. nmbl just cleans up the markup around them. We standardize the control flow tags (`@if`, `@each`) to make them work in an indentation-based syntax, but they compile to each host's native syntax. We also add some sugar to make things a little easier, but most of the time you'll just do things the way your framework already does.
 
         ### Prose and markup in the same file
 
-        Anywhere you want prose, append `:md` and write plain markdown. Need a component, a loop, or fine-grained markup? Drop back out and write NMBL. You toggle between the two line by line, in a single template.
+        Anywhere you want prose, append `:md` and write plain markdown. Need a component, a loop, or fine-grained markup? Drop back out and write nmbl. You toggle between the two line by line, in a single template.
 
-        This is the gap MDX leaves open. MDX is markdown-first — prose is effortless, but the moment you need real structure around it you're fighting the markdown/JSX boundary. Hand-written templates are the opposite: total structural control, but every prose section is `<p>`-and-`<a>` soup. NMBL flips the default — structure-first, with markdown one `:md` away — so you get frictionless prose exactly where you need it without giving up control of the markup. For content-heavy pages, that's a genuinely better trade than MDX. And because the rendered markdown is spliced back into the host template, your components and interpolation still work right inside the prose.
+        This is the gap MDX leaves open. MDX is markdown-first — prose is effortless, but the moment you need real structure around it you're fighting the markdown/JSX boundary. Hand-written templates are the opposite: total structural control, but every prose section is `<p>`-and-`<a>` soup. nmbl flips the default — structure-first, with markdown one `:md` away — so you get frictionless prose exactly where you need it without giving up control of the markup. For content-heavy pages, that's a genuinely better trade than MDX. And because the rendered markdown is spliced back into the host template, your components and interpolation still work right inside the prose.
 
-        That's NMBL: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.
+        That's nmbl: a notation for HTML, without the ambitions of a template engine. Let frameworks handle the hard parts.
 
   section.principles
     .container
@@ -42,19 +45,19 @@ BaseLayout(title="About")
         .principle:md
           ### Shorthand notation — not a template engine
 
-          No mixins, no extends, no expression language of its own — it compiles directly to markup and gets out of the way. Your framework owns the logic; NMBL owns the brevity.
+          No mixins, no extends, no expression language of its own — it compiles directly to markup and gets out of the way. Your framework owns the logic; nmbl owns the brevity.
         .principle:md
           ### Nothing to learn
 
-          If you know CSS selectors and HTML attributes, you already know NMBL. One syntax for everything. No `=` vs `!=` vs `#{...}` interpolation modes. No unbuffered code blocks. Just tags, selectors, and indentation.
+          If you know CSS selectors and HTML attributes, you already know nmbl. One syntax for everything. No `=` vs `!=` vs `#{...}` interpolation modes. No unbuffered code blocks. Just tags, selectors, and indentation.
         .principle:md
           ### AI-native
 
-          Simple, predictable syntax means less for a model to get wrong, and fewer tokens to get there. Bidirectional conversion lets AI round-trip between HTML and NMBL freely. The Pug-family syntax is already familiar from training data — there are just fewer rules to trip on.
+          Simple, predictable syntax means less for a model to get wrong, and fewer tokens to get there. Bidirectional conversion lets AI round-trip between HTML and nmbl freely. The Pug-family syntax is already familiar from training data — there are just fewer rules to trip on.
         .principle:md
           ### Fits your stack
 
-          Use `<template lang="nmbl">` in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use ``nmbl`…`` tagged templates in React, Solid, and Qwik. NMBL is a compile step, not a runtime — it produces standard HTML that any framework already understands.
+          Use `<template lang="nmbl">` in Vue SFCs. Drop in the Vite plugin. Add the Astro integration. Use ``nmbl`…`` tagged templates in React, Solid, and Qwik. nmbl is a compile step, not a runtime — it produces standard HTML that any framework already understands.
 </template>
 
 <style>
@@ -122,7 +125,7 @@ BaseLayout(title="About")
   }
 
   .prose code {
-    background: rgba(124, 110, 246, 0.15);
+    background: rgba(var(--color-accent-rgb), 0.15);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-size: 0.8125rem;
@@ -165,7 +168,7 @@ BaseLayout(title="About")
   }
 
   .principle code {
-    background: rgba(124, 110, 246, 0.15);
+    background: rgba(var(--color-accent-rgb), 0.15);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-size: 0.8125rem;

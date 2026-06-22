@@ -1,5 +1,7 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
+import EditorSupportCallout from '../../components/EditorSupportCallout.astro';
+import InstallWidget from '../../components/InstallWidget.astro';
 ---
 
 <template lang="nmbl">
@@ -9,7 +11,7 @@ GuideLayout(title="React Integration Guide")
       .breadcrumb
         | <a href="/guides">Guides</a> / React
       h1 React Integration
-      p.lead Use NMBL markup in React components with the nmbl tagged template
+      p.lead Use nmbl markup in React components with the nmbl tagged template
 
   section.guide-content
     .container
@@ -26,25 +28,18 @@ GuideLayout(title="React Integration Guide")
             a(href="#troubleshooting") Troubleshooting
 
         .prose
+          EditorSupportCallout
           Fragment:md
             ## Installation
 
-            React (like other JSX frameworks) uses NMBL's Vite plugin. Install it as a dev dependency:
+            React (like other JSX frameworks) uses nmbl's Vite plugin. Install it as a dev dependency:
 
-            ```bash
-            # Using npm
-            npm install --save-dev @nmbl-lang/vite-plugin
-
-            # Using bun
-            bun add -d @nmbl-lang/vite-plugin
-
-            # Using pnpm
-            pnpm add -D @nmbl-lang/vite-plugin
-            ```
-
+          .md-indent
+            InstallWidget(packages="@nmbl-lang/vite-plugin" dev={true})
+          Fragment:md
             ## Configuration
 
-            Add the NMBL plugin to your `vite.config.ts`. It must come **before** the React plugin, and you tell it to target React's JSX:
+            Add the nmbl plugin to your `vite.config.ts`. It must come **before** the React plugin, and you tell it to target React's JSX:
 
             ```ts title="vite.config.ts"
             import { defineConfig } from 'vite';
@@ -72,7 +67,7 @@ GuideLayout(title="React Integration Guide")
 
               return nmbl`
                 div#app
-                  h1.title NMBL + React
+                  h1.title nmbl + React
                   button(onClick=${() => setCount(count + 1)}) Clicked ${count} times
               `;
             }
@@ -82,7 +77,7 @@ GuideLayout(title="React Integration Guide")
 
             ## Control Flow
 
-            NMBL's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX expressions React uses. Conditions and loop sources go in `${…}` holes:
+            nmbl's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX expressions React uses. Conditions and loop sources go in `${…}` holes:
 
             ```nmbl
             @if(${loggedIn})
@@ -95,7 +90,7 @@ GuideLayout(title="React Integration Guide")
                 li ${item.name}
             ```
 
-            `@if(${cond})` compiles to `{cond ? (…) : (…)}` and `@each(item of ${items})` compiles to `{items.map((item) => (…))}`. One JSX-specific rule worth knowing: when you use `:key`, the loop body must have a single root element (the key goes on it) — a multi-root `@each` body with `:key` is a compile error. NMBL's `@await` / `@key` / `@snippet` are Svelte-only and will error in the JSX target.
+            `@if(${cond})` compiles to `{cond ? (…) : (…)}` and `@each(item of ${items})` compiles to `{items.map((item) => (…))}`. One JSX-specific rule worth knowing: when you use `:key`, the loop body must have a single root element (the key goes on it) — a multi-root `@each` body with `:key` is a compile error. nmbl's `@await` / `@key` / `@snippet` are Svelte-only and will error in the JSX target.
 
             ## Comments
 
@@ -119,10 +114,10 @@ GuideLayout(title="React Integration Guide")
 
             ## Editor Support
 
-            The NMBL VS Code extension highlights ``nmbl`…` `` tagged templates inside `.tsx`, `.jsx`, `.ts`, and `.js` files, so the markup reads as NMBL rather than a plain string.
+            The nmbl VS Code extension highlights ``nmbl`…` `` tagged templates inside `.tsx`, `.jsx`, `.ts`, and `.js` files, so the markup reads as nmbl rather than a plain string.
 
           Fragment:md
-            > **Note:** The NMBL language server (diagnostics, completions, go-to-definition) currently covers standalone `.nmbl` files and `<template lang="nmbl">` blocks in Svelte/Astro — not the JSX tagged-template form yet. You get syntax highlighting in React files today; for the richest tooling, factor shared markup into a `.nmbl` file. Vue remains the most complete for full type intellisense via its dedicated Volar plugin.
+            > **Note:** The nmbl language server (diagnostics, completions, go-to-definition) currently covers standalone `.nmbl` files and `<template lang="nmbl">` blocks in Svelte/Astro — not the JSX tagged-template form yet. You get syntax highlighting in React files today; for the richest tooling, factor shared markup into a `.nmbl` file. Vue remains the most complete for full type intellisense via its dedicated Volar plugin.
 
             ## Troubleshooting
 
@@ -137,7 +132,7 @@ GuideLayout(title="React Integration Guide")
 
             ### Syntax errors with indentation
 
-            NMBL uses indentation for structure. The first line of the template (inside the backticks) sets the base indent — keep it consistent (2-space steps, no tabs).
+            nmbl uses indentation for structure. The first line of the template (inside the backticks) sets the base indent — keep it consistent (2-space steps, no tabs).
 
           .next-steps
             h2 Next Steps
