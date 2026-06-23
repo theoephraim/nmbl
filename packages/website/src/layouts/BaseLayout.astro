@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import '../styles/code-toggle.css';
 import SiteHeader from '../components/SiteHeader.vue';
 import SiteFooter from '../components/SiteFooter.vue';
 
@@ -27,5 +28,6 @@ const { title } = Astro.props;
       <slot />
     </main>
     <SiteFooter client:load />
+    <script>import '../scripts/code-toggle.ts';</script>
   </body>
 </html>

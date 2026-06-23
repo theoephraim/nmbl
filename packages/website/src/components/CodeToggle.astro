@@ -1,0 +1,55 @@
+---
+import { Code } from 'astro-expressive-code/components';
+import { compile } from '@nmbl-lang/core';
+import { mdFilter } from '@nmbl-lang/core/markdown';
+
+interface Props {
+  nmbl: string;
+  framework?: 'html' | 'vue' | 'svelte' | 'astro' | 'jsx' | 'prompt';
+  outputLang?: string;
+}
+
+const { nmbl, framework = 'html', outputLang = 'html' } = Astro.props;
+
+// Compile the output here, at build time, so the nmbl source is the single
+// source of truth — the two panels can never drift out of sync.
+const { html } = compile(nmbl, { framework, filters: { md: mdFilter } });
+const output = html.trimEnd();
+
+const COLS = 6;
+const cols = Array.from({ length: COLS }, (_, i) => i);
+---
+
+<div class="code-toggle" data-cols={COLS}>
+  <button class="ct-flip-btn" type="button" aria-label="Reveal compiled output" title="Reveal compiled output">
+    <!-- Two chevron tokens that slide PAST each other on flip: `< >` (open =
+         HTML) while viewing nmbl ↔ `> <` (closed = "no more brackets") while
+         viewing the HTML. -->
+    <span class="ct-brackets">
+      <svg class="ct-chev ct-chev-lt" width="13" height="16" viewBox="0 0 13 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="8.5 3 4.5 8 8.5 13"></polyline>
+      </svg>
+      <svg class="ct-chev ct-chev-gt" width="13" height="16" viewBox="0 0 13 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="4.5 3 8.5 8 4.5 13"></polyline>
+      </svg>
+    </span>
+  </button>
+
+  <div class="ct-stage">
+    <div class="ct-bars" aria-hidden="true">
+      {cols.map((i) => (
+        <div
+          class="ct-bar"
+          data-col={i}
+          style={`--bar: var(--rainbow-${i}); left:${((i * 100) / COLS).toFixed(4)}%; width:${(100 / COLS).toFixed(4)}%;`}
+        />
+      ))}
+    </div>
+    <div class="ct-face ct-front">
+      <Code code={nmbl} lang="nmbl" frame="none" />
+    </div>
+    <div class="ct-face ct-back" aria-hidden="true">
+      <Code code={output} lang={outputLang} frame="none" copyable={false} />
+    </div>
+  </div>
+</div>

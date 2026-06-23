@@ -2,7 +2,7 @@ import { compile } from "@nmbl-lang/core";
 import { mdFilter } from "@nmbl-lang/core/markdown";
 
 function nmblToHtml(nmbl: string): string {
-  const { html } = compile(nmbl);
+  const { html } = compile(nmbl, { filters: { md: mdFilter } });
   return html.trimEnd();
 }
 

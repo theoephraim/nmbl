@@ -1,0 +1,143 @@
+/* Flip-to-output toggle. Global (not component-scoped) because two things emit
+   the markup: the CodeToggle.astro component (homepage) and the
+   remark-nmbl-toggle build plugin (guide ```nmbl fences). The behaviour lives
+   in src/scripts/code-toggle.ts, loaded once in BaseLayout. Self-contained card
+   so it works in the homepage grid and inline in guide prose alike. */
+.code-toggle {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+/* EC blocks sit flush inside the card; the toggle never shows a copy button. */
+.code-toggle .expressive-code {
+  margin: 0;
+}
+.code-toggle .expressive-code figure {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+/* EC frames carry a drop shadow; with two faces stacked + revealing it shows
+   through the cascade. The card is the frame here, so drop it. */
+.code-toggle .expressive-code .frame {
+  box-shadow: none;
+}
+.code-toggle .expressive-code pre {
+  border: none;
+  border-radius: 0;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.code-toggle .expressive-code pre > code {
+  padding: 0;
+}
+.code-toggle .copy {
+  display: none !important;
+}
+
+/* Floating control — the icon previews the OTHER side: `< >` (open brackets =
+   HTML) while on nmbl, and `> <` (closed = "no more brackets") once the HTML is
+   showing. */
+.ct-flip-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 5;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  background: var(--color-bg-card);
+  transition: color 0.15s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.ct-flip-btn:hover {
+  color: var(--color-text);
+  border-color: color-mix(in srgb, var(--rainbow-2) 50%, var(--color-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rainbow-2) 14%, transparent);
+}
+
+/* The `<` and `>` tokens slide past each other on flip — `< >` (outward) ↔
+   `> <` (inward) — crossing through the centre. */
+.ct-brackets {
+  display: grid;
+  place-items: center;
+}
+
+.ct-chev {
+  grid-area: 1 / 1;
+  transition: transform 0.42s cubic-bezier(0.5, 0, 0.18, 1);
+}
+
+.ct-chev-lt { transform: translateX(-5px); }
+.ct-chev-gt { transform: translateX(5px); }
+.code-toggle.is-flipped .ct-chev-lt { transform: translateX(5px); }
+.code-toggle.is-flipped .ct-chev-gt { transform: translateX(-5px); }
+
+.ct-stage {
+  position: relative;
+  overflow: hidden;
+  /* Match the code panel's own background (the EC theme's code bg) so the whole
+     card is one continuous gray: it slides open/closed smoothly with the height
+     transition, and the cascade reveals only the code TEXT on top — the
+     background is never "revealed" by the animation. */
+  background: var(--ec-codeBg, var(--color-surface));
+  transition: height 0.35s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+/* Faces stack; each carries the same code-panel background so the incoming face
+   fully covers the outgoing one and no seam shows during the reveal. */
+.ct-face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--ec-codeBg, var(--color-surface));
+}
+
+.ct-front { z-index: 2; }
+.ct-back { z-index: 1; }
+.code-toggle.is-flipped .ct-front { z-index: 1; }
+.code-toggle.is-flipped .ct-back { z-index: 2; }
+
+/* Falling rainbow bars — one per ramp colour, each a column-wide streak that
+   drops from the top (staggered) while its column of the incoming face wipes in
+   behind it. Brightest at the leading (bottom) edge, trailing up; screen blend
+   so it glows over the code. The script drives the fall + the staggered clip. */
+.ct-bars {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.ct-bar {
+  position: absolute;
+  top: 0;
+  height: 120px;
+  opacity: 0;
+  will-change: transform, opacity;
+  mix-blend-mode: screen;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(
+    to top,
+    var(--bar) 0%,
+    color-mix(in srgb, var(--bar) 35%, transparent) 45%,
+    transparent 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-stage { transition: none; }
+  .ct-bars { display: none; }
+  .ct-chev { transition: none; }
+}

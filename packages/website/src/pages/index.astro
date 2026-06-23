@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Code } from 'astro-expressive-code/components';
 import FrameworkShowcase from '../components/FrameworkShowcase.astro';
+import CodeToggle from '../components/CodeToggle.astro';
 import { EDITOR_PAGE } from '../links';
 import {
   SHOWCASE_BASICS, SHOWCASE_COMMENTS, SHOWCASE_MARKDOWN,
@@ -33,8 +34,7 @@ BaseLayout(title="Home")
   section.showcase
     .container
       .feature-row
-        .showcase-code
-          Code(code={SHOWCASE_BASICS} lang="nmbl" frame="none")
+        CodeToggle(nmbl={SHOWCASE_BASICS})
         .feature-text:md
           ### You already know nmbl
 
@@ -44,16 +44,14 @@ BaseLayout(title="Home")
           
 
       .feature-row
-        .showcase-code
-          Code(code={SHOWCASE_COMMENTS} lang="nmbl" frame="none" copyable={false})
+        CodeToggle(nmbl={SHOWCASE_COMMENTS})
         .feature-text:md
           ### Comments that actually work
 
           No more leaving dev comments in output or awkward `{/* ... */}`. nmbl lets you control whether comments are stripped or preserved, and even comment out attributes without breaking your layout.
 
       .feature-row
-        .showcase-code
-          Code(code={SHOWCASE_MARKDOWN} lang="nmbl" frame="none")
+        CodeToggle(nmbl={SHOWCASE_MARKDOWN})
         .feature-text:md
           ### Markdown, right inline
 
