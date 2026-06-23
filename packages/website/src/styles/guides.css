@@ -62,21 +62,22 @@
     color: var(--color-text-muted);
     text-decoration: none;
     padding: 0.4rem 0 0.4rem 1rem;
-    /* dim rail down the whole TOC; the active (or hovered) link brightens its
-       own segment to the accent */
+    /* dim rail down the whole TOC; hovering brightens a segment to neutral,
+       while the active section is the one that gets the accent */
     border-left: 2px solid var(--color-border);
     transition: color 0.2s, border-color 0.2s;
   }
 
   .toc a:hover {
     color: var(--color-text);
-    border-left-color: var(--color-accent);
+    border-left-color: var(--color-text-muted);
   }
 
   /* Scroll-spy: the link for the section currently under the sticky header.
-     Set from GuideLayout's IntersectionObserver-free scroll handler. */
+     Set from GuideLayout's IntersectionObserver-free scroll handler. The accent
+     is reserved for this, so it reads distinctly from a plain hover (above). */
   .toc a.active {
-    color: var(--color-text);
+    color: var(--color-accent);
     border-left-color: var(--color-accent);
   }
 
@@ -209,6 +210,15 @@
      out for its own embedded code (higher specificity, in InstallWidget). */
   .prose .expressive-code {
     margin: 1.5rem 0;
+  }
+
+  /* Flip toggles (from ```nmbl fences via remark-nmbl-toggle) flow like other
+     code samples; their inner EC blocks stay flush — the card is the frame. */
+  .prose .code-toggle {
+    margin: 1.5rem 0;
+  }
+  .prose .code-toggle .expressive-code {
+    margin: 0;
   }
 
   .prose table {

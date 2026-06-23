@@ -108,6 +108,17 @@ code, pre {
   font-feature-settings: 'liga' 0, 'calt' 0 !important;
 }
 
+/* Copy buttons only where there's something to paste: titled config/usage files
+   (they carry a filename) and the install-command widget. Illustrative nmbl and
+   compiled-output snippets carry no title, so they drop the copy control. */
+.expressive-code .copy {
+  display: none !important;
+}
+.expressive-code .frame.has-title .copy,
+.install-widget .expressive-code .copy {
+  display: flex !important;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
