@@ -62,6 +62,25 @@ const { title } = Astro.props;
       links.get(active)?.classList.add('active');
     };
 
+    // Smooth-scroll TOC clicks ourselves. Native anchor scrolling misfires when
+    // the target heading is `position: sticky` above the current scroll position
+    // (it updates the hash but doesn't move). We can't measure the target at
+    // click time either: for a stuck sticky element both offsetTop AND
+    // getBoundingClientRect report the stuck position, not its natural one. So
+    // use the natural offsets already captured in `tops` (measured at load /
+    // resize, when nothing is stuck), minus the heading's CSS `top`.
+    links.forEach((a, id) => {
+      a.addEventListener('click', (e) => {
+        const target = document.getElementById(id);
+        const entry = tops.find((t) => t.id === id);
+        if (!target || !entry) return;
+        e.preventDefault();
+        const stuckTop = parseFloat(getComputedStyle(target).top) || 0;
+        window.scrollTo({ top: Math.max(0, entry.y - stuckTop - rem * 0.5), behavior: 'smooth' });
+        history.pushState(null, '', `#${id}`);
+      });
+    });
+
     let ticking = false;
     addEventListener(
       'scroll',
