@@ -92,7 +92,7 @@ GuideLayout(title="Svelte Integration Guide")
 
             nmbl's `@if` / `@elseif` / `@else` and `@each` blocks compile to Svelte's native `{#if}` and `{#each}` blocks:
 
-            ```nmbl
+            ```nmbl framework=svelte
             @if(loggedIn)
               p Welcome back, {user.name}
             @else
@@ -109,7 +109,7 @@ GuideLayout(title="Svelte Integration Guide")
 
             `//` comments are stripped from the output (dev notes); `//!` comments are rendered as real HTML comments:
 
-            ```nmbl
+            ```nmbl framework=svelte
             // dev note — never shipped
             //! becomes <!-- an HTML comment -->
             p Visible text
@@ -117,7 +117,7 @@ GuideLayout(title="Svelte Integration Guide")
 
             You can also comment out individual props inside a tag's parens — handy while debugging:
 
-            ```nmbl
+            ```nmbl framework=svelte
             button(
               type="submit"
               // disabled

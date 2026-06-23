@@ -87,7 +87,7 @@ GuideLayout(title="Astro Integration Guide")
             nmbl's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX-style
             expressions Astro uses:
 
-            ```nmbl
+            ```nmbl framework=astro
             @if(user)
               p Welcome back, {user.name}
             @else
@@ -111,7 +111,7 @@ GuideLayout(title="Astro Integration Guide")
             highlighting that `.md` files get. Drop prose-heavy content inline with
             `div.prose:md` (or `Fragment:md`):
 
-            ```nmbl
+            ```nmbl framework=astro
             article.prose:md
               ## Getting Started
 
@@ -130,7 +130,7 @@ GuideLayout(title="Astro Integration Guide")
             `//` comments are stripped from the output (dev notes); `//!` comments are rendered
             as real HTML comments:
 
-            ```nmbl
+            ```nmbl framework=astro
             // dev note — never shipped
             //! becomes <!-- an HTML comment -->
             p Visible text
@@ -139,7 +139,7 @@ GuideLayout(title="Astro Integration Guide")
             You can also comment out individual props inside a tag's parens — handy while
             debugging:
 
-            ```nmbl
+            ```nmbl framework=astro
             button(
               type="submit"
               // disabled

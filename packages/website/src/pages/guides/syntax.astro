@@ -51,7 +51,7 @@ GuideLayout(title="Syntax Reference")
             `.class` for classes (repeat `.` for multiple classes). A selector with **no tag
             name** implies a `div`.
 
-            ```nmbl
+            ```nmbl no-toggle
             nav#main-nav.sticky   → <nav id="main-nav" class="sticky">
             .foo.bar              → <div class="foo bar">
             ```
@@ -192,7 +192,7 @@ GuideLayout(title="Syntax Reference")
             space (a `\` with no space before it is a no-op), and it preserves the
             spaces *verbatim*, count and all:
 
-            ```nmbl
+            ```nmbl no-toggle
             span gap of three.   \   → <span>gap of three.   </span>
             span no space.\          → <span>no space.</span>
             ```
@@ -236,7 +236,7 @@ GuideLayout(title="Syntax Reference")
             Nest a single child inline with `>` (spaces on both sides). Great for
             link lists and wrappers.
 
-            ```nmbl
+            ```nmbl no-toggle
             li > a(href="/") Home   → <li><a href="/">Home</a></li>
             ```
 

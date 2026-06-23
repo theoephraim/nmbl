@@ -3,6 +3,7 @@ import vue from '@astrojs/vue';
 import nmbl from '@nmbl-lang/astro';
 import expressiveCode from 'astro-expressive-code';
 import rehypeIndentSections from './src/rehype-indent-sections.mjs';
+import remarkNmblToggle from './src/remark-nmbl-toggle.mjs';
 
 // Expressive Code options (themes, NMBL grammars/injections, the rainbow
 // indent-guide plugin) live in ./ec.config.mjs — required so the `<Code>`
@@ -15,7 +16,12 @@ export default defineConfig({
   server: { port: 4344 },
   // Sectionize `:md` prose into nested `.md-indent` blocks so guide pages render
   // as a tree (styled in guides.css; a no-op wrapper elsewhere).
-  markdown: { rehypePlugins: [rehypeIndentSections] },
+  markdown: {
+    // remark: turn ```nmbl fences in guide prose into flip-to-output toggles
+    // (compiled at build time). rehype: sectionize prose into the indented tree.
+    remarkPlugins: [remarkNmblToggle],
+    rehypePlugins: [rehypeIndentSections],
+  },
   vite: {
     // @nmbl-lang/codemirror is a linked workspace package, so vite doesn't
     // prebundle it — its @codemirror/* imports must resolve to the SAME

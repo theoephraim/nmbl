@@ -79,7 +79,7 @@ GuideLayout(title="React Integration Guide")
 
             nmbl's `@if` / `@elseif` / `@else` and `@each` blocks compile to the JSX expressions React uses. Conditions and loop sources go in `${…}` holes:
 
-            ```nmbl
+            ```nmbl framework=jsx
             @if(${loggedIn})
               p Welcome back, ${user.name}
             @else
@@ -96,7 +96,7 @@ GuideLayout(title="React Integration Guide")
 
             `//` comments are stripped from the output (dev notes); `//!` comments are rendered as real HTML comments:
 
-            ```nmbl
+            ```nmbl framework=jsx
             // dev note — never shipped
             //! becomes <!-- an HTML comment -->
             p Visible text
@@ -104,7 +104,7 @@ GuideLayout(title="React Integration Guide")
 
             You can also comment out individual props inside a tag's parens — handy while debugging:
 
-            ```nmbl
+            ```nmbl framework=jsx
             button(
               type="button"
               // disabled
