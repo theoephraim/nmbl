@@ -222,7 +222,7 @@ for (const line of labelLines) {
 
 const labelBodyTokens = syntheticResults[1].tokens;
 const labelBodyHasContentBlock = labelBodyTokens.some((t) =>
-  t.scopes.includes('string.unquoted.content-block.nmbl') ||
+  t.scopes.includes('text.content-block.nmbl') ||
   t.scopes.includes('source.js') ||
   t.scopes.includes('source.css') ||
   t.scopes.includes('text.html.markdown') ||

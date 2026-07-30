@@ -213,7 +213,10 @@ function injectNmblContentBlocks(
       '3': { name: 'storage.type.content-mode.nmbl' },
     } as Record<string, unknown>,
     while: whileMoreIndented,
-    name: 'string.unquoted.content-block.nmbl',
+    // Plain `text.*` — a raw block's body IS text in the output, exactly like
+    // inline text after a tag head or a `|` line (both `text.nmbl`). A string
+    // scope here made identical output text render in the theme's string color.
+    name: 'text.content-block.nmbl',
   };
 
   // ── Inject into the grammar object ────────────────────────────────────────

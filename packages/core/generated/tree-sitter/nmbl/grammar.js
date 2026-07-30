@@ -84,7 +84,7 @@ module.exports = grammar({
 
     text_chunk: $ => token(/[^ \t\n\r()>|]+/),
 
-    attr_name: $ => token(/[a-zA-Z@:#][a-zA-Z0-9\-_.:@]*/),
+    attr_name: $ => token(/[a-zA-Z@:#][a-zA-Z0-9\-_.:@$]*/),
 
     dqstring: $ => token(/"(?:\\["\\]|[^"\\])*"/),
 

@@ -382,7 +382,7 @@
         }
       ],
       [
-        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@$]*",
         {
           "token": "identifier",
           "switchTo": "@value"
@@ -523,7 +523,7 @@
         "identifier"
       ],
       [
-        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@$]*",
         "identifier"
       ],
       [
@@ -555,7 +555,7 @@
         }
       ],
       [
-        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@]*",
+        "[a-zA-Z@:#][a-zA-Z0-9\\-_.:@$]*",
         "attribute.name"
       ],
       [
