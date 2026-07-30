@@ -222,14 +222,17 @@ GuideLayout(title="Syntax Reference")
               | Copy
             ```
 
-            **Leave SVG (and other pasted markup) as raw HTML** rather than
-            translating it into nmbl nodes. Kept verbatim, it stays a clean copy you
-            can paste straight back into a `.svg` file or another template — and
-            hand-converting generated markup gains nothing while churning diffs. One
-            rule: every line of a raw block must sit at the **same** indentation (note
-            the `<svg>`, `<rect>`, `<path>`, and `</svg>` lines above are all flush); a
-            line indented deeper than the one above it is a parse error, so flatten
-            the block's internal indentation.
+            Converting pasted markup into nmbl is usually the right move — that's
+            the point of the notation, and the decompiler will do it for you. **SVG
+            is the exception: leave it as raw HTML.** An SVG is XML that other
+            programs read — design tools, optimizers like SVGO, anything expecting a
+            `.svg` file. Kept verbatim, it copies straight back out into those tools
+            and the edited version pastes straight back in; converted to nmbl, every
+            round trip needs a translation step in both directions.
+            One rule: every line of a raw block must sit at the **same** indentation
+            (note the `<svg>`, `<rect>`, `<path>`, and `</svg>` lines above are all
+            flush); a line indented deeper than the one above it is a parse error, so
+            flatten the block's internal indentation.
 
             ## Block expansion
 
@@ -266,19 +269,43 @@ GuideLayout(title="Syntax Reference")
             */
             ```
 
-            Inside a tag's parens, use the block form `/* … */` to comment an
-            attribute out without deleting it:
+            ### Commenting out attributes and props
+
+            Because attributes live on their own lines inside the parens, you can
+            comment **a single attribute or component prop** out — something HTML has
+            no way to express at all, and JSX only manages with a `{/* … */}`
+            wrapper:
 
             ```nmbl
             button(
               type="submit"
-              /* disabled */          ← toggle a prop while debugging
+              // disabled
+              aria-label="Save changes"
             ) Save
             ```
 
-            > Placement matters: line comments (`//`, `//!`) live at the element
-            > level, and the block form (`/* */`) lives inside parens. The rendered
-            > `/*! */` is the one block-level exception.
+            Component props work exactly the same way, which makes toggling one
+            prop off a one-character edit instead of a delete-and-retype:
+
+            ```nmbl
+            PricingCard(
+              tier="pro"
+              price={29}
+              // badge="Most popular"
+            )
+            ```
+
+            A `//` runs to the end of its line, so the closing `)` has to sit on a
+            later line. To comment something out **mid-line**, use the block form
+            `/* … */` instead:
+
+            ```nmbl
+            button(type="submit" /* disabled */) Save
+            ```
+
+            > The rendered forms (`//!`, `/*! … */`) are element-level only — inside
+            > parens they're a parse error. An attribute can be commented out, but
+            > never shipped as an HTML comment.
 
             ## Content blocks
 

@@ -33,7 +33,11 @@ const { title } = Astro.props;
   );
 
   if (headings.length && links.size) {
-    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const rootStyle = getComputedStyle(document.documentElement);
+    const rem = parseFloat(rootStyle.fontSize);
+    // The site header is sticky, so the first content visible below it starts at
+    // --header-h; the activation line sits just under that.
+    const headerH = parseFloat(rootStyle.getPropertyValue('--header-h')) * rem || 0;
     let tops: { id: string; y: number }[] = [];
     let active: string | null = null;
 
@@ -50,7 +54,7 @@ const { title } = Astro.props;
     };
 
     const update = () => {
-      const pos = window.scrollY + rem * 5; // activation line just below the top
+      const pos = window.scrollY + headerH + rem; // activation line just below the header
       let current = tops[0].id;
       for (const t of tops) {
         if (t.y <= pos) current = t.id;

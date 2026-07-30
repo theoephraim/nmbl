@@ -13,7 +13,8 @@
   },
   "main": "./client/extension.js",
   "exports": {
-    "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json"
+    "./syntaxes/nmbl.tmLanguage.json": "./syntaxes/nmbl.tmLanguage.json",
+    "./syntaxes/jsx-nmbl.tmLanguage.json": "./syntaxes/jsx-nmbl.tmLanguage.json"
   },
   "scripts": {
     "install-local": "node scripts/install-local.mjs",

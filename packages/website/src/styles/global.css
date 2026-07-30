@@ -26,6 +26,19 @@
   --rainbow-3: #8ac926;
   --rainbow-4: #1982c4;
   --rainbow-5: #9b6cf0;
+
+  /* Height of the sticky site header (SiteHeader.vue: 1rem padding top+bottom,
+     a ~2rem logo line, and the 1px bottom border). Everything else that pins to
+     the viewport — the guide TOC, sticky h2/h3 section headers — offsets by it
+     so it lands BELOW the header instead of underneath it. Keep in sync if the
+     header's padding or logo size changes. */
+  --header-h: 4.0625rem;
+}
+
+/* Anchor jumps (a bare `#id` in the URL, back/forward) land below the header
+   rather than behind it. TOC clicks are handled in GuideLayout's script. */
+html {
+  scroll-padding-top: var(--header-h);
 }
 
 * {

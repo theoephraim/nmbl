@@ -41,7 +41,7 @@
 
   .toc {
     position: sticky;
-    top: 2rem;
+    top: calc(var(--header-h) + 2rem);
   }
 
   .toc h3 {
@@ -128,9 +128,10 @@
     margin-bottom: 1rem;
     /* Sticky section headers: each h2 pins to the top while its section is in
        view; the page-bg fill lets the content scroll cleanly beneath it. h3
-       sub-headings stack just below it (see below). */
+       sub-headings stack just below it (see below). Pins under the sticky site
+       header, not at the viewport top. */
     position: sticky;
-    top: 0;
+    top: var(--header-h);
     z-index: 3;
     padding-bottom: 0.5rem;
     background: var(--color-bg);
@@ -148,7 +149,7 @@
     /* Stacks just beneath the stuck h2 while its subsection is in view; bounded
        to its own .md-indent block, so it scrolls away with the subsection. */
     position: sticky;
-    top: var(--sticky-h2);
+    top: calc(var(--header-h) + var(--sticky-h2));
     z-index: 2;
     padding-bottom: 0.4rem;
     background: var(--color-bg);

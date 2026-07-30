@@ -35,8 +35,13 @@ const isOpen = ref(false);
 </script>
 
 <style scoped>
+/* Pinned to the top on every page. Still a positioned element, so the mobile
+   dropdown's `position: absolute; top: 100%` keeps resolving against it. Its
+   height is published as --header-h (global.css) for everything that pins
+   beneath it. */
 .site-header {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--color-border);
   padding: 1rem 0;

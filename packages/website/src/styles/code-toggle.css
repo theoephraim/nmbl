@@ -25,10 +25,13 @@
 .code-toggle .expressive-code .frame {
   box-shadow: none;
 }
+/* Block padding only. EC already pads the code inline (`--ec-codePadInl` on
+   `.ec-line .code`), so an inline value here stacks on top of it and toggle
+   blocks end up indented ~36px against ~22px for plain ones. */
 .code-toggle .expressive-code pre {
   border: none;
   border-radius: 0;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 0;
   font-size: 0.85rem;
   line-height: 1.5;
 }
