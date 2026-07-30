@@ -15,7 +15,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "bun run build && varlock-wrangler deploy"
+    "deploy": "bun run build && varlock-wrangler deploy",
+    "deploy:preview": "bun run build && varlock-wrangler versions upload"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
