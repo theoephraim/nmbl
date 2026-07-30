@@ -1,6 +1,6 @@
 {
   "name": "@nmbl-lang/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lexer, parser, compiler, formatter, linter, and HTML\u2192NMBL decompiler for the NMBL templating language",
   "keywords": [
     "nmbl",

@@ -1,6 +1,6 @@
 {
   "name": "@nmbl-lang/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Format and lint NMBL templates from the command line",
   "keywords": [
     "nmbl",

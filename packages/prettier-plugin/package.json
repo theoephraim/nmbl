@@ -1,6 +1,6 @@
 {
   "name": "@nmbl-lang/prettier-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Prettier plugin for formatting NMBL templates",
   "keywords": [
     "nmbl",
