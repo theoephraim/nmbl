@@ -1,6 +1,6 @@
 {
   "name": "@nmbl-lang/vue-language-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Volar plugin providing full IntelliSense for NMBL templates in Vue SFCs",
   "keywords": [
     "nmbl",

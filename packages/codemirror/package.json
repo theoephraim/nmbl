@@ -1,6 +1,6 @@
 {
   "name": "@nmbl-lang/codemirror",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CodeMirror 6 language support for NMBL, driven by the generated Monarch tokenizer",
   "keywords": [
     "nmbl",
