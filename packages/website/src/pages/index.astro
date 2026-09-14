@@ -365,6 +365,13 @@ BaseLayout(title="Home")
     gap: 1rem;
   }
 
+  /* Grid items default to min-width:auto, which would let a column stretch to
+     the code's min-content width and push the page sideways. Pin it to 0 so
+     long lines scroll inside the <pre> instead. */
+  .prompt-col {
+    min-width: 0;
+  }
+
   .prompt-label {
     font-family: var(--font-mono);
     font-size: 0.75rem;
